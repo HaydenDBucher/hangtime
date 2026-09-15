@@ -1,40 +1,25 @@
-# Hangtime — 90-Second Demo Path
+# Hangtime — 90-second MVP demo
 
-## 0:00–0:15 — The idea
+## 0:00–0:15 — The promise
 
-Open on the hero and say:
+Open on the hero and frame the product in one sentence:
 
-> Your group is already going out. Hangtime helps you find the other groups you should meet tonight.
+> See what's happening, find the groups who fit, and make one plan.
 
-Point out that Hangtime matches existing friend groups—not isolated individuals—by destination, plan, and vibe.
+## 0:15–0:35 — Make tonight live
 
-## 0:15–0:30 — Build the night
+Select **Set tonight's plan**. Change the area, vibe, or time and select **Go live**. The whole setup happens on one screen.
 
-Click **Pitch Demo** in the bottom-right corner.
+## 0:35–0:55 — See the city
 
-Four people are already selected. Click **Build Tonight’s Plan**, briefly point to the vibe choices, then click **Find Groups**.
+Select heat-map markers to show event activity without exposing individual identities. Add an event from the right-side feed and point out that the plan updates immediately.
 
-## 0:30–0:50 — Discover with context
+## 0:55–1:15 — Match privately
 
-On **Lane Ave Crew**, point to:
+Sort groups by **Same stop**, **Mutuals**, or **Similar size**. Open **Lane Ave crew** to show fit factors, verification, and linked-social signals while faces remain hidden.
 
-- 94% compatibility
-- Verified identity
-- Three mutual connections
-- Their specific plan and destination
+## 1:15–1:30 — Mutual payoff
 
-Click **View Group**, mention the trust indicators, then click **Match Groups**.
+Select **Wave to this group**. The mutual-match screen unlocks first names, connected accounts, and the shared group chat.
 
-## 0:50–1:12 — Turn discovery into a meetup
-
-On “It’s a Hangtime,” click **Open Group Chat**.
-
-Let the sample exchange tell the story, then click **Meet at Pins · 9:50**. The confirmed meetup is the product payoff.
-
-## 1:12–1:30 — The business and test
-
-Close the demo and summarize:
-
-> Hangtime can monetize premium discovery controls and venue promotion at the exact moment groups decide where to go. The MVP tests the riskiest assumption: will two existing groups actually choose to meet?
-
-Keep the browser at 100% zoom. A 1920×1080 display shows the intended full pitch layout.
+Close on the promoted local offers: monetization appears at the moment a group is deciding what to do, without interrupting discovery.
