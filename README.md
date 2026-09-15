@@ -17,10 +17,11 @@ If dependencies need to be restored, run `npm install` first.
 - Set the crew, area, vibe, and start time in one screen.
 - Explore an activity heat map and tonight's event feed.
 - Add an event or promoted venue offer to the plan.
-- Sort compatible groups by fit, same stop, mutuals, or size.
+- Sort compatible groups by plan, shared places, timing, or mutuals.
+- See fictional member photos and open individual profiles before matching.
 - Review verification, linked-account, and mutual-connection signals.
-- Keep identities obscured until both groups match.
-- Unlock the shared group chat after a mutual wave.
+- Keep direct social handles and messaging private until both groups match.
+- Unlock connected accounts and the shared group chat after mutual interest.
 
 ## Live events
 

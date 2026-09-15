@@ -16,10 +16,10 @@ Select heat-map markers to show event activity without exposing individual ident
 
 ## 0:55–1:15 — Match privately
 
-Sort groups by **Same stop**, **Mutuals**, or **Similar size**. Open **Lane Ave crew** to show fit factors, verification, and linked-social signals while faces remain hidden.
+Sort groups by **Same places**, **Same timing**, or **Mutuals**. Open **Lane Ave crew** to show the actual plan, member photos, individual profiles, verification, and linked-social signals while direct handles remain private.
 
 ## 1:15–1:30 — Mutual payoff
 
-Select **Wave to this group**. The mutual-match screen unlocks first names, connected accounts, and the shared group chat.
+Select **We’d meet them**. The mutual-match screen unlocks connected accounts and the shared group chat.
 
 Close on the promoted local offers: monetization appears at the moment a group is deciding what to do, without interrupting discovery.

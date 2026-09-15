@@ -9,14 +9,61 @@ const crew = [
 ];
 
 const matches = [
-  { id: 1, name: "Lane Ave crew", score: 96, members: 5, range: "21–24", distance: "0.4 mi", vibe: "Social", status: "Pins at 9:30", overlap: "Same stop", mutuals: 3, verified: 5, socials: ["Instagram", "TikTok"], interests: ["Live music", "Patios", "Buckeyes"], initials: ["EM", "JR", "SL", "+2"], blurb: "OSU seniors. Competitive at games, easygoing everywhere else." },
-  { id: 2, name: "Clintonville four", score: 91, members: 4, range: "22–25", distance: "0.8 mi", vibe: "Low-key", status: "Dinner, then north", overlap: "Similar night", mutuals: 1, verified: 4, socials: ["Instagram"], interests: ["Food", "Indie", "Trivia"], initials: ["NB", "LE", "RA", "MO"], blurb: "Recent grads looking for a patio and a night that can go either way." },
-  { id: 3, name: "Campus collective", score: 87, members: 6, range: "21–23", distance: "1.1 mi", vibe: "Live", status: "Show, then Short North", overlap: "Same area", mutuals: 0, verified: 6, socials: ["Instagram", "TikTok"], interests: ["Concerts", "Dancing", "Photos"], initials: ["DW", "AP", "CJ", "+3"], blurb: "A campus friend group catching a show before a late-night bite." },
-  { id: 4, name: "German Village crew", score: 82, members: 4, range: "23–26", distance: "1.7 mi", vibe: "Social", status: "Open to ideas", overlap: "Friend overlap", mutuals: 5, verified: 4, socials: ["Instagram"], interests: ["Cocktails", "Comedy", "Crew"], initials: ["AR", "KP", "SV", "DC"], blurb: "Neighbors, coworkers, and one cousin. Here for the stories." },
+  {
+    id: 1, name: "Lane Ave crew", score: 96, members: 4, range: "21–24", distance: "0.4 mi", night: "Drinks, then decide", status: "Pins at 9:15 → maybe Standard Hall", overlap: "Same first stop", mutuals: 3, verified: 4, socials: ["Instagram", "TikTok"], interests: ["Live music", "Patios", "Buckeyes"], blurb: "OSU seniors. Competitive at games, easygoing everywhere else.",
+    timeline: [{ time: "9:15", action: "Meet at Pins", place: "Short North" }, { time: "10:30", action: "See how it’s going", place: "Standard Hall, maybe" }],
+    people: [
+      { name: "Emma", age: 22, role: "Design student", photo: 0, bio: "Usually finds the table and orders for everyone.", interests: ["Concerts", "Tennis", "Film"] },
+      { name: "Ryan", age: 23, role: "Finance major", photo: 1, bio: "Will challenge anyone to duckpin bowling.", interests: ["Crew", "Golf", "Trivia"] },
+      { name: "Simone", age: 22, role: "Nursing student", photo: 2, bio: "Here for live music and a good patio.", interests: ["R&B", "Running", "Food"] },
+      { name: "Theo", age: 24, role: "Software engineer", photo: 3, bio: "The one who actually makes the reservation.", interests: ["Climbing", "DJs", "Coffee"] },
+    ],
+  },
+  {
+    id: 2, name: "Clintonville four", score: 91, members: 4, range: "22–25", distance: "0.8 mi", night: "Dinner into drinks", status: "Comune at 8:00 → patio drinks", overlap: "Similar route", mutuals: 1, verified: 4, socials: ["Instagram"], interests: ["Food", "Indie", "Trivia"], blurb: "Recent grads looking for dinner and a night that can go either way.",
+    timeline: [{ time: "8:00", action: "Dinner at Comune", place: "German Village" }, { time: "9:45", action: "Find a patio", place: "Brewery District" }],
+    people: [
+      { name: "Noah", age: 24, role: "Product designer", photo: 4, bio: "New restaurant list is always ready.", interests: ["Food", "Art", "Cycling"] },
+      { name: "Lucy", age: 23, role: "Teacher", photo: 5, bio: "Prefers patios where you can hear each other.", interests: ["Books", "Travel", "Indie"] },
+      { name: "Rafa", age: 25, role: "Architect", photo: 6, bio: "Can turn one drink into a neighborhood tour.", interests: ["Design", "Soccer", "Vinyl"] },
+      { name: "Mina", age: 23, role: "Grad student", photo: 7, bio: "Always knows the late-night food spot.", interests: ["Comedy", "Food", "Photos"] },
+    ],
+  },
+  {
+    id: 3, name: "Campus collective", score: 87, members: 4, range: "21–23", distance: "1.1 mi", night: "Catch a show", status: "KEMBA Live at 8:30 → Short North", overlap: "Same area later", mutuals: 0, verified: 4, socials: ["Instagram", "TikTok"], interests: ["Concerts", "Dancing", "Photos"], blurb: "A campus friend group catching a show before a late-night bite.",
+    timeline: [{ time: "8:30", action: "Show at KEMBA Live", place: "Arena District" }, { time: "11:00", action: "Late food and drinks", place: "Short North" }],
+    people: [
+      { name: "Dani", age: 22, role: "Marketing major", photo: 8, bio: "Has the playlist ready before the preshow.", interests: ["Pop", "Photos", "Thrifting"] },
+      { name: "Austin", age: 23, role: "Journalism major", photo: 9, bio: "Never misses an opener.", interests: ["Live music", "Running", "Film"] },
+      { name: "Chloe", age: 21, role: "Psychology major", photo: 10, bio: "Will stay out for one more song.", interests: ["Dance", "Coffee", "Travel"] },
+      { name: "Malik", age: 23, role: "Photographer", photo: 11, bio: "Documents the night without slowing it down.", interests: ["Photos", "House", "Basketball"] },
+    ],
+  },
+  {
+    id: 4, name: "German Village crew", score: 82, members: 4, range: "23–26", distance: "1.7 mi", night: "Show and one round", status: "Comedy at 8:00 → one drink nearby", overlap: "Same timing", mutuals: 5, verified: 4, socials: ["Instagram"], interests: ["Cocktails", "Comedy", "Crew"], blurb: "Neighbors, coworkers, and one cousin. Here for the stories.",
+    timeline: [{ time: "8:00", action: "Comedy at The Attic", place: "Old North" }, { time: "9:45", action: "One round nearby", place: "Open" }],
+    people: [
+      { name: "Andre", age: 25, role: "Account manager", photo: 12, bio: "Knows when to call it and when not to.", interests: ["Comedy", "Crew", "Cooking"] },
+      { name: "Kiara", age: 24, role: "Event producer", photo: 13, bio: "A very reliable judge of whether a place is worth it.", interests: ["Events", "Fashion", "Podcasts"] },
+      { name: "Sam", age: 26, role: "Physical therapist", photo: 14, bio: "Here for jokes, sports, and exactly one round.", interests: ["Soccer", "Comedy", "Travel"] },
+      { name: "Delaney", age: 24, role: "Copywriter", photo: 15, bio: "Always has a backup plan within walking distance.", interests: ["Writing", "Wine", "Yoga"] },
+    ],
+  },
 ];
 
-const filters = ["Best fit", "Same stop", "Mutuals", "Similar size"];
-const vibes = ["Social", "Dance", "Live", "Low-key"];
+const filters = ["Best plan", "Same places", "Same timing", "Mutuals"];
+const nightOptions = [
+  { label: "Drinks, then decide", detail: "Start somewhere. Keep the rest open." },
+  { label: "Dinner into drinks", detail: "Sit down first, stay out after." },
+  { label: "Catch a show", detail: "Music, comedy, or something live." },
+  { label: "Watch the game", detail: "Find a crowd and a screen." },
+  { label: "Try a few places", detail: "Move around, no fixed destination." },
+  { label: "Meet for one round", detail: "Easy start. No pressure to stay out." },
+  { label: "Dance somewhere", detail: "A late start and a real dance floor." },
+  { label: "Low-key hang", detail: "Somewhere you can actually talk." },
+  { label: "Late-night food", detail: "Food is the plan, anything else is extra." },
+  { label: "Open to anything", detail: "See what’s busy and decide together." },
+];
 
 function Icon({ name, size = 20 }) {
   const paths = {
@@ -48,6 +95,21 @@ function AvatarStack({ people = crew, masked = false, size = "normal" }) {
   return <div className={`avatar-stack ${size}`}>{source.map((person, index) => <span className={masked ? "masked" : person.tone} style={{ "--index": index }} key={`${person.initials}-${index}`}>{masked && index < source.length - 1 ? "" : person.initials}</span>)}</div>;
 }
 
+function ProfilePhoto({ person, size = "normal", onClick }) {
+  const column = person.photo % 4;
+  const row = Math.floor(person.photo / 4);
+  const style = {
+    backgroundImage: `url(${import.meta.env.BASE_URL}profile-sprite.png)`,
+    backgroundPosition: `${column * 33.333}% ${row * 33.333}%`,
+  };
+  const content = <span className={`profile-photo ${size}`} style={style} role="img" aria-label={`${person.name}'s profile photo`}></span>;
+  return onClick ? <button className="profile-photo-button" onClick={onClick} aria-label={`View ${person.name}'s profile`}>{content}</button> : content;
+}
+
+function PhotoStack({ people, onPerson, size = "normal" }) {
+  return <div className={`photo-stack ${size}`}>{people.map((person, index) => <ProfilePhoto person={person} size={size} onClick={onPerson ? () => onPerson(person) : undefined} key={person.name + index}/>)}</div>;
+}
+
 function App() {
   const [events, setEvents] = useState([]);
   const [eventSource, setEventSource] = useState("loading");
@@ -56,9 +118,10 @@ function App() {
   const [matchFilter, setMatchFilter] = useState("Best fit");
   const [planOpen, setPlanOpen] = useState(false);
   const [profile, setProfile] = useState(null);
+  const [personProfile, setPersonProfile] = useState(null);
   const [matchedGroup, setMatchedGroup] = useState(null);
   const [toast, setToast] = useState("");
-  const [plan, setPlan] = useState({ crew: "The usual four", area: "Short North", vibe: "Social", time: "9:30 PM", event: "Open plan" });
+  const [plan, setPlan] = useState({ crew: "The usual four", area: "Short North", night: "Drinks, then decide", time: "9:30 PM", event: "Open plan" });
   const tonightLabel = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" }).format(new Date());
 
   useEffect(() => {
@@ -80,8 +143,8 @@ function App() {
   const orderedMatches = useMemo(() => {
     const next = [...matches];
     if (matchFilter === "Mutuals") return next.sort((a, b) => b.mutuals - a.mutuals);
-    if (matchFilter === "Similar size") return next.sort((a, b) => Math.abs(a.members - 4) - Math.abs(b.members - 4));
-    if (matchFilter === "Same stop") return next.sort((a, b) => Number(b.overlap === "Same stop") - Number(a.overlap === "Same stop"));
+    if (matchFilter === "Same timing") return next.sort((a, b) => Number(b.timeline[0].time === "9:15") - Number(a.timeline[0].time === "9:15"));
+    if (matchFilter === "Same places") return next.sort((a, b) => Number(b.overlap === "Same first stop") - Number(a.overlap === "Same first stop"));
     return next;
   }, [matchFilter]);
 
@@ -119,7 +182,7 @@ function App() {
         <section className="plan-bar shell" aria-label="Your plan tonight">
           <div className="plan-crew"><AvatarStack/><span><small>Your crew</small><strong>{plan.crew}</strong></span></div>
           <button onClick={() => setPlanOpen(true)}><Icon name="pin"/><span><small>Area</small><strong>{plan.area}</strong></span></button>
-          <button onClick={() => setPlanOpen(true)}><Icon name="spark"/><span><small>Vibe</small><strong>{plan.vibe}</strong></span></button>
+          <button onClick={() => setPlanOpen(true)}><Icon name="spark"/><span><small>Type of night</small><strong>{plan.night}</strong></span></button>
           <button onClick={() => setPlanOpen(true)}><Icon name="clock"/><span><small>Start</small><strong>{plan.time}</strong></span></button>
           <div className="plan-event"><span><small>Plan</small><strong>{plan.event}</strong></span></div>
           <button className="edit-plan" onClick={() => setPlanOpen(true)}>Edit</button>
@@ -139,17 +202,17 @@ function App() {
 
         <section className="matches shell" id="matches">
           <div className="section-title-row matches-heading">
-            <div><span className="kicker">PRIVATE UNTIL IT’S MUTUAL</span><h2>Groups on your wavelength.</h2></div>
+            <div><span className="kicker">PHOTOS VISIBLE · DETAILS PROTECTED</span><h2>Who fits your actual plan.</h2></div>
             <div className="filter-row"><Icon name="tune" size={17}/>{filters.map((filter) => <button className={matchFilter === filter ? "active" : ""} onClick={() => setMatchFilter(filter)} key={filter}>{filter}</button>)}</div>
           </div>
-          <div className="match-grid">{orderedMatches.map((group, index) => <MatchCard group={group} featured={index === 0} onOpen={() => setProfile(group)} onWave={() => sendWave(group)} key={group.id}/>)}</div>
+          <div className="match-grid">{orderedMatches.map((group, index) => <MatchCard group={group} featured={index === 0} onOpen={() => setProfile(group)} onPerson={(person) => setPersonProfile({ person, group })} onWave={() => sendWave(group)} key={group.id}/>)}</div>
         </section>
 
         <section className="privacy shell" id="safety">
           <div className="privacy-mark"><Icon name="shield" size={30}/></div>
-          <div><span className="kicker">DESIGNED FOR DISCRETION</span><h2>Interest first.<br/>Identity after.</h2></div>
-          <p>Before a mutual match, groups see compatibility, shared context, verification, and blurred profiles—not a directory of strangers.</p>
-          <div className="privacy-points"><span><Icon name="check" size={15}/>Group-only by default</span><span><Icon name="check" size={15}/>Socials stay private</span><span><Icon name="check" size={15}/>Meet-up safety tools</span></div>
+          <div><span className="kicker">DESIGNED FOR DISCRETION</span><h2>People visible.<br/>Access controlled.</h2></div>
+          <p>See who you may meet and open individual profiles. Direct social handles, messaging, and contact details stay private until both groups match.</p>
+          <div className="privacy-points"><span><Icon name="check" size={15}/>Real photos up front</span><span><Icon name="check" size={15}/>Handles after matching</span><span><Icon name="check" size={15}/>Group-only introductions</span></div>
         </section>
 
         <section className="promotions shell">
@@ -165,7 +228,10 @@ function App() {
         <PlanModal plan={plan} onClose={() => setPlanOpen(false)} onSave={(next) => { setPlan(next); setPlanOpen(false); setToast("Tonight’s plan is live"); }}/>
       )}
       {profile && (
-        <ProfileModal group={profile} onClose={() => setProfile(null)} onWave={() => sendWave(profile)}/>
+        <ProfileModal group={profile} onClose={() => setProfile(null)} onPerson={(person) => setPersonProfile({ person, group: profile })} onWave={() => sendWave(profile)}/>
+      )}
+      {personProfile && (
+        <PersonModal person={personProfile.person} group={personProfile.group} onClose={() => setPersonProfile(null)} onBack={() => { setPersonProfile(null); setProfile(personProfile.group); }}/>
       )}
       {matchedGroup && (
         <MatchModal group={matchedGroup} onClose={() => setMatchedGroup(null)} onMessage={() => { setMatchedGroup(null); setToast("Group chat opened"); }}/>
@@ -198,13 +264,14 @@ function EventRail({ events, source, selected, onSelect, onJoin }) {
   </aside>;
 }
 
-function MatchCard({ group, featured, onOpen, onWave }) {
+function MatchCard({ group, featured, onOpen, onPerson, onWave }) {
   return <article className={`match-card ${featured ? "featured" : ""}`}>
-    <div className="match-top"><AvatarStack people={group.initials} masked/><div className="score"><strong>{group.score}</strong><span>% fit</span></div></div>
-    <div className="match-status"><span className="live-dot"></span>{group.status}</div><h3>{group.name}</h3><p>{group.members} people · Ages {group.range} · {group.distance}</p>
-    <div className="reason-row"><span>{group.overlap}</span><span>{group.vibe}</span>{group.mutuals > 0 && <span>{group.mutuals} mutuals</span>}</div>
+    <div className="match-top"><PhotoStack people={group.people} onPerson={onPerson}/><div className="score"><strong>{group.score}</strong><span>% plan fit</span></div></div>
+    <div className="match-status"><span className="live-dot"></span>{group.night}</div><h3>{group.name}</h3><p>{group.members} people · Ages {group.range} · {group.distance}</p>
+    <div className="card-plan"><small>THEIR NIGHT</small><strong>{group.status}</strong><span>{group.timeline[0].place} · starts {group.timeline[0].time}</span></div>
+    <div className="reason-row"><span>{group.overlap}</span><span>Starts near you</span>{group.mutuals > 0 && <span>{group.mutuals} mutuals</span>}</div>
     <div className="social-proof"><Icon name="shield" size={14}/>{group.verified}/{group.members} verified <i></i><Icon name="instagram" size={14}/>{group.socials.length} socials linked</div>
-    <div className="match-actions"><button onClick={onOpen}>View fit</button><button className="wave" onClick={onWave}>Wave <Icon name="arrow" size={16}/></button></div>
+    <div className="match-actions"><button onClick={onOpen}>People + plan</button><button className="wave" onClick={onWave}>Interested <Icon name="arrow" size={16}/></button></div>
   </article>;
 }
 
@@ -216,32 +283,45 @@ function PlanModal({ plan, onClose, onSave }) {
   const [next, setNext] = useState(plan);
   const set = (key, value) => setNext((current) => ({ ...current, [key]: value }));
   return <ModalShell onClose={onClose} label="Set tonight's plan" className="plan-modal">
-    <span className="kicker">30-SECOND SETUP</span><h2>What’s the move?</h2><p>One screen. Change anything later.</p>
+    <span className="kicker">30-SECOND SETUP</span><h2>What are you actually doing?</h2><p>Pick the closest version. You can change it later.</p>
     <label><span>Who’s in?</span><div className="modal-crew"><AvatarStack/><strong>The usual four</strong><button>Change</button></div></label>
     <label><span>Where?</span><div className="choice-grid">{["Short North", "Campus", "Downtown", "Open to ideas"].map((area) => <button className={next.area === area ? "selected" : ""} onClick={() => set("area", area)} key={area}>{area}</button>)}</div></label>
-    <label><span>What energy?</span><div className="choice-grid vibes">{vibes.map((vibe) => <button className={next.vibe === vibe ? "selected" : ""} onClick={() => set("vibe", vibe)} key={vibe}>{vibe}</button>)}</div></label>
+    <label><span>What kind of night?</span><div className="night-choice-grid">{nightOptions.map((option) => <button className={next.night === option.label ? "selected" : ""} onClick={() => set("night", option.label)} key={option.label}><strong>{option.label}</strong><small>{option.detail}</small></button>)}</div></label>
     <label><span>Starting around</span><div className="choice-grid time">{["8:30 PM", "9:30 PM", "10:30 PM", "Whenever"].map((time) => <button className={next.time === time ? "selected" : ""} onClick={() => set("time", time)} key={time}>{time}</button>)}</div></label>
     <button className="modal-primary" onClick={() => onSave(next)}>Go live <Icon name="arrow"/></button>
   </ModalShell>;
 }
 
-function ProfileModal({ group, onClose, onWave }) {
+function ProfileModal({ group, onClose, onPerson, onWave }) {
   return <ModalShell onClose={onClose} label={`${group.name} profile`} className="profile-modal">
-    <div className="profile-visual"><AvatarStack people={group.initials} masked size="large"/><div><span className="score-pill">{group.score}% FIT</span><h2>{group.name}</h2><p>{group.members} people · Ages {group.range}</p></div></div>
-    <div className="identity-note"><Icon name="lock" size={18}/><div><strong>Faces unlock after you both match</strong><span>Names and accounts stay private until then.</span></div></div>
-    <div className="fit-breakdown"><div><span>Same vibe</span><strong>98%</strong></div><div><span>Plan overlap</span><strong>96%</strong></div><div><span>Group fit</span><strong>92%</strong></div></div>
-    <section><span className="kicker">TONIGHT</span><h3>{group.status}</h3><p>{group.overlap} · {group.distance} away</p></section>
+    <div className="profile-visual"><PhotoStack people={group.people} onPerson={onPerson} size="large"/><div><span className="score-pill">{group.score}% PLAN FIT</span><h2>{group.name}</h2><p>{group.members} people · Ages {group.range}</p></div></div>
+    <div className="identity-note"><Icon name="lock" size={18}/><div><strong>Photos and first names are visible</strong><span>Social handles and direct messaging unlock after a mutual match.</span></div></div>
+    <div className="member-directory"><span className="kicker">TAP A PERSON TO VIEW THEIR PROFILE</span><div>{group.people.map((person) => <button onClick={() => onPerson(person)} key={person.name}><ProfilePhoto person={person}/><span><strong>{person.name}, {person.age}</strong><small>{person.role}</small></span><Icon name="chevron" size={16}/></button>)}</div></div>
+    <div className="fit-breakdown"><div><span>Plan overlap</span><strong>98%</strong></div><div><span>Timing</span><strong>96%</strong></div><div><span>Group fit</span><strong>92%</strong></div></div>
+    <section className="tonight-plan"><span className="kicker">WHAT THEY’RE DOING</span><h3>{group.status}</h3><div className="plan-timeline">{group.timeline.map((stop) => <div key={stop.time + stop.action}><time>{stop.time}</time><i></i><span><strong>{stop.action}</strong><small>{stop.place}</small></span></div>)}</div></section>
     <section><span className="kicker">A LITTLE CONTEXT</span><p>{group.blurb}</p><div className="interest-list">{group.interests.map((interest) => <span key={interest}>{interest}</span>)}</div></section>
     <div className="account-links"><span><Icon name="shield" size={16}/>{group.verified}/{group.members} identity verified</span><span><Icon name="instagram" size={16}/>{group.socials.join(" + ")} connected</span><span><Icon name="users" size={16}/>{group.mutuals || "No"} mutual connections</span></div>
-    <button className="modal-primary" onClick={onWave}>Wave to this group <Icon name="arrow"/></button>
+    <button className="modal-primary" onClick={onWave}>We’d meet them <Icon name="arrow"/></button>
+  </ModalShell>;
+}
+
+function PersonModal({ person, group, onClose, onBack }) {
+  return <ModalShell onClose={onClose} label={`${person.name}'s profile`} className="person-modal">
+    <button className="person-back" onClick={onBack}>← {group.name}</button>
+    <div className="person-hero"><ProfilePhoto person={person} size="hero"/><span className="verified-person"><Icon name="shield" size={14}/>Verified</span></div>
+    <div className="person-heading"><span className="kicker">{group.name}</span><h2>{person.name}, {person.age}</h2><p>{person.role} · Columbus</p></div>
+    <p className="person-bio">{person.bio}</p>
+    <section><span className="kicker">THEIR PLAN TONIGHT</span><h3>{group.status}</h3><p>{group.night} · {group.distance} away</p></section>
+    <section><span className="kicker">INTO</span><div className="interest-list">{person.interests.map((interest) => <span key={interest}>{interest}</span>)}</div></section>
+    <div className="locked-social"><Icon name="instagram"/><span><strong>Instagram connected</strong><small>Handle unlocks if both groups match.</small></span><Icon name="lock" size={16}/></div>
   </ModalShell>;
 }
 
 function MatchModal({ group, onClose, onMessage }) {
   return <ModalShell onClose={onClose} label="It's a match" className="matched-modal">
     <span className="burst"><Icon name="spark" size={28}/></span><span className="kicker">IT’S MUTUAL</span><h2>You found<br/>your people.</h2>
-    <div className="mutual-groups"><div><AvatarStack/><strong>The usual four</strong></div><span>+</span><div><AvatarStack people={group.initials}/><strong>{group.name}</strong></div></div>
-    <p>Both groups are heading to Pins around 9:30.</p>
+    <div className="mutual-groups"><div><AvatarStack/><strong>The usual four</strong></div><span>+</span><div><PhotoStack people={group.people}/><strong>{group.name}</strong></div></div>
+    <p>Your plans overlap at {group.timeline[0].place} around {group.timeline[0].time}.</p>
     <div className="unlocked"><Icon name="instagram"/><span><strong>Profiles unlocked</strong><small>First names and connected accounts are now visible.</small></span></div>
     <button className="modal-primary" onClick={onMessage}><Icon name="message"/>Open group chat</button><button className="text-button" onClick={onClose}>Keep exploring</button>
   </ModalShell>;
