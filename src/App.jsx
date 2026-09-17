@@ -1,9 +1,29 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { getTonightEvents } from "./eventService";
+import { CAMPUS_CENTER, CAMPUS_RADIUS_MILES, getTonightEvents, isWithinCampusRadius } from "./eventService";
 import { getSession, isCloudAuthEnabled, signIn, signOut, signUp, updateSessionProfile } from "./authService";
 import { getCampusRidePreview, getRideLink } from "./rideService";
+
+const CAMPUS_RADIUS_METERS = CAMPUS_RADIUS_MILES * 1609.344;
+const CAMPUS_LAT_DELTA = CAMPUS_RADIUS_MILES / 69;
+const CAMPUS_LNG_DELTA = CAMPUS_RADIUS_MILES / (69 * Math.cos(CAMPUS_CENTER.lat * Math.PI / 180));
+const CAMPUS_BOUNDS = [
+  [CAMPUS_CENTER.lat - CAMPUS_LAT_DELTA, CAMPUS_CENTER.lng - CAMPUS_LNG_DELTA],
+  [CAMPUS_CENTER.lat + CAMPUS_LAT_DELTA, CAMPUS_CENTER.lng + CAMPUS_LNG_DELTA],
+];
+
+function campusBoundaryRing(steps = 80) {
+  const ring = [];
+  for (let index = steps; index >= 0; index -= 1) {
+    const angle = index / steps * Math.PI * 2;
+    ring.push([
+      CAMPUS_CENTER.lat + CAMPUS_LAT_DELTA * Math.sin(angle),
+      CAMPUS_CENTER.lng + CAMPUS_LNG_DELTA * Math.cos(angle),
+    ]);
+  }
+  return ring;
+}
 
 const crew = [
   { name: "You", initials: "HB", tone: "ink" },
@@ -345,18 +365,35 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
   useEffect(() => {
     if (!mapNode.current || mapInstance.current) return undefined;
     const map = L.map(mapNode.current, {
-      center: [40.0025, -83.012],
+      center: [CAMPUS_CENTER.lat, CAMPUS_CENTER.lng],
       zoom: 14,
       minZoom: 13,
       maxZoom: 18,
-      maxBounds: [[39.965, -83.050], [40.038, -82.970]],
-      maxBoundsViscosity: .86,
+      maxBounds: CAMPUS_BOUNDS,
+      maxBoundsViscosity: 1,
       zoomControl: false,
       attributionControl: true,
     });
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+    map.createPane("campusMaskPane");
+    map.getPane("campusMaskPane").style.zIndex = "350";
+    map.getPane("campusMaskPane").style.pointerEvents = "none";
+    L.polygon([
+      [[85, -180], [85, 180], [-85, 180], [-85, -180]],
+      campusBoundaryRing(),
+    ], { pane: "campusMaskPane", stroke: false, fillColor: "#edece7", fillOpacity: .9, interactive: false }).addTo(map);
+    L.circle([CAMPUS_CENTER.lat, CAMPUS_CENTER.lng], {
+      pane: "campusMaskPane",
+      radius: CAMPUS_RADIUS_METERS,
+      color: "#4053c7",
+      weight: 1.5,
+      opacity: .58,
+      dashArray: "5 7",
+      fill: false,
+      interactive: false,
     }).addTo(map);
     crowdLayer.current = L.layerGroup().addTo(map);
     locationLayer.current = L.layerGroup().addTo(map);
@@ -415,7 +452,8 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
 
       if (lens === "Crowds" && index < 5) {
         const offset = crowdOffsets[index % crowdOffsets.length];
-        const origin = [lat + offset[0], lng + offset[1]];
+        let origin = [lat + offset[0], lng + offset[1]];
+        if (!isWithinCampusRadius({ lat: origin[0], lng: origin[1] })) origin = [lat + offset[0] * .4, lng + offset[1] * .4];
         const progress = Math.min(.88, .28 + ((tick + index) % 4) * .13 + horizon / 100);
         const moving = [origin[0] + (lat - origin[0]) * progress, origin[1] + (lng - origin[1]) * progress];
         const inbound = Math.max(1, Math.round(count * (/rising|filling/i.test(event.trend || "") ? .24 : .12)));
@@ -479,7 +517,7 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
       {lens === "Crowds" && <div className="forecast-tabs" aria-label="Crowd forecast time">{[0, 15, 30].map((minutes) => <button className={horizon === minutes ? "active" : ""} onClick={() => setHorizon(minutes)} key={minutes}>{minutes === 0 ? "Now" : `+${minutes} min`}</button>)}</div>}
     </div>
     {lens === "Crowds" && feedEvent && <div className="movement-feed"><span className="movement-pulse"></span><strong>{Math.max(2, Math.round(feedEvent.groups * .18))} crews moving toward {feedEvent.venue}</strong><small>updated just now</small></div>}
-    <div className="map-privacy-note"><Icon name="shield" size={13}/>Approximate group movement only</div>
+    <div className="map-privacy-note"><Icon name="shield" size={13}/>{CAMPUS_RADIUS_MILES} mi campus radius · approximate groups</div>
     <div className="map-controls"><button onClick={() => mapInstance.current?.zoomIn()} aria-label="Zoom in">+</button><button onClick={() => mapInstance.current?.zoomOut()} aria-label="Zoom out">−</button><button aria-label="Use my location" onClick={locate} className={locating ? "locating" : ""}><Icon name="compass" size={16}/></button></div>
     {!events.length && <div className="map-empty"><strong>No places match that view</strong><span>Try another filter or search.</span></div>}
   </div>;

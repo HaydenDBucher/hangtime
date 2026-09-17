@@ -1,5 +1,22 @@
 const API_URL = "https://app.ticketmaster.com/discovery/v2/events.json";
 
+export const CAMPUS_CENTER = { lat: 40.0017, lng: -83.0129 };
+export const CAMPUS_RADIUS_MILES = 2.5;
+
+const toRadians = (degrees) => degrees * Math.PI / 180;
+
+export function isWithinCampusRadius(event, radiusMiles = CAMPUS_RADIUS_MILES) {
+  const lat = Number(event?.lat);
+  const lng = Number(event?.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  const latDistance = toRadians(lat - CAMPUS_CENTER.lat);
+  const lngDistance = toRadians(lng - CAMPUS_CENTER.lng);
+  const centerLat = toRadians(CAMPUS_CENTER.lat);
+  const eventLat = toRadians(lat);
+  const a = Math.sin(latDistance / 2) ** 2 + Math.cos(centerLat) * Math.cos(eventLat) * Math.sin(lngDistance / 2) ** 2;
+  return 3958.8 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) <= radiusMiles;
+}
+
 const fallbackEvents = [
   {
     id: "newport-after-dark",
@@ -205,7 +222,7 @@ const normalizeEvent = (event, index) => {
 
 export async function getTonightEvents({ city = "Columbus", signal } = {}) {
   const apiKey = import.meta.env.VITE_TICKETMASTER_API_KEY;
-  if (!apiKey) return { events: fallbackEvents, source: "demo" };
+  if (!apiKey) return { events: fallbackEvents.filter((event) => isWithinCampusRadius(event)), source: "demo" };
 
   const start = new Date();
   const end = new Date(start);
@@ -216,7 +233,7 @@ export async function getTonightEvents({ city = "Columbus", signal } = {}) {
     stateCode: "OH",
     countryCode: "US",
     latlong: "40.0030,-83.0120",
-    radius: "3",
+    radius: String(CAMPUS_RADIUS_MILES),
     unit: "miles",
     startDateTime: start.toISOString().replace(/\.\d{3}Z$/, "Z"),
     endDateTime: end.toISOString().replace(/\.\d{3}Z$/, "Z"),
@@ -228,12 +245,12 @@ export async function getTonightEvents({ city = "Columbus", signal } = {}) {
     const response = await fetch(`${API_URL}?${params}`, { signal });
     if (!response.ok) throw new Error(`Ticketmaster returned ${response.status}`);
     const payload = await response.json();
-    const events = payload?._embedded?.events?.map(normalizeEvent) || [];
+    const events = (payload?._embedded?.events?.map(normalizeEvent) || []).filter((event) => isWithinCampusRadius(event));
     return events.length ? { events, source: "live" } : { events: fallbackEvents, source: "demo" };
   } catch (error) {
     if (error.name === "AbortError") throw error;
     console.warn("Live events unavailable; using Hangtime demo events.", error);
-    return { events: fallbackEvents, source: "demo" };
+    return { events: fallbackEvents.filter((event) => isWithinCampusRadius(event)), source: "demo" };
   }
 }
 
