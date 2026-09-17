@@ -347,20 +347,54 @@ function projectedGroups(event, horizon, tick = 0) {
   return event.groups + forecast + liveChange;
 }
 
+function getCrowdFocus(events, horizon, intentions = {}) {
+  const places = events.map((event) => {
+    const lat = Number(event.lat);
+    const lng = Number(event.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    const currentGroups = Math.max(1, Number(event.groups) || 1);
+    const peoplePerGroup = Math.max(2, (Number(event.attending) || currentGroups * 4) / currentGroups);
+    const intentBoost = intentions[event.id] === "here" ? 4 : intentions[event.id] === "heading" ? 2 : intentions[event.id] === "considering" ? 1 : 0;
+    const people = projectedGroups(event, horizon) * peoplePerGroup + intentBoost;
+    return { lat, lng, people, area: event.area || "campus" };
+  }).filter(Boolean);
+
+  const totalWeight = places.reduce((sum, place) => sum + place.people, 0);
+  if (!places.length || !totalWeight) return null;
+  const areaWeights = places.reduce((areas, place) => ({ ...areas, [place.area]: (areas[place.area] || 0) + place.people }), {});
+  const area = Object.entries(areaWeights).sort((a, b) => b[1] - a[1])[0]?.[0] || "campus";
+  return {
+    lat: places.reduce((sum, place) => sum + place.lat * place.people, 0) / totalWeight,
+    lng: places.reduce((sum, place) => sum + place.lng * place.people, 0) / totalWeight,
+    people: Math.round(totalWeight),
+    area,
+  };
+}
+
 function NightMap({ events, selected, intentions, lens, onSelect }) {
   const mapNode = useRef(null);
   const mapInstance = useRef(null);
   const crowdLayer = useRef(null);
   const locationLayer = useRef(null);
-  const fitted = useRef(false);
+  const initialSelectionSkipped = useRef(false);
   const [horizon, setHorizon] = useState(0);
   const [tick, setTick] = useState(0);
   const [locating, setLocating] = useState(false);
+  const activityCenter = useMemo(() => getCrowdFocus(events, horizon, intentions), [events, horizon, intentions]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setTick((current) => current + 1), 4500);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!activityCenter || !mapInstance.current) return undefined;
+    const timer = window.setTimeout(() => {
+      mapInstance.current?.invalidateSize({ animate: false, pan: false });
+      mapInstance.current?.setView([activityCenter.lat, activityCenter.lng], 15, { animate: false });
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [activityCenter]);
 
   useEffect(() => {
     if (!mapNode.current || mapInstance.current) return undefined;
@@ -414,13 +448,11 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
     if (!map || !layer) return;
     layer.clearLayers();
 
-    const points = [];
     events.forEach((event, index) => {
       const lat = Number(event.lat);
       const lng = Number(event.lng);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
       const point = [lat, lng];
-      points.push(point);
       const count = projectedGroups(event, horizon, tick);
       const color = crowdColors[event.tone] || crowdColors.coral;
       const isSelected = selected?.id === event.id;
@@ -470,17 +502,22 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
       }
     });
 
-    if (!fitted.current && points.length > 1) {
-      map.fitBounds(L.latLngBounds(points).pad(.16), { padding: [46, 46], maxZoom: 14 });
-      fitted.current = true;
-    }
-  }, [events, horizon, intentions, lens, onSelect, selected?.id, tick]);
+  }, [activityCenter, events, horizon, intentions, lens, onSelect, selected?.id, tick]);
 
   useEffect(() => {
     const map = mapInstance.current;
     if (!map || !selected || !Number.isFinite(Number(selected.lat)) || !Number.isFinite(Number(selected.lng))) return;
+    if (!initialSelectionSkipped.current) {
+      initialSelectionSkipped.current = true;
+      return;
+    }
     map.setView([selected.lat, selected.lng], Math.max(map.getZoom(), 14), { animate: false });
   }, [selected?.id]);
+
+  const centerOnCrowd = () => {
+    if (!activityCenter || !mapInstance.current) return;
+    mapInstance.current.flyTo([activityCenter.lat, activityCenter.lng], Math.max(mapInstance.current.getZoom(), 15), { duration: .65 });
+  };
 
   const locate = () => {
     if (!navigator.geolocation || !mapInstance.current) return;
@@ -501,7 +538,7 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
   const rising = events.filter((event) => /rising|filling/i.test(event.trend || "")).reduce((total, event) => total + Math.max(1, Math.round(event.groups * .2)), 0);
   const feedEvent = ranked[tick % Math.max(1, ranked.length)] || leader;
   const lensSummary = {
-    Crowds: { title: leader ? `${projectedGroups(leader, horizon, tick)} crews around ${leader.area}` : "Finding tonight's crowds", detail: horizon ? `Projected ${horizon} minutes from now.` : `${rising} crews are moving toward rising spots.` },
+    Crowds: { title: activityCenter ? `${activityCenter.area} is tonight's center` : "Finding tonight's crowds", detail: activityCenter ? `Centered on ${activityCenter.people} people${horizon ? ` projected in ${horizon} minutes` : " active now"}.` : `${rising} crews are moving toward rising spots.` },
     Deals: { title: `${events.length} student deals tonight`, detail: "Tap a marker to see the offer and deadline." },
     Events: { title: `${events.length} events around campus`, detail: "Music, games, comedy, and student programming." },
     Food: { title: `${events.length} late food stops`, detail: "See where people are eating before and after." },
@@ -511,14 +548,14 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
   return <div className="map-panel real-map-panel" aria-label="Live Ohio State campus crowd activity map">
     <div className="leaflet-map" ref={mapNode}></div>
     <div className="crowd-live-card">
-      <div><span className="live-dot"></span><strong>{lens}</strong><small>Campus overview</small></div>
+      <div><span className="live-dot"></span><strong>{lens}</strong><small>Live activity center</small></div>
       <h3>{lensSummary.title}</h3>
       <p>{lensSummary.detail}</p>
       {lens === "Crowds" && <div className="forecast-tabs" aria-label="Crowd forecast time">{[0, 15, 30].map((minutes) => <button className={horizon === minutes ? "active" : ""} onClick={() => setHorizon(minutes)} key={minutes}>{minutes === 0 ? "Now" : `+${minutes} min`}</button>)}</div>}
     </div>
     {lens === "Crowds" && feedEvent && <div className="movement-feed"><span className="movement-pulse"></span><strong>{Math.max(2, Math.round(feedEvent.groups * .18))} crews moving toward {feedEvent.venue}</strong><small>updated just now</small></div>}
     <div className="map-privacy-note"><Icon name="shield" size={13}/>{CAMPUS_RADIUS_MILES} mi campus radius · approximate groups</div>
-    <div className="map-controls"><button onClick={() => mapInstance.current?.zoomIn()} aria-label="Zoom in">+</button><button onClick={() => mapInstance.current?.zoomOut()} aria-label="Zoom out">−</button><button aria-label="Use my location" onClick={locate} className={locating ? "locating" : ""}><Icon name="compass" size={16}/></button></div>
+    <div className="map-controls"><button onClick={() => mapInstance.current?.zoomIn()} aria-label="Zoom in">+</button><button onClick={() => mapInstance.current?.zoomOut()} aria-label="Zoom out">−</button><button onClick={centerOnCrowd} aria-label="Center on live crowd"><Icon name="users" size={16}/></button><button aria-label="Use my location" onClick={locate} className={locating ? "locating" : ""}><Icon name="compass" size={16}/></button></div>
     {!events.length && <div className="map-empty"><strong>No places match that view</strong><span>Try another filter or search.</span></div>}
   </div>;
 }
