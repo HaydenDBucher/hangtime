@@ -14,14 +14,18 @@ If dependencies need to be restored, run `npm install` first.
 
 ## Core MVP flow
 
-- Set the crew, area, vibe, and start time in one screen.
-- Explore an activity heat map and tonight's event feed.
-- Add an event or promoted venue offer to the plan.
+- Set the crew, area, type of night, and start time in one screen.
+- Explore an activity heat map with crowd trend, wait, cover, peak-time, and confidence signals.
+- Mark a venue as considering, heading there, or here now without exposing an individual's location.
+- Run a one-tap crew destination vote and lock the winner as the plan.
+- Compare best-overall, best-deal, and best-people recommendations.
+- Unlock time-sensitive group offers when the crew commits.
 - Sort compatible groups by plan, shared places, timing, or mutuals.
 - See fictional member photos and open individual profiles before matching.
 - Review verification, linked-account, and mutual-connection signals.
 - Keep direct social handles and messaging private until both groups match.
 - Unlock connected accounts and the shared group chat after mutual interest.
+- Pause introductions completely while keeping the private crew plan active.
 
 ## Live events
 

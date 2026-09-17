@@ -2,17 +2,17 @@
 
 ## 0:00–0:15 — The promise
 
-Open on the hero and frame the product in one sentence:
+Open on the live city pulse and frame the product in one sentence:
 
-> See what's happening, find the groups who fit, and make one plan.
+> Know where the night is moving before your crew commits.
 
 ## 0:15–0:35 — Make tonight live
 
-Select **Set tonight's plan**. Change the area, vibe, or time and select **Go live**. The whole setup happens on one screen.
+Select **Ask the crew**, cast a destination vote, and lock the winner. Then show that the plan can still be edited on one screen.
 
 ## 0:35–0:55 — See the city
 
-Select heat-map markers to show event activity without exposing individual identities. Add an event from the right-side feed and point out that the plan updates immediately.
+Select heat-map markers to show crowd direction without exposing individual identities. Show wait, cover, peak time, confidence, and network overlap. Mark the crew **Heading there** and point out that the map count and plan update immediately.
 
 ## 0:55–1:15 — Match privately
 
@@ -22,4 +22,4 @@ Sort groups by **Same places**, **Same timing**, or **Mutuals**. Open **Lane Ave
 
 Select **We’d meet them**. The mutual-match screen unlocks connected accounts and the shared group chat.
 
-Close on the promoted local offers: monetization appears at the moment a group is deciding what to do, without interrupting discovery.
+Close on a Crew Unlock: monetization appears at the moment a group is deciding what to do, and the offer becomes useful only when the crew commits.

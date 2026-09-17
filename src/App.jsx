@@ -115,11 +115,15 @@ function App() {
   const [eventSource, setEventSource] = useState("loading");
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [activeView, setActiveView] = useState("map");
-  const [matchFilter, setMatchFilter] = useState("Best fit");
+  const [matchFilter, setMatchFilter] = useState("Best plan");
   const [planOpen, setPlanOpen] = useState(false);
+  const [pollOpen, setPollOpen] = useState(false);
   const [profile, setProfile] = useState(null);
   const [personProfile, setPersonProfile] = useState(null);
   const [matchedGroup, setMatchedGroup] = useState(null);
+  const [intentions, setIntentions] = useState({});
+  const [claimedDeals, setClaimedDeals] = useState([]);
+  const [openToMeet, setOpenToMeet] = useState(true);
   const [toast, setToast] = useState("");
   const [plan, setPlan] = useState({ crew: "The usual four", area: "Short North", night: "Drinks, then decide", time: "9:30 PM", event: "Open plan" });
   const tonightLabel = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" }).format(new Date());
@@ -153,6 +157,17 @@ function App() {
     setToast(`${event.title} added to your night`);
   };
 
+  const setIntent = (event, intent) => {
+    setIntentions((current) => ({ ...current, [event.id]: intent }));
+    setPlan((current) => ({ ...current, event: event.title, area: event.area }));
+    setToast(intent === "here" ? `Checked in at ${event.venue}` : intent === "heading" ? `Your crew is heading to ${event.venue}` : `${event.venue} added to your shortlist`);
+  };
+
+  const claimDeal = (event) => {
+    setClaimedDeals((current) => current.includes(event.id) ? current : [...current, event.id]);
+    setToast(`Crew deal saved for ${event.venue}`);
+  };
+
   const sendWave = (group) => {
     if (group.id === 1) {
       setMatchedGroup(group);
@@ -173,10 +188,14 @@ function App() {
       </header>
 
       <main>
-        <section className="intro shell">
-          <div className="eyebrow"><span>{tonightLabel}</span><i></i><span>Now forming</span></div>
-          <h1>Find your<br/><em>people tonight.</em></h1>
-          <div className="intro-side"><p>See what’s happening. Find the groups who fit. Make one plan.</p><button className="primary-action" onClick={() => setPlanOpen(true)}>Set tonight’s plan<Icon name="arrow"/></button></div>
+        <section className="pulse-hero shell">
+          <div className="pulse-copy"><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>Live city pulse</span></div><h1>Columbus,<br/><em>tonight.</em></h1><p>Know where the night is moving before your crew commits.</p></div>
+          <div className="pulse-board">
+            <div><span>CREWS MAKING PLANS</span><strong>97</strong><small>+18 in the last hour</small></div>
+            <div><span>MOST ACTIVE</span><strong>Short North</strong><small>Activity rising</small></div>
+            <div><span>BEST ARRIVAL</span><strong>9:15–9:45</strong><small>Before waits peak</small></div>
+            <button className="primary-action" onClick={() => setPollOpen(true)}>Ask the crew<Icon name="arrow"/></button>
+          </div>
         </section>
 
         <section className="plan-bar shell" aria-label="Your plan tonight">
@@ -185,27 +204,30 @@ function App() {
           <button onClick={() => setPlanOpen(true)}><Icon name="spark"/><span><small>Type of night</small><strong>{plan.night}</strong></span></button>
           <button onClick={() => setPlanOpen(true)}><Icon name="clock"/><span><small>Start</small><strong>{plan.time}</strong></span></button>
           <div className="plan-event"><span><small>Plan</small><strong>{plan.event}</strong></span></div>
-          <button className="edit-plan" onClick={() => setPlanOpen(true)}>Edit</button>
+          <div className="plan-actions"><button onClick={() => setPlanOpen(true)}>Edit</button><button onClick={() => setPollOpen(true)}>Crew vote</button></div>
         </section>
 
         <section className="tonight shell" id="tonight">
           <div className="section-title-row">
-            <div><span className="kicker">THE CITY, RIGHT NOW</span><h2>Where everyone’s going.</h2></div>
+            <div><span className="kicker">THE CITY, RIGHT NOW</span><h2>Choose your first move.</h2></div>
             <div className="view-tabs" aria-label="Choose view">{["map", "events"].map((view) => <button className={activeView === view ? "active" : ""} onClick={() => setActiveView(view)} key={view}>{view === "map" ? <Icon name="compass" size={17}/> : <Icon name="calendar" size={17}/>} {view}</button>)}</div>
           </div>
 
           <div className={`city-board ${activeView}`}>
-            <NightMap events={events} selected={selectedEvent} onSelect={setSelectedEvent}/>
-            <EventRail events={events} source={eventSource} selected={selectedEvent} onSelect={setSelectedEvent} onJoin={joinEvent}/>
+            <NightMap events={events} selected={selectedEvent} intentions={intentions} onSelect={setSelectedEvent}/>
+            <EventRail events={events} source={eventSource} selected={selectedEvent} intention={selectedEvent ? intentions[selectedEvent.id] : null} claimed={selectedEvent ? claimedDeals.includes(selectedEvent.id) : false} onSelect={setSelectedEvent} onJoin={joinEvent} onIntent={setIntent} onClaim={claimDeal}/>
           </div>
         </section>
 
+        <NextMoves events={events} onSelect={(event) => { setSelectedEvent(event); document.getElementById("tonight")?.scrollIntoView({ behavior: "smooth" }); }}/>
+
         <section className="matches shell" id="matches">
           <div className="section-title-row matches-heading">
-            <div><span className="kicker">PHOTOS VISIBLE · DETAILS PROTECTED</span><h2>Who fits your actual plan.</h2></div>
+            <div><span className="kicker">{openToMeet ? "OPEN TO ONE INTRODUCTION" : "DISCOVERY PAUSED"}</span><h2>Crews whose plans overlap.</h2></div>
             <div className="filter-row"><Icon name="tune" size={17}/>{filters.map((filter) => <button className={matchFilter === filter ? "active" : ""} onClick={() => setMatchFilter(filter)} key={filter}>{filter}</button>)}</div>
           </div>
-          <div className="match-grid">{orderedMatches.map((group, index) => <MatchCard group={group} featured={index === 0} onOpen={() => setProfile(group)} onPerson={(person) => setPersonProfile({ person, group })} onWave={() => sendWave(group)} key={group.id}/>)}</div>
+          <div className="meeting-control"><div><span className="live-dot"></span><p><strong>Meet another crew tonight</strong><small>Only groups near the same place and time can see you.</small></p></div><button className={openToMeet ? "on" : ""} onClick={() => setOpenToMeet((current) => !current)} aria-pressed={openToMeet}><i></i></button></div>
+          {openToMeet ? <div className="match-grid">{orderedMatches.map((group, index) => <MatchCard group={group} featured={index === 0} onOpen={() => setProfile(group)} onPerson={(person) => setPersonProfile({ person, group })} onWave={() => sendWave(group)} key={group.id}/>)}</div> : <div className="matches-paused"><Icon name="lock" size={24}/><strong>Introductions are paused</strong><p>Your plan remains visible only to your crew.</p></div>}
         </section>
 
         <section className="privacy shell" id="safety">
@@ -215,17 +237,16 @@ function App() {
           <div className="privacy-points"><span><Icon name="check" size={15}/>Real photos up front</span><span><Icon name="check" size={15}/>Handles after matching</span><span><Icon name="check" size={15}/>Group-only introductions</span></div>
         </section>
 
-        <section className="promotions shell">
-          <div className="promo-copy"><span className="sponsor-tag">PROMOTED · LOCAL PARTNER</span><h2>Good night,<br/>already handled.</h2><p>Group perks appear when they actually fit your plan.</p></div>
-          <article className="promo-card coral"><span>TONIGHT ONLY</span><h3>Skip the cover before 10.</h3><p>Pins Mechanical Co. · Short North</p><button onClick={() => events[0] && joinEvent(events[0])}>Add to plan<Icon name="arrow" size={18}/></button></article>
-          <article className="promo-card dark"><span>FOR GROUPS OF 4+</span><h3>Your first round of games is on us.</h3><p>Forty Deuce · Easton</p><button onClick={() => setToast("Offer saved for your crew")}>Save offer<Icon name="arrow" size={18}/></button></article>
-        </section>
+        <DealsSection events={events} claimedDeals={claimedDeals} onClaim={claimDeal}/>
       </main>
 
       <footer className="footer shell"><Logo/><p>One plan. More possibilities.</p><div><a href="#safety">Safety</a><button onClick={() => setToast("Venue partner form coming next")}>For venues</button><span>Concept MVP</span></div></footer>
 
       {planOpen && (
         <PlanModal plan={plan} onClose={() => setPlanOpen(false)} onSave={(next) => { setPlan(next); setPlanOpen(false); setToast("Tonight’s plan is live"); }}/>
+      )}
+      {pollOpen && (
+        <CrewPoll events={events.slice(0, 3)} onClose={() => setPollOpen(false)} onChoose={(event) => { joinEvent(event); setPollOpen(false); setToast(`${event.venue} won the crew vote`); }}/>
       )}
       {profile && (
         <ProfileModal group={profile} onClose={() => setProfile(null)} onPerson={(person) => setPersonProfile({ person, group: profile })} onWave={() => sendWave(profile)}/>
@@ -241,27 +262,65 @@ function App() {
   );
 }
 
-function NightMap({ events, selected, onSelect }) {
+function NightMap({ events, selected, intentions, onSelect }) {
   return <div className="map-panel" aria-label="Tonight activity map">
     <div className="map-grid"></div><div className="river"></div>
     <span className="map-label campus">CAMPUS</span><span className="map-label short-north">SHORT NORTH</span><span className="map-label downtown">DOWNTOWN</span><span className="map-label old-north">OLD NORTH</span>
     <span className="road road-one"></span><span className="road road-two"></span><span className="road road-three"></span><span className="road road-four"></span>
-    {events.map((event) => <button className={`map-marker ${selected?.id === event.id ? "selected" : ""}`} style={{ left: `${event.x}%`, top: `${event.y}%`, "--heat": `${Math.min(92, 42 + event.attending / 2)}px` }} onClick={() => onSelect(event)} aria-label={`${event.title}, ${event.groups} groups`} key={event.id}><span className={`heat ${event.tone}`}></span><b>{event.groups}</b><small>groups</small></button>)}
+    {events.map((event) => <button className={`map-marker ${selected?.id === event.id ? "selected" : ""} ${intentions[event.id] ? "committed" : ""}`} style={{ left: `${event.x}%`, top: `${event.y}%`, "--heat": `${Math.min(92, 42 + event.attending / 2)}px` }} onClick={() => onSelect(event)} aria-label={`${event.title}, ${event.groups} groups`} key={event.id}><span className={`heat ${event.tone}`}></span>{intentions[event.id] && <i className="intent-pin"><Icon name="check" size={10}/></i>}<b>{event.groups + (intentions[event.id] ? 1 : 0)}</b><small>crews</small></button>)}
     <div className="map-legend"><span><i className="warm"></i>More active</span><span><i></i>Less active</span></div>
     <button className="locate-button" aria-label="Use my location" onClick={() => navigator.geolocation?.getCurrentPosition(() => {}, () => {})}><Icon name="compass" size={18}/></button>
   </div>;
 }
 
-function EventRail({ events, source, selected, onSelect, onJoin }) {
+function EventRail({ events, source, selected, intention, claimed, onSelect, onJoin, onIntent, onClaim }) {
   return <aside className="event-rail">
     <div className="rail-top"><div><span className={`source-dot ${source}`}></span><strong>{source === "live" ? "Live events" : source === "loading" ? "Finding events" : "Tonight preview"}</strong></div><span>{events.length} nearby</span></div>
+    {selected && <div className="venue-intel">
+      <div className="intel-live"><span className="live-dot"></span><strong>{selected.trend || "Steady"}</strong><small>Updated {selected.updated || "recently"}</small></div>
+      <h2>{selected.venue}</h2><p>{selected.title} · {selected.time}</p>
+      <div className="intel-grid"><div><small>WAIT</small><strong>{selected.wait || "Check venue"}</strong></div><div><small>COVER</small><strong>{selected.cover || "Check venue"}</strong></div><div><small>PEAK</small><strong>{selected.peak || selected.time}</strong></div><div><small>YOUR NETWORK</small><strong>{selected.friends || 0} going</strong></div></div>
+      <div className="confidence"><Icon name="shield" size={13}/>{selected.confidence || "Community estimate"} · {selected.groups} crews committed</div>
+      {selected.deal && <div className="intel-deal"><span>CREW UNLOCK</span><strong>{selected.deal}</strong><button className={claimed ? "claimed" : ""} onClick={() => onClaim(selected)}>{claimed ? "Saved" : "Save"}</button></div>}
+      <div className="intent-picker"><span>Your crew</span><div>{[["considering","Considering"],["heading","Heading there"],["here","Here now"]].map(([value,label]) => <button className={intention === value ? "active" : ""} onClick={() => onIntent(selected,value)} key={value}>{intention === value && <Icon name="check" size={12}/>} {label}</button>)}</div></div>
+    </div>}
     <div className="event-scroll">{events.map((event) => <article className={`event-row ${selected?.id === event.id ? "selected" : ""}`} onClick={() => onSelect(event)} key={event.id}>
       <div className={`event-time ${event.tone}`}><strong>{event.time.split(" ")[0]}</strong><span>{event.time.split(" ")[1] || ""}</span></div>
-      <div className="event-info">{event.promoted && <small className="promoted-label">PROMOTED</small>}<h3>{event.title}</h3><p>{event.venue} · {event.area}</p><div><span><Icon name="users" size={13}/>{event.attending} going</span><span>{event.category}</span></div></div>
+      <div className="event-info">{event.promoted && <small className="promoted-label">PROMOTED</small>}<h3>{event.venue}</h3><p>{event.title} · {event.area}</p><div><span><Icon name="users" size={13}/>{event.groups} crews</span><span className="trend-chip">{event.trend || "Steady"}</span></div></div>
       <button className="row-arrow" onClick={(eventClick) => { eventClick.stopPropagation(); onJoin(event); }} aria-label={`Add ${event.title} to plan`}><Icon name="arrow" size={17}/></button>
     </article>)}</div>
     {source === "demo" && <p className="data-note">Demo attendance protects real identities. Add a Ticketmaster key to pull the current event lineup.</p>}
   </aside>;
+}
+
+function NextMoves({ events, onSelect }) {
+  if (events.length < 3) return null;
+  const moves = [
+    { tag: "BEST OVERALL", event: events[0], title: `${events[0].venue} before ${events[0].peak || "the rush"}`, detail: `${events[0].groups} crews · ${events[0].wait || "short wait"}` },
+    { tag: "BEST DEAL", event: events.find((event) => event.deal) || events[1], title: (events.find((event) => event.deal) || events[1]).deal || "Lowest cover nearby", detail: (events.find((event) => event.deal) || events[1]).venue },
+    { tag: "BEST PEOPLE", event: [...events].sort((a,b) => (b.friends || 0) - (a.friends || 0))[0], title: `${[...events].sort((a,b) => (b.friends || 0) - (a.friends || 0))[0].friends} people in your network`, detail: [...events].sort((a,b) => (b.friends || 0) - (a.friends || 0))[0].venue },
+  ];
+  return <section className="next-moves shell"><div className="next-label"><span className="kicker">IF YOU LEFT NOW</span><h2>Three good moves.</h2></div>{moves.map((move) => <button onClick={() => onSelect(move.event)} key={move.tag}><span>{move.tag}</span><strong>{move.title}</strong><small>{move.detail}</small><Icon name="arrow"/></button>)}</section>;
+}
+
+function DealsSection({ events, claimedDeals, onClaim }) {
+  const deals = events.filter((event) => event.deal).slice(0, 2);
+  if (!deals.length) return null;
+  return <section className="promotions shell">
+    <div className="promo-copy"><span className="sponsor-tag">CREW UNLOCKS · VERIFIED</span><h2>Deals worth<br/>changing plans for.</h2><p>No generic ads. These activate only when your group commits.</p></div>
+    {deals.map((event, index) => { const claimed = claimedDeals.includes(event.id); return <article className={`promo-card ${index === 0 ? "coral" : "dark"}`} key={event.id}><span>{event.venue.toUpperCase()} · TONIGHT</span><h3>{event.deal}</h3><p>{event.area} · {event.cover}</p><div className="unlock-progress"><div><i style={{ width: claimed ? "100%" : "75%" }}></i></div><small>{claimed ? "Unlocked for your crew" : "3 of 4 crew members committed"}</small></div><button onClick={() => onClaim(event)}>{claimed ? "Deal saved" : "Commit and unlock"}<Icon name={claimed ? "check" : "arrow"} size={18}/></button></article>; })}
+  </section>;
+}
+
+function CrewPoll({ events, onClose, onChoose }) {
+  const [votes, setVotes] = useState(events.map((_, index) => [2,1,1][index] || 0));
+  const [yourVote, setYourVote] = useState(null);
+  const vote = (index) => {
+    setVotes((current) => current.map((count, itemIndex) => count + (itemIndex === index ? 1 : 0) - (itemIndex === yourVote ? 1 : 0)));
+    setYourVote(index);
+  };
+  const winner = votes.indexOf(Math.max(...votes));
+  return <ModalShell onClose={onClose} label="Crew destination vote" className="poll-modal"><span className="kicker">THE USUAL FOUR</span><h2>Where should we start?</h2><p>One tap each. Highest vote becomes the plan.</p><div className="poll-members"><AvatarStack/><span>3 of 4 voted</span></div><div className="poll-options">{events.map((event,index) => <button className={yourVote === index ? "selected" : ""} onClick={() => vote(index)} key={event.id}><span><strong>{event.venue}</strong><small>{event.wait} wait · {event.cover}</small></span><b>{votes[index]}</b></button>)}</div><button className="modal-primary" onClick={() => onChoose(events[winner])}>Lock the winner <Icon name="arrow"/></button></ModalShell>;
 }
 
 function MatchCard({ group, featured, onOpen, onPerson, onWave }) {
