@@ -3,6 +3,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { getTonightEvents } from "./eventService";
 import { getSession, isCloudAuthEnabled, signIn, signOut, signUp, updateSessionProfile } from "./authService";
+import { getCampusRidePreview, getRideLink } from "./rideService";
 
 const crew = [
   { name: "You", initials: "HB", tone: "ink" },
@@ -13,8 +14,8 @@ const crew = [
 
 const matches = [
   {
-    id: 1, name: "Lane Ave crew", score: 96, members: 4, range: "21–24", distance: "0.4 mi", night: "Drinks, then decide", status: "Pins at 9:15 → maybe Standard Hall", overlap: "Same first stop", mutuals: 3, verified: 4, socials: ["Instagram", "TikTok"], interests: ["Live music", "Patios", "Buckeyes"], blurb: "OSU seniors. Competitive at games, easygoing everywhere else.",
-    timeline: [{ time: "9:15", action: "Meet at Pins", place: "Short North" }, { time: "10:30", action: "See how it’s going", place: "Standard Hall, maybe" }],
+    id: 1, name: "Lane Ave seniors", score: 96, members: 4, range: "21–24", distance: "0.4 mi", night: "Drinks, then decide", status: "Newport at 9:15 → maybe Midway", overlap: "Same first stop", mutuals: 3, verified: 4, socials: ["Instagram", "TikTok"], interests: ["Live music", "Patios", "Buckeyes"], blurb: "Ohio State seniors. Competitive at games, easygoing everywhere else.",
+    timeline: [{ time: "9:15", action: "Meet at Newport", place: "High Street" }, { time: "10:30", action: "See how it’s going", place: "Midway, maybe" }],
     people: [
       { name: "Emma", age: 22, role: "Design student", photo: 0, bio: "Usually finds the table and orders for everyone.", interests: ["Concerts", "Tennis", "Film"] },
       { name: "Ryan", age: 23, role: "Finance major", photo: 1, bio: "Will challenge anyone to duckpin bowling.", interests: ["Crew", "Golf", "Trivia"] },
@@ -23,8 +24,8 @@ const matches = [
     ],
   },
   {
-    id: 2, name: "Clintonville four", score: 91, members: 4, range: "22–25", distance: "0.8 mi", night: "Dinner into drinks", status: "Comune at 8:00 → patio drinks", overlap: "Similar route", mutuals: 1, verified: 4, socials: ["Instagram"], interests: ["Food", "Indie", "Trivia"], blurb: "Recent grads looking for dinner and a night that can go either way.",
-    timeline: [{ time: "8:00", action: "Dinner at Comune", place: "German Village" }, { time: "9:45", action: "Find a patio", place: "Brewery District" }],
+    id: 2, name: "Grad school four", score: 91, members: 4, range: "22–25", distance: "0.8 mi", night: "Dinner into drinks", status: "South Campus at 8:00 → High Street", overlap: "Similar route", mutuals: 1, verified: 4, socials: ["Instagram"], interests: ["Food", "Indie", "Trivia"], blurb: "Ohio State grad students looking for dinner and a night that can go either way.",
+    timeline: [{ time: "8:00", action: "Dinner near campus", place: "South Campus" }, { time: "9:45", action: "Find a patio", place: "High Street" }],
     people: [
       { name: "Noah", age: 24, role: "Product designer", photo: 4, bio: "New restaurant list is always ready.", interests: ["Food", "Art", "Cycling"] },
       { name: "Lucy", age: 23, role: "Teacher", photo: 5, bio: "Prefers patios where you can hear each other.", interests: ["Books", "Travel", "Indie"] },
@@ -33,8 +34,8 @@ const matches = [
     ],
   },
   {
-    id: 3, name: "Campus collective", score: 87, members: 4, range: "21–23", distance: "1.1 mi", night: "Catch a show", status: "KEMBA Live at 8:30 → Short North", overlap: "Same area later", mutuals: 0, verified: 4, socials: ["Instagram", "TikTok"], interests: ["Concerts", "Dancing", "Photos"], blurb: "A campus friend group catching a show before a late-night bite.",
-    timeline: [{ time: "8:30", action: "Show at KEMBA Live", place: "Arena District" }, { time: "11:00", action: "Late food and drinks", place: "Short North" }],
+    id: 3, name: "North campus roommates", score: 87, members: 4, range: "21–23", distance: "1.1 mi", night: "Catch a show", status: "Newport at 8:30 → late food nearby", overlap: "Same area later", mutuals: 0, verified: 4, socials: ["Instagram", "TikTok"], interests: ["Concerts", "Dancing", "Photos"], blurb: "Ohio State juniors catching a show before a late-night bite.",
+    timeline: [{ time: "8:30", action: "Show at Newport", place: "University District" }, { time: "11:00", action: "Late food", place: "High Street" }],
     people: [
       { name: "Dani", age: 22, role: "Marketing major", photo: 8, bio: "Has the playlist ready before the preshow.", interests: ["Pop", "Photos", "Thrifting"] },
       { name: "Austin", age: 23, role: "Journalism major", photo: 9, bio: "Never misses an opener.", interests: ["Live music", "Running", "Film"] },
@@ -43,8 +44,8 @@ const matches = [
     ],
   },
   {
-    id: 4, name: "German Village crew", score: 82, members: 4, range: "23–26", distance: "1.7 mi", night: "Show and one round", status: "Comedy at 8:00 → one drink nearby", overlap: "Same timing", mutuals: 5, verified: 4, socials: ["Instagram"], interests: ["Cocktails", "Comedy", "Crew"], blurb: "Neighbors, coworkers, and one cousin. Here for the stories.",
-    timeline: [{ time: "8:00", action: "Comedy at The Attic", place: "Old North" }, { time: "9:45", action: "One round nearby", place: "Open" }],
+    id: 4, name: "South campus friends", score: 82, members: 4, range: "21–24", distance: "0.7 mi", night: "Show and one round", status: "Union comedy at 8:00 → one drink nearby", overlap: "Same timing", mutuals: 5, verified: 4, socials: ["Instagram"], interests: ["Comedy", "Buckeyes", "Crew"], blurb: "Classmates, roommates, and one recent grad. Here for the stories.",
+    timeline: [{ time: "8:00", action: "Comedy at Ohio Union", place: "Central Campus" }, { time: "9:45", action: "One round nearby", place: "High Street" }],
     people: [
       { name: "Andre", age: 25, role: "Account manager", photo: 12, bio: "Knows when to call it and when not to.", interests: ["Comedy", "Crew", "Cooking"] },
       { name: "Kiara", age: 24, role: "Event producer", photo: 13, bio: "A very reliable judge of whether a place is worth it.", interests: ["Events", "Fashion", "Podcasts"] },
@@ -85,6 +86,7 @@ function Icon({ name, size = 20 }) {
     tune: <><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></>,
     instagram: <><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".5" fill="currentColor"/></>,
     compass: <><circle cx="12" cy="12" r="9"/><path d="m15 9-2 4-4 2 2-4 4-2Z"/></>,
+    car: <><path d="m5 17-1 2v2M19 17l1 2v2M3 13l2-6h14l2 6"/><path d="M5 13h14a2 2 0 0 1 2 2v3H3v-3a2 2 0 0 1 2-2Z"/><circle cx="7" cy="15.5" r="1"/><circle cx="17" cy="15.5" r="1"/></>,
   };
   return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
@@ -134,7 +136,7 @@ function App() {
   const [authMode, setAuthMode] = useState("signup");
   const [accountOpen, setAccountOpen] = useState(false);
   const [toast, setToast] = useState("");
-  const [plan, setPlan] = useState({ crew: "The usual four", area: "Short North", night: "Drinks, then decide", time: "9:30 PM", event: "Open plan" });
+  const [plan, setPlan] = useState({ crew: "The usual four", area: "High Street", night: "Drinks, then decide", time: "9:30 PM", event: "Open plan" });
   const tonightLabel = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" }).format(new Date());
 
   useEffect(() => {
@@ -198,7 +200,7 @@ function App() {
     <div className="app" id="top">
       <header className="topbar">
         <Logo />
-        <button className="city-switcher"><span className="status-dot"></span>Columbus tonight<Icon name="chevron" size={16}/></button>
+        <button className="city-switcher"><span className="status-dot"></span>Ohio State tonight<Icon name="chevron" size={16}/></button>
         <nav aria-label="Primary navigation"><a className="active" href="#tonight">Tonight</a><a href="#matches">Matches</a><a href="#safety">Safety</a></nav>
         {account ? <button className="profile-button" onClick={() => setAccountOpen(true)}><span>{account.name?.split(" ").map((part) => part[0]).join("").slice(0,2).toUpperCase() || "HT"}</span><span className="profile-copy"><strong>{account.name}</strong><small>{account.crewName || "Build your crew"}</small></span><Icon name="chevron" size={16}/></button> : <div className="auth-actions"><button onClick={() => { setAuthMode("signin"); setAuthOpen(true); }}>Sign in</button><button onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}>Create account</button></div>}
       </header>
@@ -206,8 +208,8 @@ function App() {
       <main>
         <section className="tonight shell" id="tonight">
           <div className="map-first-heading">
-            <div><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>97 crews making plans</span></div><h1>Where is<br/><em>everyone going?</em></h1></div>
-            <div className="map-head-actions"><p>Live crowd direction, deals, waits, and the people already heading out.</p>{!account && <button onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}>Create your account<Icon name="arrow"/></button>}</div>
+            <div><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>97 student crews around campus</span></div><h1>Where is<br/><em>campus going?</em></h1></div>
+            <div className="map-head-actions"><p>See what is building around Ohio State, what it costs, and which crews are heading there.</p>{!account && <button onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}>Join your campus<Icon name="arrow"/></button>}</div>
           </div>
 
           <div className="map-toolbar"><label><Icon name="compass" size={17}/><input value={mapSearch} onChange={(event) => setMapSearch(event.target.value)} placeholder="Search venues, events, or neighborhoods"/></label><div>{["All","Rising","Deals","Friends"].map((filter) => <button className={mapFilter === filter ? "active" : ""} onClick={() => setMapFilter(filter)} key={filter}>{filter}</button>)}</div><div className="view-tabs" aria-label="Choose view">{["map", "events"].map((view) => <button className={activeView === view ? "active" : ""} onClick={() => setActiveView(view)} key={view}>{view === "map" ? <Icon name="compass" size={17}/> : <Icon name="calendar" size={17}/>} {view}</button>)}</div></div>
@@ -319,10 +321,12 @@ function NightMap({ events, selected, intentions, onSelect }) {
   useEffect(() => {
     if (!mapNode.current || mapInstance.current) return undefined;
     const map = L.map(mapNode.current, {
-      center: [39.977, -83.002],
-      zoom: 13,
-      minZoom: 11,
+      center: [40.0025, -83.012],
+      zoom: 14,
+      minZoom: 13,
       maxZoom: 18,
+      maxBounds: [[39.965, -83.050], [40.038, -82.970]],
+      maxBoundsViscosity: .86,
       zoomControl: false,
       attributionControl: true,
     });
@@ -333,8 +337,11 @@ function NightMap({ events, selected, intentions, onSelect }) {
     crowdLayer.current = L.layerGroup().addTo(map);
     locationLayer.current = L.layerGroup().addTo(map);
     mapInstance.current = map;
-    window.setTimeout(() => map.invalidateSize(), 0);
+    const resizeObserver = new ResizeObserver(() => map.invalidateSize({ animate: false }));
+    resizeObserver.observe(mapNode.current);
+    window.setTimeout(() => map.invalidateSize({ animate: false }), 120);
     return () => {
+      resizeObserver.disconnect();
       map.remove();
       mapInstance.current = null;
     };
@@ -406,7 +413,7 @@ function NightMap({ events, selected, intentions, onSelect }) {
   useEffect(() => {
     const map = mapInstance.current;
     if (!map || !selected || !Number.isFinite(Number(selected.lat)) || !Number.isFinite(Number(selected.lng))) return;
-    map.flyTo([selected.lat, selected.lng], Math.max(map.getZoom(), 14), { duration: .55 });
+    map.setView([selected.lat, selected.lng], Math.max(map.getZoom(), 14), { animate: false });
   }, [selected?.id]);
 
   const locate = () => {
@@ -428,7 +435,7 @@ function NightMap({ events, selected, intentions, onSelect }) {
   const rising = events.filter((event) => /rising|filling/i.test(event.trend || "")).reduce((total, event) => total + Math.max(1, Math.round(event.groups * .2)), 0);
   const feedEvent = ranked[tick % Math.max(1, ranked.length)] || leader;
 
-  return <div className="map-panel real-map-panel" aria-label="Live Columbus crowd activity map">
+  return <div className="map-panel real-map-panel" aria-label="Live Ohio State campus crowd activity map">
     <div className="leaflet-map" ref={mapNode}></div>
     <div className="crowd-live-card">
       <div><span className="live-dot"></span><strong>Crowd movement</strong><small>Anonymous aggregate</small></div>
@@ -457,20 +464,33 @@ function LegacyNightMap({ events, selected, intentions, scale, onScale, onSelect
   </div>;
 }
 
+function RideOptions({ event }) {
+  const destination = useMemo(() => ({ name: event.venue, lat: Number(event.lat), lng: Number(event.lng) }), [event.id, event.lat, event.lng, event.venue]);
+  const preview = useMemo(() => getCampusRidePreview(destination), [destination]);
+  return <section className="ride-preview" aria-label={`Ride options to ${event.venue}`}>
+    <div className="ride-preview-head"><span><Icon name="car" size={14}/>Ride from Ohio Union</span><small>{preview.distance} · {preview.walkMinutes} min walk</small></div>
+    <div className="ride-provider-grid">{preview.providers.map((provider) => <a href={getRideLink(provider.id, destination)} target="_blank" rel="noreferrer" key={provider.id}>
+      <span><strong>{provider.name}</strong><small>{provider.eta} pickup</small></span><b>{provider.fare}</b><em>Check live fare ↗</em>
+    </a>)}</div>
+    <p>Campus estimate only. Uber and Lyft confirm the live price in their apps.</p>
+  </section>;
+}
+
 function EventRail({ events, source, selected, intention, claimed, onSelect, onJoin, onIntent, onClaim }) {
   return <aside className="event-rail">
     <div className="rail-top"><div><span className={`source-dot ${source}`}></span><strong>{source === "live" ? "Live events" : source === "loading" ? "Finding events" : "Tonight preview"}</strong></div><span>{events.length} nearby</span></div>
     {selected && <div className="venue-intel">
       <div className="intel-live"><span className="live-dot"></span><strong>{selected.trend || "Steady"}</strong><small>Updated {selected.updated || "recently"}</small></div>
-      <h2>{selected.venue}</h2><p>{selected.title} · {selected.time}</p>
+      <h2>{selected.venue}</h2><p>{selected.title} · {selected.time} · {selected.age || "Check age policy"}</p>
       <div className="intel-grid"><div><small>WAIT</small><strong>{selected.wait || "Check venue"}</strong></div><div><small>COVER</small><strong>{selected.cover || "Check venue"}</strong></div><div><small>PEAK</small><strong>{selected.peak || selected.time}</strong></div><div><small>YOUR NETWORK</small><strong>{selected.friends || 0} going</strong></div></div>
-      <div className="confidence"><Icon name="shield" size={13}/>{selected.confidence || "Community estimate"} · {selected.groups} crews committed</div>
+      <div className="confidence"><Icon name="shield" size={13}/>{selected.confidence || "Community estimate"} · {selected.groups} student crews committed</div>
+      <RideOptions event={selected}/>
       {selected.deal && <div className="intel-deal"><span>CREW UNLOCK</span><strong>{selected.deal}</strong><button className={claimed ? "claimed" : ""} onClick={() => onClaim(selected)}>{claimed ? "Saved" : "Save"}</button></div>}
       <div className="intent-picker"><span>Your crew</span><div>{[["considering","Considering"],["heading","Heading there"],["here","Here now"]].map(([value,label]) => <button className={intention === value ? "active" : ""} onClick={() => onIntent(selected,value)} key={value}>{intention === value && <Icon name="check" size={12}/>} {label}</button>)}</div></div>
     </div>}
     <div className="event-scroll">{events.map((event) => <article className={`event-row ${selected?.id === event.id ? "selected" : ""}`} onClick={() => onSelect(event)} key={event.id}>
       <div className={`event-time ${event.tone}`}><strong>{event.time.split(" ")[0]}</strong><span>{event.time.split(" ")[1] || ""}</span></div>
-      <div className="event-info">{event.promoted && <small className="promoted-label">PROMOTED</small>}<h3>{event.venue}</h3><p>{event.title} · {event.area}</p><div><span><Icon name="users" size={13}/>{event.groups} crews</span><span className="trend-chip">{event.trend || "Steady"}</span></div></div>
+      <div className="event-info">{event.promoted && <small className="promoted-label">PROMOTED</small>}<h3>{event.venue}</h3><p>{event.title} · {event.area}</p><div><span><Icon name="users" size={13}/>{event.groups} crews</span><span className="trend-chip">{event.trend || "Steady"}</span><span>{event.age || "Check age"}</span></div></div>
       <button className="row-arrow" onClick={(eventClick) => { eventClick.stopPropagation(); onJoin(event); }} aria-label={`Add ${event.title} to plan`}><Icon name="arrow" size={17}/></button>
     </article>)}</div>
     {source === "demo" && <p className="data-note">Modeled crowd movement shows how live, privacy-safe group signals would work. Add a Ticketmaster key for the current event lineup.</p>}
@@ -576,7 +596,7 @@ function PlanModal({ plan, onClose, onSave }) {
   return <ModalShell onClose={onClose} label="Set tonight's plan" className="plan-modal">
     <span className="kicker">30-SECOND SETUP</span><h2>What are you actually doing?</h2><p>Pick the closest version. You can change it later.</p>
     <label><span>Who’s in?</span><div className="modal-crew"><AvatarStack/><strong>The usual four</strong><button>Change</button></div></label>
-    <label><span>Where?</span><div className="choice-grid">{["Short North", "Campus", "Downtown", "Open to ideas"].map((area) => <button className={next.area === area ? "selected" : ""} onClick={() => set("area", area)} key={area}>{area}</button>)}</div></label>
+    <label><span>Where around campus?</span><div className="choice-grid">{["High Street", "North Campus", "South Campus", "Open to ideas"].map((area) => <button className={next.area === area ? "selected" : ""} onClick={() => set("area", area)} key={area}>{area}</button>)}</div></label>
     <label><span>What kind of night?</span><div className="night-choice-grid">{nightOptions.map((option) => <button className={next.night === option.label ? "selected" : ""} onClick={() => set("night", option.label)} key={option.label}><strong>{option.label}</strong><small>{option.detail}</small></button>)}</div></label>
     <label><span>Starting around</span><div className="choice-grid time">{["8:30 PM", "9:30 PM", "10:30 PM", "Whenever"].map((time) => <button className={next.time === time ? "selected" : ""} onClick={() => set("time", time)} key={time}>{time}</button>)}</div></label>
     <button className="modal-primary" onClick={() => onSave(next)}>Go live <Icon name="arrow"/></button>
@@ -600,7 +620,7 @@ function PersonModal({ person, group, onClose, onBack }) {
   return <ModalShell onClose={onClose} label={`${person.name}'s profile`} className="person-modal">
     <button className="person-back" onClick={onBack}>← {group.name}</button>
     <div className="person-hero"><ProfilePhoto person={person} size="hero"/><span className="verified-person"><Icon name="shield" size={14}/>Verified</span></div>
-    <div className="person-heading"><span className="kicker">{group.name}</span><h2>{person.name}, {person.age}</h2><p>{person.role} · Columbus</p></div>
+    <div className="person-heading"><span className="kicker">{group.name}</span><h2>{person.name}, {person.age}</h2><p>{person.role} · Ohio State area</p></div>
     <p className="person-bio">{person.bio}</p>
     <section><span className="kicker">THEIR PLAN TONIGHT</span><h3>{group.status}</h3><p>{group.night} · {group.distance} away</p></section>
     <section><span className="kicker">INTO</span><div className="interest-list">{person.interests.map((interest) => <span key={interest}>{interest}</span>)}</div></section>

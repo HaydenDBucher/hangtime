@@ -843,3 +843,39 @@ button { letter-spacing: -.01em; }
   .movement-feed small { display: none; }
   .leaflet-control-attribution { max-width: 175px; overflow: hidden; white-space: nowrap; }
 }
+
+/* Campus transportation preview */
+.ride-preview {
+  margin: 12px 0 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.ride-preview-head { margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ride-preview-head > span { display: flex; align-items: center; gap: 6px; font-size: 8px; font-weight: 650; }
+.ride-preview-head > small { color: var(--muted); font-family: "IBM Plex Mono", Consolas, monospace; font-size: 6px; white-space: nowrap; }
+.ride-provider-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.ride-provider-grid > a {
+  min-width: 0;
+  padding: 9px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--white);
+  transition: border-color .18s, background .18s;
+}
+.ride-provider-grid > a:hover { border-color: var(--ink); background: #fff; }
+.ride-provider-grid span { min-width: 0; display: grid; gap: 2px; }
+.ride-provider-grid strong { font-size: 9px; }
+.ride-provider-grid small { color: var(--muted); font-size: 6px; }
+.ride-provider-grid b { font-size: 11px; font-weight: 650; }
+.ride-provider-grid em { grid-column: 1 / -1; color: var(--coral); font-size: 7px; font-style: normal; font-weight: 600; }
+.ride-preview > p { margin: 7px 0 0; color: var(--muted); font-size: 6px; line-height: 1.4; }
+
+@media (max-width: 560px) {
+  .ride-provider-grid > a { padding: 10px; }
+  .ride-provider-grid strong { font-size: 10px; }
+  .ride-provider-grid b { font-size: 12px; }
+}
