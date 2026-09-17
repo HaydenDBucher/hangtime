@@ -384,7 +384,7 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
     L.polygon([
       [[85, -180], [85, 180], [-85, 180], [-85, -180]],
       campusBoundaryRing(),
-    ], { pane: "campusMaskPane", stroke: false, fillColor: "#edece7", fillOpacity: .9, interactive: false }).addTo(map);
+    ], { pane: "campusMaskPane", stroke: false, fillColor: "#edece7", fillOpacity: 1, interactive: false }).addTo(map);
     L.circle([CAMPUS_CENTER.lat, CAMPUS_CENTER.lng], {
       pane: "campusMaskPane",
       radius: CAMPUS_RADIUS_METERS,
