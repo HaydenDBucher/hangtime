@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { getTonightEvents } from "./eventService";
+import { getSession, isCloudAuthEnabled, signIn, signOut, signUp, updateSessionProfile } from "./authService";
 
 const crew = [
   { name: "You", initials: "HB", tone: "ink" },
@@ -115,6 +116,9 @@ function App() {
   const [eventSource, setEventSource] = useState("loading");
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [activeView, setActiveView] = useState("map");
+  const [mapFilter, setMapFilter] = useState("All");
+  const [mapSearch, setMapSearch] = useState("");
+  const [mapScale, setMapScale] = useState(1);
   const [matchFilter, setMatchFilter] = useState("Best plan");
   const [planOpen, setPlanOpen] = useState(false);
   const [pollOpen, setPollOpen] = useState(false);
@@ -124,6 +128,10 @@ function App() {
   const [intentions, setIntentions] = useState({});
   const [claimedDeals, setClaimedDeals] = useState([]);
   const [openToMeet, setOpenToMeet] = useState(true);
+  const [account, setAccount] = useState(() => getSession()?.profile || null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState("signup");
+  const [accountOpen, setAccountOpen] = useState(false);
   const [toast, setToast] = useState("");
   const [plan, setPlan] = useState({ crew: "The usual four", area: "Short North", night: "Drinks, then decide", time: "9:30 PM", event: "Open plan" });
   const tonightLabel = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" }).format(new Date());
@@ -151,6 +159,13 @@ function App() {
     if (matchFilter === "Same places") return next.sort((a, b) => Number(b.overlap === "Same first stop") - Number(a.overlap === "Same first stop"));
     return next;
   }, [matchFilter]);
+
+  const visibleEvents = useMemo(() => events.filter((event) => {
+    const query = mapSearch.trim().toLowerCase();
+    const matchesSearch = !query || `${event.venue} ${event.title} ${event.area} ${event.category}`.toLowerCase().includes(query);
+    const matchesFilter = mapFilter === "All" || (mapFilter === "Deals" && event.deal) || (mapFilter === "Friends" && event.friends > 0) || (mapFilter === "Rising" && /rising|filling/i.test(event.trend || ""));
+    return matchesSearch && matchesFilter;
+  }), [events, mapFilter, mapSearch]);
 
   const joinEvent = (event) => {
     setPlan((current) => ({ ...current, event: event.title, area: event.area }));
@@ -184,39 +199,31 @@ function App() {
         <Logo />
         <button className="city-switcher"><span className="status-dot"></span>Columbus tonight<Icon name="chevron" size={16}/></button>
         <nav aria-label="Primary navigation"><a className="active" href="#tonight">Tonight</a><a href="#matches">Matches</a><a href="#safety">Safety</a></nav>
-        <button className="profile-button"><span>HB</span><span className="profile-copy"><strong>Hayden</strong><small>4 in your crew</small></span><Icon name="chevron" size={16}/></button>
+        {account ? <button className="profile-button" onClick={() => setAccountOpen(true)}><span>{account.name?.split(" ").map((part) => part[0]).join("").slice(0,2).toUpperCase() || "HT"}</span><span className="profile-copy"><strong>{account.name}</strong><small>{account.crewName || "Build your crew"}</small></span><Icon name="chevron" size={16}/></button> : <div className="auth-actions"><button onClick={() => { setAuthMode("signin"); setAuthOpen(true); }}>Sign in</button><button onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}>Create account</button></div>}
       </header>
 
       <main>
-        <section className="pulse-hero shell">
-          <div className="pulse-copy"><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>Live city pulse</span></div><h1>Columbus,<br/><em>tonight.</em></h1><p>Know where the night is moving before your crew commits.</p></div>
-          <div className="pulse-board">
-            <div><span>CREWS MAKING PLANS</span><strong>97</strong><small>+18 in the last hour</small></div>
-            <div><span>MOST ACTIVE</span><strong>Short North</strong><small>Activity rising</small></div>
-            <div><span>BEST ARRIVAL</span><strong>9:15–9:45</strong><small>Before waits peak</small></div>
-            <button className="primary-action" onClick={() => setPollOpen(true)}>Ask the crew<Icon name="arrow"/></button>
+        <section className="tonight shell" id="tonight">
+          <div className="map-first-heading">
+            <div><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>97 crews making plans</span></div><h1>Where is<br/><em>everyone going?</em></h1></div>
+            <div className="map-head-actions"><p>Live crowd direction, deals, waits, and the people already heading out.</p>{!account && <button onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}>Create your account<Icon name="arrow"/></button>}</div>
+          </div>
+
+          <div className="map-toolbar"><label><Icon name="compass" size={17}/><input value={mapSearch} onChange={(event) => setMapSearch(event.target.value)} placeholder="Search venues, events, or neighborhoods"/></label><div>{["All","Rising","Deals","Friends"].map((filter) => <button className={mapFilter === filter ? "active" : ""} onClick={() => setMapFilter(filter)} key={filter}>{filter}</button>)}</div><div className="view-tabs" aria-label="Choose view">{["map", "events"].map((view) => <button className={activeView === view ? "active" : ""} onClick={() => setActiveView(view)} key={view}>{view === "map" ? <Icon name="compass" size={17}/> : <Icon name="calendar" size={17}/>} {view}</button>)}</div></div>
+
+          <div className={`city-board ${activeView}`}>
+            <NightMap events={visibleEvents} selected={selectedEvent} intentions={intentions} scale={mapScale} onScale={setMapScale} onSelect={setSelectedEvent}/>
+            <EventRail events={visibleEvents} source={eventSource} selected={selectedEvent} intention={selectedEvent ? intentions[selectedEvent.id] : null} claimed={selectedEvent ? claimedDeals.includes(selectedEvent.id) : false} onSelect={setSelectedEvent} onJoin={joinEvent} onIntent={setIntent} onClaim={claimDeal}/>
           </div>
         </section>
 
         <section className="plan-bar shell" aria-label="Your plan tonight">
-          <div className="plan-crew"><AvatarStack/><span><small>Your crew</small><strong>{plan.crew}</strong></span></div>
+          <div className="plan-crew"><AvatarStack/><span><small>{account ? account.crewName || "Your crew" : "Demo crew"}</small><strong>{plan.crew}</strong></span></div>
           <button onClick={() => setPlanOpen(true)}><Icon name="pin"/><span><small>Area</small><strong>{plan.area}</strong></span></button>
           <button onClick={() => setPlanOpen(true)}><Icon name="spark"/><span><small>Type of night</small><strong>{plan.night}</strong></span></button>
           <button onClick={() => setPlanOpen(true)}><Icon name="clock"/><span><small>Start</small><strong>{plan.time}</strong></span></button>
           <div className="plan-event"><span><small>Plan</small><strong>{plan.event}</strong></span></div>
           <div className="plan-actions"><button onClick={() => setPlanOpen(true)}>Edit</button><button onClick={() => setPollOpen(true)}>Crew vote</button></div>
-        </section>
-
-        <section className="tonight shell" id="tonight">
-          <div className="section-title-row">
-            <div><span className="kicker">THE CITY, RIGHT NOW</span><h2>Choose your first move.</h2></div>
-            <div className="view-tabs" aria-label="Choose view">{["map", "events"].map((view) => <button className={activeView === view ? "active" : ""} onClick={() => setActiveView(view)} key={view}>{view === "map" ? <Icon name="compass" size={17}/> : <Icon name="calendar" size={17}/>} {view}</button>)}</div>
-          </div>
-
-          <div className={`city-board ${activeView}`}>
-            <NightMap events={events} selected={selectedEvent} intentions={intentions} onSelect={setSelectedEvent}/>
-            <EventRail events={events} source={eventSource} selected={selectedEvent} intention={selectedEvent ? intentions[selectedEvent.id] : null} claimed={selectedEvent ? claimedDeals.includes(selectedEvent.id) : false} onSelect={setSelectedEvent} onJoin={joinEvent} onIntent={setIntent} onClaim={claimDeal}/>
-          </div>
         </section>
 
         <NextMoves events={events} onSelect={(event) => { setSelectedEvent(event); document.getElementById("tonight")?.scrollIntoView({ behavior: "smooth" }); }}/>
@@ -248,6 +255,12 @@ function App() {
       {pollOpen && (
         <CrewPoll events={events.slice(0, 3)} onClose={() => setPollOpen(false)} onChoose={(event) => { joinEvent(event); setPollOpen(false); setToast(`${event.venue} won the crew vote`); }}/>
       )}
+      {authOpen && (
+        <AuthModal initialMode={authMode} onClose={() => setAuthOpen(false)} onAuthenticated={(session) => { setAccount(session.profile); setAuthOpen(false); setToast(session.needsVerification ? "Check your email to verify your account" : `Welcome${session.profile.name ? `, ${session.profile.name.split(" ")[0]}` : ""}`); }}/>
+      )}
+      {accountOpen && account && (
+        <AccountModal account={account} onClose={() => setAccountOpen(false)} onUpdate={(profile) => { const session = updateSessionProfile(profile); setAccount(session.profile); setToast("Profile updated"); }} onSignOut={() => { signOut(); setAccount(null); setAccountOpen(false); setToast("Signed out"); }}/>
+      )}
       {profile && (
         <ProfileModal group={profile} onClose={() => setProfile(null)} onPerson={(person) => setPersonProfile({ person, group: profile })} onWave={() => sendWave(profile)}/>
       )}
@@ -262,14 +275,17 @@ function App() {
   );
 }
 
-function NightMap({ events, selected, intentions, onSelect }) {
+function NightMap({ events, selected, intentions, scale, onScale, onSelect }) {
   return <div className="map-panel" aria-label="Tonight activity map">
-    <div className="map-grid"></div><div className="river"></div>
-    <span className="map-label campus">CAMPUS</span><span className="map-label short-north">SHORT NORTH</span><span className="map-label downtown">DOWNTOWN</span><span className="map-label old-north">OLD NORTH</span>
-    <span className="road road-one"></span><span className="road road-two"></span><span className="road road-three"></span><span className="road road-four"></span>
-    {events.map((event) => <button className={`map-marker ${selected?.id === event.id ? "selected" : ""} ${intentions[event.id] ? "committed" : ""}`} style={{ left: `${event.x}%`, top: `${event.y}%`, "--heat": `${Math.min(92, 42 + event.attending / 2)}px` }} onClick={() => onSelect(event)} aria-label={`${event.title}, ${event.groups} groups`} key={event.id}><span className={`heat ${event.tone}`}></span>{intentions[event.id] && <i className="intent-pin"><Icon name="check" size={10}/></i>}<b>{event.groups + (intentions[event.id] ? 1 : 0)}</b><small>crews</small></button>)}
+    <div className="map-canvas" style={{ transform: `scale(${scale})` }}>
+      <div className="map-grid"></div><div className="river"></div>
+      <span className="map-label campus">CAMPUS</span><span className="map-label short-north">SHORT NORTH</span><span className="map-label downtown">DOWNTOWN</span><span className="map-label old-north">OLD NORTH</span>
+      <span className="road road-one"></span><span className="road road-two"></span><span className="road road-three"></span><span className="road road-four"></span>
+      {events.map((event) => <button className={`map-marker ${selected?.id === event.id ? "selected" : ""} ${intentions[event.id] ? "committed" : ""}`} style={{ left: `${event.x}%`, top: `${event.y}%`, "--heat": `${Math.min(92, 42 + event.attending / 2)}px` }} onClick={() => onSelect(event)} aria-label={`${event.title}, ${event.groups} groups`} key={event.id}><span className={`heat ${event.tone}`}></span>{intentions[event.id] && <i className="intent-pin"><Icon name="check" size={10}/></i>}<b>{event.groups + (intentions[event.id] ? 1 : 0)}</b><small>crews</small></button>)}
+      {!events.length && <div className="map-empty"><strong>No places match that view</strong><span>Try another filter or search.</span></div>}
+    </div>
     <div className="map-legend"><span><i className="warm"></i>More active</span><span><i></i>Less active</span></div>
-    <button className="locate-button" aria-label="Use my location" onClick={() => navigator.geolocation?.getCurrentPosition(() => {}, () => {})}><Icon name="compass" size={18}/></button>
+    <div className="map-controls"><button onClick={() => onScale(Math.min(1.35, scale + .1))} aria-label="Zoom in">+</button><button onClick={() => onScale(Math.max(1, scale - .1))} aria-label="Zoom out">−</button><button aria-label="Use my location" onClick={() => navigator.geolocation?.getCurrentPosition(() => {}, () => {})}><Icon name="compass" size={16}/></button></div>
   </div>;
 }
 
@@ -321,6 +337,54 @@ function CrewPoll({ events, onClose, onChoose }) {
   };
   const winner = votes.indexOf(Math.max(...votes));
   return <ModalShell onClose={onClose} label="Crew destination vote" className="poll-modal"><span className="kicker">THE USUAL FOUR</span><h2>Where should we start?</h2><p>One tap each. Highest vote becomes the plan.</p><div className="poll-members"><AvatarStack/><span>3 of 4 voted</span></div><div className="poll-options">{events.map((event,index) => <button className={yourVote === index ? "selected" : ""} onClick={() => vote(index)} key={event.id}><span><strong>{event.venue}</strong><small>{event.wait} wait · {event.cover}</small></span><b>{votes[index]}</b></button>)}</div><button className="modal-primary" onClick={() => onChoose(events[winner])}>Lock the winner <Icon name="arrow"/></button></ModalShell>;
+}
+
+function AuthModal({ initialMode, onClose, onAuthenticated }) {
+  const [mode, setMode] = useState(initialMode);
+  const [form, setForm] = useState({ name: "", email: "", password: "", campus: "Ohio State", crewName: "The usual crew", instagram: "", ageConfirmed: false });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const set = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const submit = async (event) => {
+    event.preventDefault();
+    setError("");
+    if (mode === "signup" && !form.ageConfirmed) return setError("You must confirm that you are 18 or older.");
+    if (form.password.length < 8) return setError("Use at least 8 characters for your password.");
+    setLoading(true);
+    try {
+      const session = mode === "signup" ? await signUp({ email: form.email, password: form.password, profile: { name: form.name.trim(), campus: form.campus, crewName: form.crewName.trim(), instagram: form.instagram.trim(), ageConfirmed: form.ageConfirmed } }) : await signIn({ email: form.email, password: form.password });
+      onAuthenticated(session);
+    } catch (authError) {
+      setError(authError.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  return <ModalShell onClose={onClose} label={mode === "signup" ? "Create a Hangtime account" : "Sign in to Hangtime"} className="auth-modal">
+    <div className="auth-brand"><Logo/><span>{isCloudAuthEnabled() ? "Secure cloud account" : "Browser-local prototype"}</span></div>
+    <h2>{mode === "signup" ? "Make tonight easier." : "Welcome back."}</h2><p>{mode === "signup" ? "Save your crew, join plans, unlock deals, and meet people safely." : "Your crew and tonight’s plan are waiting."}</p>
+    <div className="auth-tabs"><button className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")}>Create account</button><button className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")}>Sign in</button></div>
+    <form className="auth-form" onSubmit={submit}>
+      {mode === "signup" && <><label><span>Name</span><input required value={form.name} onChange={(event) => set("name", event.target.value)} placeholder="First and last name"/></label><div className="auth-split"><label><span>Campus or city</span><input required value={form.campus} onChange={(event) => set("campus", event.target.value)} /></label><label><span>Crew name</span><input required value={form.crewName} onChange={(event) => set("crewName", event.target.value)} /></label></div></>}
+      <label><span>Email</span><input required type="email" autoComplete="email" value={form.email} onChange={(event) => set("email", event.target.value)} placeholder="you@school.edu"/></label>
+      <label><span>Password</span><input required minLength="8" type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} value={form.password} onChange={(event) => set("password", event.target.value)} placeholder="8 characters or more"/></label>
+      {mode === "signup" && <><label><span>Instagram <small>Optional · hidden until matching</small></span><input value={form.instagram} onChange={(event) => set("instagram", event.target.value)} placeholder="@username"/></label><label className="age-check"><input type="checkbox" checked={form.ageConfirmed} onChange={(event) => set("ageConfirmed", event.target.checked)}/><span>I confirm that I’m at least 18 years old.</span></label></>}
+      {error && <div className="auth-error" role="alert">{error}</div>}
+      <button className="modal-primary" disabled={loading}>{loading ? "Working…" : mode === "signup" ? "Create my account" : "Sign in"}<Icon name="arrow"/></button>
+    </form>
+    {!isCloudAuthEnabled() && <p className="prototype-note"><Icon name="shield" size={14}/>Prototype accounts remain on this browser. Configure Supabase before collecting real user credentials.</p>}
+  </ModalShell>;
+}
+
+function AccountModal({ account, onClose, onUpdate, onSignOut }) {
+  const [profile, setProfile] = useState(account);
+  const set = (key, value) => setProfile((current) => ({ ...current, [key]: value }));
+  return <ModalShell onClose={onClose} label="Your Hangtime account" className="account-modal">
+    <div className="account-avatar">{profile.name?.split(" ").map((part) => part[0]).join("").slice(0,2).toUpperCase()}</div><span className="kicker">YOUR ACCOUNT</span><h2>{profile.name}</h2><p>{profile.email}</p>
+    <div className="account-stats"><div><strong>4</strong><span>Crew members</span></div><div><strong>3</strong><span>Nights planned</span></div><div><strong>2</strong><span>Trusted intros</span></div></div>
+    <form className="auth-form" onSubmit={(event) => { event.preventDefault(); onUpdate(profile); onClose(); }}><label><span>Name</span><input value={profile.name || ""} onChange={(event) => set("name", event.target.value)}/></label><div className="auth-split"><label><span>Campus or city</span><input value={profile.campus || ""} onChange={(event) => set("campus", event.target.value)}/></label><label><span>Crew name</span><input value={profile.crewName || ""} onChange={(event) => set("crewName", event.target.value)}/></label></div><label><span>Instagram <small>Private until matching</small></span><input value={profile.instagram || ""} onChange={(event) => set("instagram", event.target.value)}/></label><button className="modal-primary">Save profile<Icon name="check"/></button></form>
+    <button className="signout-button" onClick={onSignOut}>Sign out</button>
+  </ModalShell>;
 }
 
 function MatchCard({ group, featured, onOpen, onPerson, onWave }) {

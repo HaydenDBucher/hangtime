@@ -2,13 +2,15 @@
 
 ## 0:00–0:15 — The promise
 
-Open on the live city pulse and frame the product in one sentence:
+Open directly on the live map and frame the product in one sentence:
 
 > Know where the night is moving before your crew commits.
 
 ## 0:15–0:35 — Make tonight live
 
 Select **Ask the crew**, cast a destination vote, and lock the winner. Then show that the plan can still be edited on one screen.
+
+Before voting, point out that a new user can create an account from the header, save a crew, and return to the same profile later.
 
 ## 0:35–0:55 — See the city
 
