@@ -879,3 +879,77 @@ button { letter-spacing: -.01em; }
   .ride-provider-grid strong { font-size: 10px; }
   .ride-provider-grid b { font-size: 12px; }
 }
+
+/* Compact decision dashboard */
+.tonight { padding-top: 50px; }
+.map-first-heading { margin-bottom: 22px; grid-template-columns: 1fr 330px; }
+.map-first-heading .eyebrow { margin-bottom: 20px; }
+.map-first-heading h1 { max-width: 820px; font-size: clamp(52px, 5.8vw, 82px); line-height: .91; }
+.map-head-actions p { font-size: 15px; }
+
+.night-lenses {
+  margin-bottom: 8px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.night-lenses button {
+  min-width: 0;
+  min-height: 88px;
+  padding: 12px 13px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: rgba(248,248,245,.78);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .18s, background .18s, transform .18s;
+}
+.night-lenses button:hover { border-color: var(--ink); transform: translateY(-1px); }
+.night-lenses button.active { border-color: var(--ink); background: var(--ink); color: #fff; }
+.night-lenses button > span { display: flex; align-items: center; gap: 6px; color: var(--muted); font-family: "IBM Plex Mono", Consolas, monospace; font-size: 7px; text-transform: uppercase; }
+.night-lenses button.active > span, .night-lenses button.active small { color: #bfc2ca; }
+.night-lenses strong { margin-top: 3px; overflow: hidden; font-size: 17px; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }
+.night-lenses small { overflow: hidden; color: var(--muted); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+
+.map-toolbar.compact { grid-template-columns: minmax(250px, 1fr) auto; }
+.map-toolbar.compact > label { grid-column: auto; }
+.city-board { height: 520px; grid-template-columns: minmax(0, 1.45fr) minmax(400px, .85fr); }
+.crowd-live-card { width: 255px; padding: 12px; }
+.crowd-live-card h3 { margin-top: 11px; font-size: 17px; }
+.venue-map-marker { width: 54px; height: 54px; }
+.venue-map-marker strong { font-size: 14px; }
+
+.venue-intel { padding: 14px 18px; }
+.venue-intel h2 { margin-top: 10px; font-size: 24px; }
+.venue-intel > p { margin-bottom: 11px; }
+.intel-grid > div { padding: 8px 6px; }
+.confidence { margin: 7px 0 9px; }
+.ride-preview { margin: 8px 0 9px; padding-top: 8px; }
+.ride-provider-grid > a { padding: 7px; }
+.ride-preview > p { display: none; }
+.intel-deal { padding: 8px 9px; }
+.intent-picker { margin-top: 9px; }
+.intent-picker button { min-height: 31px; }
+.event-row { min-height: 92px; }
+
+@media (max-width: 980px) {
+  .night-lenses { grid-template-columns: repeat(5, minmax(145px, 1fr)); overflow-x: auto; padding-bottom: 3px; scrollbar-width: none; }
+  .night-lenses::-webkit-scrollbar { display: none; }
+}
+
+@media (max-width: 820px) {
+  .map-first-heading { display: block; }
+  .map-first-heading h1 { font-size: clamp(54px, 13vw, 78px); }
+  .city-board { height: auto; }
+  .night-lenses { margin-inline: -14px; padding-inline: 14px; }
+}
+
+@media (max-width: 560px) {
+  .tonight { padding-top: 42px; }
+  .map-first-heading h1 { font-size: 52px; }
+  .night-lenses button { min-height: 80px; }
+  .map-toolbar.compact { display: flex; }
+}

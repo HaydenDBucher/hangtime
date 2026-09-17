@@ -87,6 +87,7 @@ function Icon({ name, size = 20 }) {
     instagram: <><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".5" fill="currentColor"/></>,
     compass: <><circle cx="12" cy="12" r="9"/><path d="m15 9-2 4-4 2 2-4 4-2Z"/></>,
     car: <><path d="m5 17-1 2v2M19 17l1 2v2M3 13l2-6h14l2 6"/><path d="M5 13h14a2 2 0 0 1 2 2v3H3v-3a2 2 0 0 1 2-2Z"/><circle cx="7" cy="15.5" r="1"/><circle cx="17" cy="15.5" r="1"/></>,
+    food: <><path d="M7 3v8M4 3v5a3 3 0 0 0 6 0V3M7 11v10M17 3v18M17 3c3 2 4 6 0 9"/></>,
   };
   return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
@@ -120,7 +121,7 @@ function App() {
   const [eventSource, setEventSource] = useState("loading");
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [activeView, setActiveView] = useState("map");
-  const [mapFilter, setMapFilter] = useState("All");
+  const [mapFilter, setMapFilter] = useState("Crowds");
   const [mapSearch, setMapSearch] = useState("");
   const [matchFilter, setMatchFilter] = useState("Best plan");
   const [planOpen, setPlanOpen] = useState(false);
@@ -163,12 +164,33 @@ function App() {
     return next;
   }, [matchFilter]);
 
+  const lensStats = useMemo(() => {
+    const people = events.reduce((total, event) => total + (event.attending || event.groups * 4), 0);
+    const deals = events.filter((event) => event.deal).length;
+    const food = events.filter((event) => /food|dinner|pizza|donut/i.test(`${event.category} ${event.title}`)).length;
+    const rideMins = events.flatMap((event) => getCampusRidePreview({ name: event.venue, lat: event.lat, lng: event.lng }).providers.map((provider) => Number(provider.fare.match(/\d+/)?.[0] || 99)));
+    const rideFrom = rideMins.length ? Math.min(...rideMins) : 6;
+    return [
+      { label: "Crowds", icon: "users", value: `${people} nearby`, detail: "Where people are going" },
+      { label: "Deals", icon: "spark", value: `${deals} live`, detail: "Student offers tonight" },
+      { label: "Events", icon: "calendar", value: `${events.length} tonight`, detail: "Music, games, comedy" },
+      { label: "Food", icon: "food", value: `${food} late spots`, detail: "Food around campus" },
+      { label: "Ride cost", icon: "car", value: `from $${rideFrom}`, detail: "From Ohio Union" },
+    ];
+  }, [events]);
+
   const visibleEvents = useMemo(() => events.filter((event) => {
     const query = mapSearch.trim().toLowerCase();
     const matchesSearch = !query || `${event.venue} ${event.title} ${event.area} ${event.category}`.toLowerCase().includes(query);
-    const matchesFilter = mapFilter === "All" || (mapFilter === "Deals" && event.deal) || (mapFilter === "Friends" && event.friends > 0) || (mapFilter === "Rising" && /rising|filling/i.test(event.trend || ""));
+    const eventText = `${event.category} ${event.title}`;
+    const isFood = /food|dinner|pizza|donut/i.test(eventText);
+    const matchesFilter = mapFilter === "Crowds" || mapFilter === "Ride cost" || (mapFilter === "Deals" && event.deal) || (mapFilter === "Food" && isFood) || (mapFilter === "Events" && !isFood);
     return matchesSearch && matchesFilter;
   }), [events, mapFilter, mapSearch]);
+
+  useEffect(() => {
+    if (visibleEvents.length && !visibleEvents.some((event) => event.id === selectedEvent?.id)) setSelectedEvent(visibleEvents[0]);
+  }, [selectedEvent?.id, visibleEvents]);
 
   const joinEvent = (event) => {
     setPlan((current) => ({ ...current, event: event.title, area: event.area }));
@@ -208,14 +230,16 @@ function App() {
       <main>
         <section className="tonight shell" id="tonight">
           <div className="map-first-heading">
-            <div><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>97 student crews around campus</span></div><h1>Where is<br/><em>campus going?</em></h1></div>
-            <div className="map-head-actions"><p>See what is building around Ohio State, what it costs, and which crews are heading there.</p>{!account && <button onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}>Join your campus<Icon name="arrow"/></button>}</div>
+            <div><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>Ohio State tonight</span></div><h1>Campus,<br/><em>at a glance.</em></h1></div>
+            <div className="map-head-actions"><p>People, plans, prices, and food—one quick look before your group decides.</p>{!account && <button onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}>Join your campus<Icon name="arrow"/></button>}</div>
           </div>
 
-          <div className="map-toolbar"><label><Icon name="compass" size={17}/><input value={mapSearch} onChange={(event) => setMapSearch(event.target.value)} placeholder="Search venues, events, or neighborhoods"/></label><div>{["All","Rising","Deals","Friends"].map((filter) => <button className={mapFilter === filter ? "active" : ""} onClick={() => setMapFilter(filter)} key={filter}>{filter}</button>)}</div><div className="view-tabs" aria-label="Choose view">{["map", "events"].map((view) => <button className={activeView === view ? "active" : ""} onClick={() => setActiveView(view)} key={view}>{view === "map" ? <Icon name="compass" size={17}/> : <Icon name="calendar" size={17}/>} {view}</button>)}</div></div>
+          <div className="night-lenses" aria-label="Explore tonight">{lensStats.map((lens) => <button className={mapFilter === lens.label ? "active" : ""} onClick={() => setMapFilter(lens.label)} key={lens.label}><span><Icon name={lens.icon} size={15}/>{lens.label}</span><strong>{lens.value}</strong><small>{lens.detail}</small></button>)}</div>
+
+          <div className="map-toolbar compact"><label><Icon name="compass" size={17}/><input value={mapSearch} onChange={(event) => setMapSearch(event.target.value)} placeholder="Search around campus"/></label><div className="view-tabs" aria-label="Choose view">{["map", "events"].map((view) => <button className={activeView === view ? "active" : ""} onClick={() => setActiveView(view)} key={view}>{view === "map" ? <Icon name="compass" size={17}/> : <Icon name="calendar" size={17}/>} {view}</button>)}</div></div>
 
           <div className={`city-board ${activeView}`}>
-            <NightMap events={visibleEvents} selected={selectedEvent} intentions={intentions} onSelect={setSelectedEvent}/>
+            <NightMap events={visibleEvents} selected={selectedEvent} intentions={intentions} lens={mapFilter} onSelect={setSelectedEvent}/>
             <EventRail events={visibleEvents} source={eventSource} selected={selectedEvent} intention={selectedEvent ? intentions[selectedEvent.id] : null} claimed={selectedEvent ? claimedDeals.includes(selectedEvent.id) : false} onSelect={setSelectedEvent} onJoin={joinEvent} onIntent={setIntent} onClaim={claimDeal}/>
           </div>
         </section>
@@ -303,7 +327,7 @@ function projectedGroups(event, horizon, tick = 0) {
   return event.groups + forecast + liveChange;
 }
 
-function NightMap({ events, selected, intentions, onSelect }) {
+function NightMap({ events, selected, intentions, lens, onSelect }) {
   const mapNode = useRef(null);
   const mapInstance = useRef(null);
   const crowdLayer = useRef(null);
@@ -363,6 +387,10 @@ function NightMap({ events, selected, intentions, onSelect }) {
       const count = projectedGroups(event, horizon, tick);
       const color = crowdColors[event.tone] || crowdColors.coral;
       const isSelected = selected?.id === event.id;
+      const ridePreview = getCampusRidePreview({ name: event.venue, lat, lng });
+      const rideMinimum = ridePreview.providers[0].fare.match(/\d+/)?.[0] || "6";
+      const markerValue = lens === "Ride cost" ? `$${rideMinimum}` : lens === "Deals" ? (event.deal ? "Deal" : "—") : count;
+      const markerLabel = lens === "Ride cost" ? "ride" : lens === "Deals" ? "tonight" : lens === "Food" ? "people" : "crews";
 
       L.circle(point, {
         radius: 115 + count * 10,
@@ -377,7 +405,7 @@ function NightMap({ events, selected, intentions, onSelect }) {
 
       const venueIcon = L.divIcon({
         className: "hangtime-div-icon",
-        html: `<div class="venue-map-marker ${isSelected ? "selected" : ""} ${intentions[event.id] ? "committed" : ""}" style="--marker:${color}"><strong>${count}</strong><span>crews</span>${intentions[event.id] ? '<i>✓</i>' : ""}</div>`,
+        html: `<div class="venue-map-marker ${isSelected ? "selected" : ""} ${intentions[event.id] ? "committed" : ""}" style="--marker:${color}"><strong>${markerValue}</strong><span>${markerLabel}</span>${intentions[event.id] ? '<i>✓</i>' : ""}</div>`,
         iconSize: [58, 58],
         iconAnchor: [29, 29],
       });
@@ -385,7 +413,7 @@ function NightMap({ events, selected, intentions, onSelect }) {
         .on("click", () => onSelect(event))
         .addTo(layer);
 
-      if (index < 5) {
+      if (lens === "Crowds" && index < 5) {
         const offset = crowdOffsets[index % crowdOffsets.length];
         const origin = [lat + offset[0], lng + offset[1]];
         const progress = Math.min(.88, .28 + ((tick + index) % 4) * .13 + horizon / 100);
@@ -408,7 +436,7 @@ function NightMap({ events, selected, intentions, onSelect }) {
       map.fitBounds(L.latLngBounds(points).pad(.16), { padding: [46, 46], maxZoom: 14 });
       fitted.current = true;
     }
-  }, [events, horizon, intentions, onSelect, selected?.id, tick]);
+  }, [events, horizon, intentions, lens, onSelect, selected?.id, tick]);
 
   useEffect(() => {
     const map = mapInstance.current;
@@ -434,16 +462,23 @@ function NightMap({ events, selected, intentions, onSelect }) {
   const leader = ranked[0];
   const rising = events.filter((event) => /rising|filling/i.test(event.trend || "")).reduce((total, event) => total + Math.max(1, Math.round(event.groups * .2)), 0);
   const feedEvent = ranked[tick % Math.max(1, ranked.length)] || leader;
+  const lensSummary = {
+    Crowds: { title: leader ? `${projectedGroups(leader, horizon, tick)} crews around ${leader.area}` : "Finding tonight's crowds", detail: horizon ? `Projected ${horizon} minutes from now.` : `${rising} crews are moving toward rising spots.` },
+    Deals: { title: `${events.length} student deals tonight`, detail: "Tap a marker to see the offer and deadline." },
+    Events: { title: `${events.length} events around campus`, detail: "Music, games, comedy, and student programming." },
+    Food: { title: `${events.length} late food stops`, detail: "See where people are eating before and after." },
+    "Ride cost": { title: `Campus rides from ${leader ? getCampusRidePreview({ name: leader.venue, lat: leader.lat, lng: leader.lng }).providers[0].fare : "$6"}`, detail: "Modeled from Ohio Union. Open an app for the live fare." },
+  }[lens] || { title: "Tonight around campus", detail: "Tap any place to see the details." };
 
   return <div className="map-panel real-map-panel" aria-label="Live Ohio State campus crowd activity map">
     <div className="leaflet-map" ref={mapNode}></div>
     <div className="crowd-live-card">
-      <div><span className="live-dot"></span><strong>Crowd movement</strong><small>Anonymous aggregate</small></div>
-      <h3>{leader ? `${projectedGroups(leader, horizon, tick)} crews around ${leader.area}` : "Finding tonight's crowds"}</h3>
-      <p>{horizon ? `Projected ${horizon} minutes from now.` : `${rising} crews are moving toward rising spots.`}</p>
-      <div className="forecast-tabs" aria-label="Crowd forecast time">{[0, 15, 30].map((minutes) => <button className={horizon === minutes ? "active" : ""} onClick={() => setHorizon(minutes)} key={minutes}>{minutes === 0 ? "Now" : `+${minutes} min`}</button>)}</div>
+      <div><span className="live-dot"></span><strong>{lens}</strong><small>Campus overview</small></div>
+      <h3>{lensSummary.title}</h3>
+      <p>{lensSummary.detail}</p>
+      {lens === "Crowds" && <div className="forecast-tabs" aria-label="Crowd forecast time">{[0, 15, 30].map((minutes) => <button className={horizon === minutes ? "active" : ""} onClick={() => setHorizon(minutes)} key={minutes}>{minutes === 0 ? "Now" : `+${minutes} min`}</button>)}</div>}
     </div>
-    {feedEvent && <div className="movement-feed"><span className="movement-pulse"></span><strong>{Math.max(2, Math.round(feedEvent.groups * .18))} crews moving toward {feedEvent.venue}</strong><small>updated just now</small></div>}
+    {lens === "Crowds" && feedEvent && <div className="movement-feed"><span className="movement-pulse"></span><strong>{Math.max(2, Math.round(feedEvent.groups * .18))} crews moving toward {feedEvent.venue}</strong><small>updated just now</small></div>}
     <div className="map-privacy-note"><Icon name="shield" size={13}/>Approximate group movement only</div>
     <div className="map-controls"><button onClick={() => mapInstance.current?.zoomIn()} aria-label="Zoom in">+</button><button onClick={() => mapInstance.current?.zoomOut()} aria-label="Zoom out">−</button><button aria-label="Use my location" onClick={locate} className={locating ? "locating" : ""}><Icon name="compass" size={16}/></button></div>
     {!events.length && <div className="map-empty"><strong>No places match that view</strong><span>Try another filter or search.</span></div>}
