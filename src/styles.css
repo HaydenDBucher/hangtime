@@ -678,3 +678,168 @@ button { letter-spacing: -.01em; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Geographic crowd map */
+.real-map-panel::after { display: none; }
+.leaflet-map { position: absolute; inset: 0; z-index: 1; background: #daddd7; }
+.leaflet-tile-pane { filter: grayscale(.28) saturate(.64) contrast(.93) brightness(1.04); }
+.leaflet-container { font-family: "Archivo", "Helvetica Neue", Arial, sans-serif; }
+.leaflet-control-attribution {
+  padding: 3px 6px !important;
+  border-radius: 3px 0 0 0;
+  background: rgba(248,248,245,.88) !important;
+  color: #656862;
+  font-family: "IBM Plex Mono", Consolas, monospace;
+  font-size: 7px;
+}
+.leaflet-control-attribution a { color: #3e4da7; }
+.hangtime-div-icon { border: 0; background: transparent; }
+.venue-map-marker {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-content: center;
+  position: relative;
+  border: 2px solid rgba(248,248,245,.95);
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  box-shadow: 0 7px 20px rgba(23,25,31,.28);
+  text-align: center;
+  cursor: pointer;
+  transition: transform .2s ease, background .2s ease;
+}
+.venue-map-marker:hover, .venue-map-marker.selected {
+  background: var(--marker);
+  box-shadow: 0 0 0 4px rgba(248,248,245,.72), 0 8px 24px rgba(23,25,31,.3);
+  transform: scale(1.12);
+}
+.venue-map-marker strong { font-size: 16px; line-height: 1; }
+.venue-map-marker span {
+  margin-top: 2px;
+  font-family: "IBM Plex Mono", Consolas, monospace;
+  font-size: 6px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.venue-map-marker > i {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  position: absolute;
+  right: -5px;
+  top: -5px;
+  border: 2px solid var(--white);
+  border-radius: 50%;
+  background: #83a990;
+  color: var(--ink);
+  font-size: 9px;
+  font-style: normal;
+}
+.crowd-heat-circle { animation: crowd-breathe 3.2s ease-in-out infinite alternate; }
+.moving-group-icon { overflow: visible; }
+.moving-group {
+  width: max-content;
+  padding: 4px 7px 4px 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(23,25,31,.16);
+  border-radius: 3px;
+  background: rgba(248,248,245,.94);
+  box-shadow: 0 4px 14px rgba(23,25,31,.12);
+  color: var(--ink);
+  white-space: nowrap;
+}
+.moving-group i {
+  width: 8px;
+  height: 8px;
+  border: 2px solid rgba(248,248,245,.9);
+  border-radius: 50%;
+  background: var(--marker);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--marker) 22%, transparent);
+}
+.moving-group span { font-family: "IBM Plex Mono", Consolas, monospace; font-size: 7px; font-weight: 500; }
+
+.crowd-live-card {
+  width: 285px;
+  padding: 14px;
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  z-index: 900;
+  border: 1px solid rgba(23,25,31,.2);
+  border-radius: 5px;
+  background: rgba(248,248,245,.94);
+  box-shadow: 0 10px 28px rgba(23,25,31,.12);
+  backdrop-filter: blur(10px);
+}
+.crowd-live-card > div:first-child { display: flex; align-items: center; gap: 8px; }
+.crowd-live-card > div:first-child strong { font-size: 10px; }
+.crowd-live-card > div:first-child small { margin-left: auto; color: var(--muted); font-family: "IBM Plex Mono", Consolas, monospace; font-size: 6px; text-transform: uppercase; }
+.crowd-live-card h3 { margin: 14px 0 3px; font-size: 19px; line-height: 1.08; letter-spacing: -.035em; }
+.crowd-live-card p { margin: 0; color: var(--muted); font-size: 9px; }
+.forecast-tabs { margin-top: 13px; padding: 3px; display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; background: #e2e3de; }
+.forecast-tabs button { min-height: 29px; border: 0; border-radius: 2px; background: transparent; color: var(--muted); font-family: "IBM Plex Mono", Consolas, monospace; font-size: 7px; cursor: pointer; }
+.forecast-tabs button.active { background: var(--ink); color: #fff; }
+
+.movement-feed {
+  max-width: min(420px, calc(100% - 190px));
+  min-height: 38px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  z-index: 900;
+  border: 1px solid rgba(23,25,31,.18);
+  border-radius: 4px;
+  background: rgba(23,25,31,.92);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(23,25,31,.2);
+  transform: translateX(-50%);
+  backdrop-filter: blur(8px);
+}
+.movement-feed strong { overflow: hidden; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.movement-feed small { margin-left: auto; color: #b8bab5; font-family: "IBM Plex Mono", Consolas, monospace; font-size: 6px; white-space: nowrap; }
+.movement-pulse { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #78bc8c; box-shadow: 0 0 0 4px rgba(120,188,140,.16); animation: live-pulse 1.5s ease-in-out infinite; }
+.map-privacy-note {
+  padding: 7px 9px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  position: absolute;
+  left: 16px;
+  bottom: 18px;
+  z-index: 900;
+  border-radius: 3px;
+  background: rgba(248,248,245,.92);
+  color: var(--muted);
+  font-size: 7px;
+}
+.real-map-panel .map-controls { z-index: 900; }
+.real-map-panel .map-controls button.locating { color: var(--coral); animation: live-pulse 1s infinite; }
+.real-map-panel .map-empty { z-index: 950; box-shadow: 0 8px 24px rgba(23,25,31,.14); }
+
+@keyframes crowd-breathe { to { fill-opacity: .18; stroke-opacity: .62; } }
+@keyframes live-pulse { 50% { opacity: .45; transform: scale(.84); } }
+
+@media (max-width: 820px) {
+  .crowd-live-card { width: 255px; }
+  .movement-feed { max-width: calc(100% - 36px); bottom: 54px; }
+  .map-privacy-note { display: none; }
+}
+
+@media (max-width: 560px) {
+  .crowd-live-card { width: calc(100% - 82px); padding: 11px; left: 10px; top: 10px; }
+  .crowd-live-card h3 { margin-top: 10px; font-size: 16px; }
+  .crowd-live-card > div:first-child small { display: none; }
+  .forecast-tabs { margin-top: 9px; }
+  .real-map-panel .map-controls { right: 10px; top: 10px; }
+  .movement-feed { bottom: 30px; }
+  .movement-feed small { display: none; }
+  .leaflet-control-attribution { max-width: 175px; overflow: hidden; white-space: nowrap; }
+}

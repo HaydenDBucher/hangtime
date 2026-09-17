@@ -10,6 +10,8 @@ const fallbackEvents = [
     category: "Social",
     attending: 84,
     groups: 18,
+    lat: 39.9669,
+    lng: -82.9954,
     x: 49,
     y: 37,
     promoted: true,
@@ -33,6 +35,8 @@ const fallbackEvents = [
     category: "Live music",
     attending: 47,
     groups: 11,
+    lat: 40.0147,
+    lng: -83.0112,
     x: 50,
     y: 17,
     wait: "No line",
@@ -53,6 +57,8 @@ const fallbackEvents = [
     category: "Sports",
     attending: 126,
     groups: 24,
+    lat: 39.9863,
+    lng: -83.0057,
     x: 59,
     y: 43,
     deal: "First round of games free for crews of 4+",
@@ -74,6 +80,8 @@ const fallbackEvents = [
     category: "Comedy",
     attending: 31,
     groups: 7,
+    lat: 39.9637,
+    lng: -82.9748,
     x: 39,
     y: 24,
     wait: "5 min",
@@ -94,6 +102,8 @@ const fallbackEvents = [
     category: "Food + drink",
     attending: 68,
     groups: 14,
+    lat: 39.9608,
+    lng: -82.9732,
     x: 76,
     y: 62,
     promoted: true,
@@ -117,6 +127,8 @@ const fallbackEvents = [
     category: "DJ",
     attending: 93,
     groups: 20,
+    lat: 39.9665,
+    lng: -83.0016,
     x: 38,
     y: 59,
     wait: "15–20 min",
@@ -153,6 +165,8 @@ const approximateMapPosition = (event, index) => {
 const normalizeEvent = (event, index) => {
   const venue = event?._embedded?.venues?.[0];
   const position = approximateMapPosition(event, index);
+  const latitude = Number(venue?.location?.latitude);
+  const longitude = Number(venue?.location?.longitude);
   const popularity = Math.round(Number(event?.pleaseNote?.length || event?.info?.length || 34) / 3);
   const groups = Math.max(4, Math.min(28, 7 + popularity + index * 2));
 
@@ -165,6 +179,8 @@ const normalizeEvent = (event, index) => {
     category: event?.classifications?.[0]?.genre?.name || event?.classifications?.[0]?.segment?.name || "Event",
     attending: groups * (3 + (index % 3)),
     groups,
+    lat: Number.isFinite(latitude) ? latitude : 39.976 + ((index % 4) - 1.5) * .009,
+    lng: Number.isFinite(longitude) ? longitude : -83.002 + ((index % 5) - 2) * .009,
     x: position.x,
     y: position.y,
     url: event.url,

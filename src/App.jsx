@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { getTonightEvents } from "./eventService";
 import { getSession, isCloudAuthEnabled, signIn, signOut, signUp, updateSessionProfile } from "./authService";
 
@@ -118,7 +120,6 @@ function App() {
   const [activeView, setActiveView] = useState("map");
   const [mapFilter, setMapFilter] = useState("All");
   const [mapSearch, setMapSearch] = useState("");
-  const [mapScale, setMapScale] = useState(1);
   const [matchFilter, setMatchFilter] = useState("Best plan");
   const [planOpen, setPlanOpen] = useState(false);
   const [pollOpen, setPollOpen] = useState(false);
@@ -212,7 +213,7 @@ function App() {
           <div className="map-toolbar"><label><Icon name="compass" size={17}/><input value={mapSearch} onChange={(event) => setMapSearch(event.target.value)} placeholder="Search venues, events, or neighborhoods"/></label><div>{["All","Rising","Deals","Friends"].map((filter) => <button className={mapFilter === filter ? "active" : ""} onClick={() => setMapFilter(filter)} key={filter}>{filter}</button>)}</div><div className="view-tabs" aria-label="Choose view">{["map", "events"].map((view) => <button className={activeView === view ? "active" : ""} onClick={() => setActiveView(view)} key={view}>{view === "map" ? <Icon name="compass" size={17}/> : <Icon name="calendar" size={17}/>} {view}</button>)}</div></div>
 
           <div className={`city-board ${activeView}`}>
-            <NightMap events={visibleEvents} selected={selectedEvent} intentions={intentions} scale={mapScale} onScale={setMapScale} onSelect={setSelectedEvent}/>
+            <NightMap events={visibleEvents} selected={selectedEvent} intentions={intentions} onSelect={setSelectedEvent}/>
             <EventRail events={visibleEvents} source={eventSource} selected={selectedEvent} intention={selectedEvent ? intentions[selectedEvent.id] : null} claimed={selectedEvent ? claimedDeals.includes(selectedEvent.id) : false} onSelect={setSelectedEvent} onJoin={joinEvent} onIntent={setIntent} onClaim={claimDeal}/>
           </div>
         </section>
@@ -275,7 +276,174 @@ function App() {
   );
 }
 
-function NightMap({ events, selected, intentions, scale, onScale, onSelect }) {
+const crowdColors = {
+  coral: "#4053c7",
+  violet: "#756f96",
+  lime: "#4f8062",
+  blue: "#547f9e",
+  amber: "#ad7b34",
+  pink: "#995c70",
+};
+
+const crowdOffsets = [
+  [.011, -.014],
+  [-.009, .015],
+  [.014, .009],
+  [-.012, -.011],
+  [.007, .018],
+  [-.015, .006],
+];
+
+function projectedGroups(event, horizon, tick = 0) {
+  const trendRate = /filling/i.test(event.trend || "") ? .52 : /rising/i.test(event.trend || "") ? .34 : .14;
+  const forecast = Math.round(event.groups * trendRate * (horizon / 30));
+  const liveChange = horizon === 0 ? [0, 1, 0, 2][tick % 4] : 0;
+  return event.groups + forecast + liveChange;
+}
+
+function NightMap({ events, selected, intentions, onSelect }) {
+  const mapNode = useRef(null);
+  const mapInstance = useRef(null);
+  const crowdLayer = useRef(null);
+  const locationLayer = useRef(null);
+  const fitted = useRef(false);
+  const [horizon, setHorizon] = useState(0);
+  const [tick, setTick] = useState(0);
+  const [locating, setLocating] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setTick((current) => current + 1), 4500);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!mapNode.current || mapInstance.current) return undefined;
+    const map = L.map(mapNode.current, {
+      center: [39.977, -83.002],
+      zoom: 13,
+      minZoom: 11,
+      maxZoom: 18,
+      zoomControl: false,
+      attributionControl: true,
+    });
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+    crowdLayer.current = L.layerGroup().addTo(map);
+    locationLayer.current = L.layerGroup().addTo(map);
+    mapInstance.current = map;
+    window.setTimeout(() => map.invalidateSize(), 0);
+    return () => {
+      map.remove();
+      mapInstance.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapInstance.current;
+    const layer = crowdLayer.current;
+    if (!map || !layer) return;
+    layer.clearLayers();
+
+    const points = [];
+    events.forEach((event, index) => {
+      const lat = Number(event.lat);
+      const lng = Number(event.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+      const point = [lat, lng];
+      points.push(point);
+      const count = projectedGroups(event, horizon, tick);
+      const color = crowdColors[event.tone] || crowdColors.coral;
+      const isSelected = selected?.id === event.id;
+
+      L.circle(point, {
+        radius: 115 + count * 10,
+        color,
+        weight: isSelected ? 2 : 1,
+        opacity: isSelected ? .72 : .3,
+        fillColor: color,
+        fillOpacity: isSelected ? .18 : .1,
+        interactive: false,
+        className: "crowd-heat-circle",
+      }).addTo(layer);
+
+      const venueIcon = L.divIcon({
+        className: "hangtime-div-icon",
+        html: `<div class="venue-map-marker ${isSelected ? "selected" : ""} ${intentions[event.id] ? "committed" : ""}" style="--marker:${color}"><strong>${count}</strong><span>crews</span>${intentions[event.id] ? '<i>✓</i>' : ""}</div>`,
+        iconSize: [58, 58],
+        iconAnchor: [29, 29],
+      });
+      L.marker(point, { icon: venueIcon, title: `${event.venue}: ${count} crews` })
+        .on("click", () => onSelect(event))
+        .addTo(layer);
+
+      if (index < 5) {
+        const offset = crowdOffsets[index % crowdOffsets.length];
+        const origin = [lat + offset[0], lng + offset[1]];
+        const progress = Math.min(.88, .28 + ((tick + index) % 4) * .13 + horizon / 100);
+        const moving = [origin[0] + (lat - origin[0]) * progress, origin[1] + (lng - origin[1]) * progress];
+        const inbound = Math.max(1, Math.round(count * (/rising|filling/i.test(event.trend || "") ? .24 : .12)));
+        L.polyline([origin, point], { color, weight: 1.5, opacity: .52, dashArray: "4 7", interactive: false }).addTo(layer);
+        L.marker(moving, {
+          interactive: false,
+          icon: L.divIcon({
+            className: "hangtime-div-icon moving-group-icon",
+            html: `<div class="moving-group" style="--marker:${color}"><i></i><span>${inbound} inbound</span></div>`,
+            iconSize: [82, 24],
+            iconAnchor: [12, 12],
+          }),
+        }).addTo(layer);
+      }
+    });
+
+    if (!fitted.current && points.length > 1) {
+      map.fitBounds(L.latLngBounds(points).pad(.16), { padding: [46, 46], maxZoom: 14 });
+      fitted.current = true;
+    }
+  }, [events, horizon, intentions, onSelect, selected?.id, tick]);
+
+  useEffect(() => {
+    const map = mapInstance.current;
+    if (!map || !selected || !Number.isFinite(Number(selected.lat)) || !Number.isFinite(Number(selected.lng))) return;
+    map.flyTo([selected.lat, selected.lng], Math.max(map.getZoom(), 14), { duration: .55 });
+  }, [selected?.id]);
+
+  const locate = () => {
+    if (!navigator.geolocation || !mapInstance.current) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(({ coords }) => {
+      const point = [coords.latitude, coords.longitude];
+      locationLayer.current?.clearLayers();
+      L.circleMarker(point, { radius: 8, color: "#fff", weight: 3, fillColor: "#4053c7", fillOpacity: 1 })
+        .bindTooltip("Your approximate location", { direction: "top" })
+        .addTo(locationLayer.current);
+      mapInstance.current.flyTo(point, 15, { duration: .7 });
+      setLocating(false);
+    }, () => setLocating(false), { enableHighAccuracy: false, timeout: 8000 });
+  };
+
+  const ranked = [...events].sort((a, b) => projectedGroups(b, horizon, tick) - projectedGroups(a, horizon, tick));
+  const leader = ranked[0];
+  const rising = events.filter((event) => /rising|filling/i.test(event.trend || "")).reduce((total, event) => total + Math.max(1, Math.round(event.groups * .2)), 0);
+  const feedEvent = ranked[tick % Math.max(1, ranked.length)] || leader;
+
+  return <div className="map-panel real-map-panel" aria-label="Live Columbus crowd activity map">
+    <div className="leaflet-map" ref={mapNode}></div>
+    <div className="crowd-live-card">
+      <div><span className="live-dot"></span><strong>Crowd movement</strong><small>Anonymous aggregate</small></div>
+      <h3>{leader ? `${projectedGroups(leader, horizon, tick)} crews around ${leader.area}` : "Finding tonight's crowds"}</h3>
+      <p>{horizon ? `Projected ${horizon} minutes from now.` : `${rising} crews are moving toward rising spots.`}</p>
+      <div className="forecast-tabs" aria-label="Crowd forecast time">{[0, 15, 30].map((minutes) => <button className={horizon === minutes ? "active" : ""} onClick={() => setHorizon(minutes)} key={minutes}>{minutes === 0 ? "Now" : `+${minutes} min`}</button>)}</div>
+    </div>
+    {feedEvent && <div className="movement-feed"><span className="movement-pulse"></span><strong>{Math.max(2, Math.round(feedEvent.groups * .18))} crews moving toward {feedEvent.venue}</strong><small>updated just now</small></div>}
+    <div className="map-privacy-note"><Icon name="shield" size={13}/>Approximate group movement only</div>
+    <div className="map-controls"><button onClick={() => mapInstance.current?.zoomIn()} aria-label="Zoom in">+</button><button onClick={() => mapInstance.current?.zoomOut()} aria-label="Zoom out">−</button><button aria-label="Use my location" onClick={locate} className={locating ? "locating" : ""}><Icon name="compass" size={16}/></button></div>
+    {!events.length && <div className="map-empty"><strong>No places match that view</strong><span>Try another filter or search.</span></div>}
+  </div>;
+}
+
+function LegacyNightMap({ events, selected, intentions, scale, onScale, onSelect }) {
   return <div className="map-panel" aria-label="Tonight activity map">
     <div className="map-canvas" style={{ transform: `scale(${scale})` }}>
       <div className="map-grid"></div><div className="river"></div>
@@ -305,7 +473,7 @@ function EventRail({ events, source, selected, intention, claimed, onSelect, onJ
       <div className="event-info">{event.promoted && <small className="promoted-label">PROMOTED</small>}<h3>{event.venue}</h3><p>{event.title} · {event.area}</p><div><span><Icon name="users" size={13}/>{event.groups} crews</span><span className="trend-chip">{event.trend || "Steady"}</span></div></div>
       <button className="row-arrow" onClick={(eventClick) => { eventClick.stopPropagation(); onJoin(event); }} aria-label={`Add ${event.title} to plan`}><Icon name="arrow" size={17}/></button>
     </article>)}</div>
-    {source === "demo" && <p className="data-note">Demo attendance protects real identities. Add a Ticketmaster key to pull the current event lineup.</p>}
+    {source === "demo" && <p className="data-note">Modeled crowd movement shows how live, privacy-safe group signals would work. Add a Ticketmaster key for the current event lineup.</p>}
   </aside>;
 }
 
