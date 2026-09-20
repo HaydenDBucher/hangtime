@@ -27,6 +27,31 @@ The input suggested that matching strangers was not the strongest opening value 
 
 This is evidence of a user-informed revision, not evidence that the revision succeeded. Success must be measured with the unchanged task and decision rule below.
 
+## Second exploratory input about clarity
+
+- Participants represented: one additional reported user interaction.
+- Interaction date and participant characteristics: not supplied.
+- Date added to the repository: 2026-09-20.
+- Method: informal feedback reported by the project owner; not the structured task below.
+- Feedback supplied by the project owner: the screen and instructions looked crowded and were hard to follow.
+
+### Interpretation and revision
+
+The feedback identified information hierarchy, not missing functionality, as the problem. The first screen presented a large headline, three instruction cards, a disclosure banner, five data lenses, search and view controls, the map, and a full plan summary before the user had taken an action.
+
+The revision reduced simultaneous choices and introduced progressive disclosure:
+
+- replaced three instruction cards with one current-next-step row;
+- shortened the headline and supporting sentence;
+- showed three primary data lenses plus a single **More** control before setup;
+- hid the full plan summary and recommendation cards until the plan is configured;
+- hid matching navigation and content until a destination is locked;
+- collapsed the modeled-data explanation behind a short visible label;
+- showed four common night types first, with additional choices on request;
+- simplified modal headings and final action language.
+
+This is a consequential clarity revision based on reported feedback. Its success is not yet verified; the structured task must measure whether users complete the path with less help and confusion.
+
 ## Test protocol
 
 Recruit 5-8 independent groups of 3-5 OSU-area students who are considering a night out. Use at least two dates or planning contexts. Give each group this neutral task:

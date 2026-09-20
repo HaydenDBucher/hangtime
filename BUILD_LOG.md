@@ -92,6 +92,10 @@ The deployed MVP currently supports:
 
 One exploratory interaction does not establish frequency, market size, retention, completion rate, data trust, or willingness to pay. It does not show that the revised map-first product outperforms the original experience. The feedback justified a product hypothesis and a build direction; the frozen experiment must now test the result.
 
+## Second user-informed clarity revision
+
+The project owner later reported another user's feedback that the screen and instructions looked crowded and were hard to follow. The product interpretation was that too many elements were asking for attention before the user understood the next action. The resulting revision replaced the three-card instruction block with one next-step row, shortened the hero copy, limited the initial data lenses, delayed plan summaries and recommendations until configuration, delayed matching until destination lock, collapsed the full prototype disclosure, and reduced the initial night-type choices. This revision is implemented but not yet behaviorally verified.
+
 The primary rule remains:
 
 - **Continue:** at least 50% of qualified groups lock a destination within five minutes without moderator help.

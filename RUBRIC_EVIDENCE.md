@@ -42,9 +42,11 @@ This page maps each grading criterion to a live artifact, repository evidence, c
 
 - Observed directional evidence: one exploratory user interaction reported that matching “felt off” while trend visibility, seeing where people are, and a one-stop night-out hub were useful.
 - Implemented revision: the product moved from matching-first to map-and-planning-first, adding aggregate crowd geography, campus zones, rankings, deals, events, food, ride estimates, and post-lock matching.
+- Observed directional evidence: a second reported user interaction found the screen and instructions crowded and hard to follow.
+- Implemented revision: the first screen now uses one current-next-step prompt, shorter copy, fewer initial lenses, and progressive disclosure of plan details, recommendations, matching, and additional options.
 - Documented: `USER_TEST_RESULTS.md` preserves the denominator, session log, funnel, surprise, revision, and fresh-user retest structure.
 - Documented: `SIMULATED_USABILITY_REVIEW.md` records heuristic improvements while explicitly excluding them from observed evidence.
-- Boundary: the exploratory interaction did not use the frozen task and has no completion measure. Level 4 still requires structured observed behavior and a verified retest; no repository change can truthfully replace that requirement.
+- Boundary: neither exploratory interaction used the frozen task or produced a completion measure. Level 4 still requires structured observed behavior and a verified retest; no repository change can truthfully replace that requirement.
 
 ## 6. Build process, candor, and team ownership
 

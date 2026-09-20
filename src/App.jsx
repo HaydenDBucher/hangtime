@@ -187,6 +187,7 @@ function App() {
   const [activeView, setActiveView] = useState("map");
   const [mapFilter, setMapFilter] = useState("Crowds");
   const [mapSearch, setMapSearch] = useState("");
+  const [showAllLenses, setShowAllLenses] = useState(false);
   const [matchFilter, setMatchFilter] = useState("Best plan");
   const [planOpen, setPlanOpen] = useState(false);
   const [pollOpen, setPollOpen] = useState(false);
@@ -307,26 +308,26 @@ function App() {
       <header className="topbar">
         <Logo />
         <button className="city-switcher"><span className="status-dot"></span>Ohio State tonight<Icon name="chevron" size={16}/></button>
-        <nav aria-label="Primary navigation"><a className="active" href="#tonight">Tonight</a><a href="#matches">Matches</a><a href="#safety">Safety</a></nav>
+        <nav aria-label="Primary navigation"><a className="active" href="#tonight">Tonight</a>{planLocked && <a href="#matches">Matches</a>}<a href="#safety">Safety</a></nav>
         {account ? <button className="profile-button" onClick={() => setAccountOpen(true)}><span>{account.name?.split(" ").map((part) => part[0]).join("").slice(0,2).toUpperCase() || "HT"}</span><span className="profile-copy"><strong>{account.name}</strong><small>{account.crewName || "Build your crew"}</small></span><Icon name="chevron" size={16}/></button> : <div className="auth-actions"><button onClick={() => { setAuthMode("signin"); setAuthOpen(true); }}>Sign in</button><button onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}>Create account</button></div>}
       </header>
 
       <main>
         <section className="tonight shell" id="tonight">
           <div className="map-first-heading">
-            <div><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>Ohio State tonight</span></div><h1>Stop losing 30 minutes<br/><em>deciding where to go.</em></h1></div>
-            <div className="map-head-actions"><p>For OSU crews planning tonight: compare the crowd, cost, and group fit in one place, then lock a destination together.</p><button onClick={() => { trackExperimentEvent("plan_started"); setPlanOpen(true); }}>Start tonight's plan<Icon name="arrow"/></button></div>
+            <div><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>Ohio State tonight</span></div><h1>Pick tonight's<br/><em>first stop.</em></h1></div>
+            <div className="map-head-actions"><p>See what's busy, compare your options, and choose together.</p><button onClick={() => { trackExperimentEvent("plan_started"); setPlanOpen(true); }}>{planConfigured ? "Edit tonight's plan" : "Start with your crew"}<Icon name="arrow"/></button></div>
           </div>
 
-          <ol className="decision-path" aria-label="Three steps to choose tonight's destination">
-            <li className={planConfigured ? "complete" : "current"}><span>{planConfigured ? <Icon name="check" size={13}/> : "1"}</span><strong>Set your night</strong><small>{planConfigured ? "Preferences saved" : "Choose the area, timing, and vibe."}</small></li>
-            <li className={planConfigured && !planLocked ? "current" : planLocked ? "complete" : ""}><span>{planLocked ? <Icon name="check" size={13}/> : "2"}</span><strong>Compare three places</strong><small>{planConfigured ? "Use the map and recommendation cards." : "Available after step one."}</small></li>
-            <li className={planLocked ? "complete" : ""}><span>{planLocked ? <Icon name="check" size={13}/> : "3"}</span><strong>Vote and lock it</strong><small>{planLocked ? `${plan.event} is locked` : "Finish with one shared destination."}</small></li>
-          </ol>
+          <div className="single-next-step" role="status">
+            <span>{planLocked ? <Icon name="check" size={14}/> : planConfigured ? "2" : "1"}</span>
+            <div><strong>{planLocked ? `${plan.event} is locked` : planConfigured ? "Compare a few places, then vote" : "Tell us what kind of night you want"}</strong><small>{planLocked ? "Your plan is ready. Matching is now optional." : planConfigured ? "Tap a marker or ranked destination. Vote when you're ready." : "It takes about 30 seconds."}</small></div>
+            {planConfigured && !planLocked && <button onClick={() => { trackExperimentEvent("crew_vote_opened"); setPollOpen(true); }}>Vote + lock</button>}
+          </div>
 
-          <div className="prototype-banner" role="note"><Icon name="shield" size={16}/><span><strong>Concept test:</strong> crowd counts, profiles, matches, and offers are fictional or modeled unless explicitly labeled live. Do not enter real credentials.</span></div>
+          <details className="prototype-disclosure"><summary><Icon name="shield" size={14}/>Modeled demo data</summary><p>Crowd counts, profiles, matches, and offers are fictional or modeled unless labeled live. Do not enter real credentials.</p></details>
 
-          <div className="night-lenses" aria-label="Explore tonight">{lensStats.map((lens) => <button className={mapFilter === lens.label ? "active" : ""} onClick={() => setMapFilter(lens.label)} key={lens.label}><span><Icon name={lens.icon} size={15}/>{lens.label}</span><strong>{lens.value}</strong><small>{lens.detail}</small></button>)}</div>
+          <div className="night-lenses" aria-label="Explore tonight">{(showAllLenses || planConfigured ? lensStats : lensStats.slice(0, 3)).map((lens) => <button className={mapFilter === lens.label ? "active" : ""} onClick={() => setMapFilter(lens.label)} key={lens.label}><span><Icon name={lens.icon} size={15}/>{lens.label}</span><strong>{lens.value}</strong><small>{lens.detail}</small></button>)}{!showAllLenses && !planConfigured && <button className="more-lenses" onClick={() => setShowAllLenses(true)}><span><Icon name="tune" size={15}/>More</span><strong>Food + rides</strong><small>Show every planning signal</small></button>}</div>
 
           <div className="map-toolbar compact"><label><Icon name="compass" size={17}/><input value={mapSearch} onChange={(event) => setMapSearch(event.target.value)} placeholder="Search High Street + downtown"/></label><div className="view-tabs" aria-label="Choose view">{["map", "events"].map((view) => <button className={activeView === view ? "active" : ""} onClick={() => setActiveView(view)} key={view}>{view === "map" ? <Icon name="compass" size={17}/> : <Icon name="calendar" size={17}/>} {view}</button>)}</div></div>
 
@@ -336,25 +337,25 @@ function App() {
           </div>
         </section>
 
-        <section className="plan-bar shell" aria-label="Your plan tonight">
+        {planConfigured && <section className="plan-bar shell" aria-label="Your plan tonight">
           <div className="plan-crew"><AvatarStack/><span><small>{account ? account.crewName || "Your crew" : "Demo crew"}</small><strong>{plan.crew}</strong></span></div>
           <button onClick={() => setPlanOpen(true)}><Icon name="pin"/><span><small>Area</small><strong>{plan.area}</strong></span></button>
           <button onClick={() => setPlanOpen(true)}><Icon name="spark"/><span><small>Type of night</small><strong>{plan.night}</strong></span></button>
           <button onClick={() => setPlanOpen(true)}><Icon name="clock"/><span><small>Start</small><strong>{plan.time}</strong></span></button>
           <div className="plan-event"><span><small>Plan</small><strong>{plan.event}</strong></span></div>
           <div className="plan-actions"><button onClick={() => setPlanOpen(true)}>Edit</button><button className="lock-plan-cta" disabled={!events.length} onClick={() => { trackExperimentEvent("crew_vote_opened"); setPollOpen(true); }}>{planLocked ? "Vote again" : "Vote + lock plan"}</button></div>
-        </section>
+        </section>}
 
-        <NextMoves events={events} onSelect={(event) => { setSelectedEvent(event); document.getElementById("tonight")?.scrollIntoView({ behavior: "smooth" }); }}/>
+        {planConfigured && <NextMoves events={events} onSelect={(event) => { setSelectedEvent(event); document.getElementById("tonight")?.scrollIntoView({ behavior: "smooth" }); }}/>}
 
-        <section className="matches shell" id="matches">
+        {planLocked && <section className="matches shell" id="matches">
           <div className="section-title-row matches-heading">
             <div><span className="kicker">{!planLocked ? "AVAILABLE AFTER YOUR PLAN IS LOCKED" : openToMeet ? "OPEN TO ONE INTRODUCTION" : "DISCOVERY PAUSED"}</span><h2>Crews whose plans overlap.</h2></div>
             <div className="filter-row"><Icon name="tune" size={17}/>{filters.map((filter) => <button className={matchFilter === filter ? "active" : ""} onClick={() => setMatchFilter(filter)} key={filter}>{filter}</button>)}</div>
           </div>
           <div className="meeting-control"><div><span className="live-dot"></span><p><strong>Meet another crew tonight</strong><small>{planLocked ? "Only groups near the same place and time can see you." : "First lock a destination so matching has a real place and time."}</small></p></div><button disabled={!planLocked} className={planLocked && openToMeet ? "on" : ""} onClick={() => setOpenToMeet((current) => !current)} aria-pressed={planLocked && openToMeet} aria-label={planLocked ? "Toggle crew introductions" : "Crew introductions unavailable until a destination is locked"}><i></i></button></div>
-          {!planLocked ? <div className="matches-paused"><Icon name="lock" size={24}/><strong>Lock a destination before meeting other crews</strong><p>This keeps the first decision focused and only shows groups whose plans overlap with yours.</p><button className="section-cta" onClick={() => setPollOpen(true)}>Vote + lock tonight's plan</button></div> : openToMeet ? <div className="match-grid">{orderedMatches.map((group, index) => <MatchCard group={group} featured={index === 0} onOpen={() => setProfile(group)} onPerson={(person) => setPersonProfile({ person, group })} onWave={() => sendWave(group)} key={group.id}/>)}</div> : <div className="matches-paused"><Icon name="lock" size={24}/><strong>Introductions are paused</strong><p>Your plan remains visible only to your crew.</p></div>}
-        </section>
+          {openToMeet ? <div className="match-grid">{orderedMatches.map((group, index) => <MatchCard group={group} featured={index === 0} onOpen={() => setProfile(group)} onPerson={(person) => setPersonProfile({ person, group })} onWave={() => sendWave(group)} key={group.id}/>)}</div> : <div className="matches-paused"><Icon name="lock" size={24}/><strong>Introductions are paused</strong><p>Your plan remains visible only to your crew.</p></div>}
+        </section>}
 
         <section className="privacy shell" id="safety">
           <div className="privacy-mark"><Icon name="shield" size={30}/></div>
@@ -711,7 +712,7 @@ function EventRail({ events, source, selected, intention, claimed, onSelect, onI
   const rankedEvents = useMemo(() => [...events].sort((a, b) => estimatedPeople(b) - estimatedPeople(a)), [events]);
   const totalPeople = rankedEvents.reduce((total, event) => total + estimatedPeople(event), 0);
   const maxPeople = Math.max(1, ...rankedEvents.map(estimatedPeople));
-  const topEvents = rankedEvents.slice(0, 6);
+  const topEvents = rankedEvents.slice(0, 3);
   const selectedRank = selected ? rankedEvents.findIndex((event) => event.id === selected.id) + 1 : 0;
   const selectedOutsideTop = selectedRank > 0 && !topEvents.some((event) => event.id === selected.id) ? selected : null;
   const visibleRankings = showAllRankings ? rankedEvents : selectedOutsideTop ? [...topEvents, selectedOutsideTop] : topEvents;
@@ -732,7 +733,7 @@ function EventRail({ events, source, selected, intention, claimed, onSelect, onI
         </button>;
       })}
     </div>
-    {rankedEvents.length > 6 && <button className="ranking-toggle" onClick={() => setShowAllRankings((current) => !current)}>{showAllRankings ? "Show top six" : `View all ${rankedEvents.length} ranked places`}<Icon name="chevron" size={14}/></button>}
+    {rankedEvents.length > 3 && <button className="ranking-toggle" onClick={() => setShowAllRankings((current) => !current)}>{showAllRankings ? "Show top three" : `View all ${rankedEvents.length} places`}<Icon name="chevron" size={14}/></button>}
     {selected && <div className="venue-intel">
       <div className="intel-live"><span className="live-dot"></span><strong>{selectedRank > 0 ? `#${selectedRank} tonight · ` : ""}{estimatedPeople(selected)} people</strong><small>Updated {selected.updated || "recently"}</small></div>
       <h2>{selected.venue}</h2><p>{selected.title} · {selected.time} · {selected.age || "Check age policy"}</p>
@@ -860,14 +861,16 @@ function ModalShell({ children, onClose, label, className = "" }) {
 
 function PlanModal({ plan, onClose, onSave }) {
   const [next, setNext] = useState(plan);
+  const [showAllNights, setShowAllNights] = useState(false);
   const set = (key, value) => setNext((current) => ({ ...current, [key]: value }));
   return <ModalShell onClose={onClose} label="Set tonight's plan" className="plan-modal">
-    <span className="kicker">30-SECOND SETUP</span><h2>What are you actually doing?</h2><p>Pick the closest version. You can change it later.</p>
+    <span className="kicker">STEP 1</span><h2>What sounds good tonight?</h2><p>Choose the closest fit. Nothing here is permanent.</p>
     <label><span>Who’s in?</span><div className="modal-crew"><AvatarStack/><strong>The usual four</strong><button>Change</button></div></label>
     <label><span>Where around campus?</span><div className="choice-grid">{["High Street", "North Campus", "South Campus", "Open to ideas"].map((area) => <button className={next.area === area ? "selected" : ""} onClick={() => set("area", area)} key={area}>{area}</button>)}</div></label>
-    <label><span>What kind of night?</span><div className="night-choice-grid">{nightOptions.map((option) => <button className={next.night === option.label ? "selected" : ""} onClick={() => set("night", option.label)} key={option.label}><strong>{option.label}</strong><small>{option.detail}</small></button>)}</div></label>
+    <label><span>What kind of night?</span><div className="night-choice-grid">{(showAllNights ? nightOptions : nightOptions.slice(0, 4)).map((option) => <button className={next.night === option.label ? "selected" : ""} onClick={() => set("night", option.label)} key={option.label}><strong>{option.label}</strong><small>{option.detail}</small></button>)}</div></label>
+    {!showAllNights && <button className="night-options-toggle" onClick={() => setShowAllNights(true)}>Show more night types</button>}
     <label><span>Starting around</span><div className="choice-grid time">{["8:30 PM", "9:30 PM", "10:30 PM", "Whenever"].map((time) => <button className={next.time === time ? "selected" : ""} onClick={() => set("time", time)} key={time}>{time}</button>)}</div></label>
-    <button className="modal-primary" onClick={() => onSave(next)}>Go live <Icon name="arrow"/></button>
+    <button className="modal-primary" onClick={() => onSave(next)}>Show me where to go <Icon name="arrow"/></button>
   </ModalShell>;
 }
 
