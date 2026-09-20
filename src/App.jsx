@@ -366,7 +366,7 @@ function App() {
         <DealsSection events={events} claimedDeals={claimedDeals} onClaim={claimDeal}/>
       </main>
 
-      <footer className="footer shell"><Logo/><p>One plan. More possibilities.</p><div><a href="#safety">Safety</a><a href={`${import.meta.env.BASE_URL}pitch-deck.html`} target="_blank" rel="noreferrer">Venture deck</a><button onClick={() => { trackExperimentEvent("venue_interest_opened"); setVenueOpen(true); }}>For venues</button><button onClick={() => setEvidenceOpen(true)}>Test evidence</button><span>Concept MVP</span></div></footer>
+      <footer className="footer shell"><Logo/><p>One plan. More possibilities.</p><div><a href="#safety">Safety</a><button onClick={() => { trackExperimentEvent("venue_interest_opened"); setVenueOpen(true); }}>For venues</button><button onClick={() => setEvidenceOpen(true)}>Test evidence</button><span>Concept MVP</span></div></footer>
 
       {planOpen && (
         <PlanModal plan={plan} onClose={() => setPlanOpen(false)} onSave={(next) => { trackExperimentEvent("plan_configured", { area: next.area, night: next.night, time: next.time }); setPlan(next); setPlanConfigured(true); setPlanOpen(false); setToast("Step 1 complete. Compare places, then vote."); }}/>
