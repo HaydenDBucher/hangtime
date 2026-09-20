@@ -1,0 +1,4 @@
+evidence_id,date,participant_id,segment,method,task_or_question,observation_or_quote,artifact_link,interpretation,product_or_business_decision,confidence,owner
+E-001,[enter date],[multiple testers],college student,exploratory conversation,What matters when deciding where to go?,Testers wanted to know where people are and emphasized the overall ecosystem over individual groups,[add notes link],Destination intelligence is a stronger initial job than group matching,Make map crowd direction deals events food and rides primary; retain matching as optional,directional,[name]
+E-002,[enter date],[participant ID],college student,prototype usability test,[task],[exact behavior or verbatim quote],[recording or notes],[interpretation],[decision],low/medium/high,[name]
+E-003,[enter date],[venue ID],venue decision-maker,payer interview,Would you sign a $149/month pilot?,[exact response],[notes or LOI],[interpretation],[decision],low/medium/high,[name]

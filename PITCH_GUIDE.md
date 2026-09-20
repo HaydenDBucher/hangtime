@@ -1,27 +1,13 @@
-# Hangtime — 90-second MVP demo
+# Hangtime presentation guide
 
-## 0:00–0:15 — The promise
+The complete presentation materials now live in [`docs/`](docs/README.md).
 
-Open directly on the live map and frame the product in one sentence:
+- [Rubric narrative](docs/RUBRIC_SUBMISSION.md)
+- [Pitch deck](public/pitch-deck.html)
+- [90-second and five-minute demo scripts](docs/DEMO_SCRIPT.md)
+- [Final submission checklist](docs/RUBRIC_CHECKLIST.md)
 
-> Know where the night is moving before your crew commits.
+Live product: <https://haydendbucher.github.io/hangtime/><br>
+Live presentation: <https://haydendbucher.github.io/hangtime/pitch-deck.html>
 
-## 0:15–0:35 — Make tonight live
-
-Select **Ask the crew**, cast a destination vote, and lock the winner. Then show that the plan can still be edited on one screen.
-
-Before voting, point out that a new user can create an account from the header, save a crew, and return to the same profile later.
-
-## 0:35–0:55 — See the city
-
-Select heat-map markers to show crowd direction without exposing individual identities. Show wait, cover, peak time, confidence, and network overlap. Mark the crew **Heading there** and point out that the map count and plan update immediately.
-
-## 0:55–1:15 — Match privately
-
-Sort groups by **Same places**, **Same timing**, or **Mutuals**. Open **Lane Ave crew** to show the actual plan, member photos, individual profiles, verification, and linked-social signals while direct handles remain private.
-
-## 1:15–1:30 — Mutual payoff
-
-Select **We’d meet them**. The mutual-match screen unlocks connected accounts and the shared group chat.
-
-Close on a Crew Unlock: monetization appears at the moment a group is deciding what to do, and the offer becomes useful only when the crew commits.
+The pitch should close on the next honest test: a two-week OSU pilot measuring destination decisions, repeat use, information accuracy, and venue willingness to pay.

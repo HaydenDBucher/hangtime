@@ -2,6 +2,21 @@
 
 A functional concept MVP for coordinating a night out. A crew can publish one lightweight plan, see where groups are gathering, browse events and venue offers, and privately match with another group.
 
+## Venture submission kit
+
+- [Rubric-mapped narrative](docs/RUBRIC_SUBMISSION.md)
+- [One-page venture summary](docs/ONE_PAGE_SUMMARY.md)
+- [Browser and print pitch deck](public/pitch-deck.html)
+- [Product demo script](docs/DEMO_SCRIPT.md)
+- [Falsifiable experiment plan](docs/EXPERIMENT_PLAN.md)
+- [User research and revision record](docs/USER_RESEARCH.md)
+- [Venture economics](docs/VENTURE_ECONOMICS.md)
+- [Venue pilot LOI](docs/VENUE_PILOT_LOI.md)
+- [Build, candor, and ownership](docs/BUILD_AND_OWNERSHIP.md)
+- [Final submission checklist](docs/RUBRIC_CHECKLIST.md)
+
+Live presentation: [haydendbucher.github.io/hangtime/pitch-deck.html](https://haydendbucher.github.io/hangtime/pitch-deck.html)
+
 ## Run locally
 
 ```powershell
