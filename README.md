@@ -67,3 +67,15 @@ npm run preview
 ```
 
 GitHub Pages deploys automatically from `main` using the workflow in `.github/workflows`.
+
+## MVP evidence packet
+
+- [`MVP_EXPERIMENT.md`](MVP_EXPERIMENT.md): named hypothesis, behavioral measure, denominator, and precommitted decision rule.
+- [`USER_TEST_RESULTS.md`](USER_TEST_RESULTS.md): consent-safe protocol and results/retest structure. It intentionally contains no invented outcomes.
+- [`VENTURE_ECONOMICS.md`](VENTURE_ECONOMICS.md): payer, pricing, contribution logic, acquisition path, and cash implication.
+- [`BUILD_LOG.md`](BUILD_LOG.md): build decisions, automated assistance, human verification, failures, and limitations.
+- [`TEAM_OWNERSHIP.md`](TEAM_OWNERSHIP.md): responsibility and command-of-evidence receipt.
+- [`LIMITATIONS.md`](LIMITATIONS.md): product, data, safety, account, and business boundaries.
+- [`SIMULATED_USABILITY_REVIEW.md`](SIMULATED_USABILITY_REVIEW.md): clearly labeled heuristic walkthrough used to prepare the interface for real testing; it is not validation evidence.
+
+The prototype records a minimal anonymous behavioral funnel in browser storage. Use **Test evidence** in the footer to inspect and export those events. Review all exports before sharing them.

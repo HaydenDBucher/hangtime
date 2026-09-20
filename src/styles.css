@@ -1002,3 +1002,39 @@ button { letter-spacing: -.01em; }
   .night-lenses button { min-height: 80px; }
   .map-toolbar.compact { display: flex; }
 }
+
+/* Rubric-focused MVP test layer */
+.decision-path {
+  margin: 0 0 10px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  list-style: none;
+}
+.decision-path li { padding: 13px 14px; display: grid; grid-template-columns: 28px 1fr; column-gap: 9px; border: 1px solid var(--line); border-radius: 5px; background: #fff; }
+.decision-path li > span { grid-row: span 2; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: #fff; font-family: "IBM Plex Mono", Consolas, monospace; font-size: 10px; }
+.decision-path li.current { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.decision-path li.complete { background: #edf5ed; border-color: #9bb49f; }
+.decision-path li.complete > span { background: #4f8062; }
+.decision-path strong { font-size: 13px; }
+.decision-path small { margin-top: 2px; color: var(--muted); font-size: 10px; }
+.prototype-banner { margin-bottom: 10px; padding: 9px 12px; display: flex; align-items: flex-start; gap: 8px; border: 1px solid #d7c891; border-radius: 5px; background: #fff9dc; color: #50471f; font-size: 10px; line-height: 1.45; }
+.prototype-banner .icon { flex: 0 0 auto; }
+.lock-plan-cta { background: var(--ink) !important; color: #fff !important; }
+.lock-plan-cta:disabled { opacity: .45; cursor: not-allowed; }
+.section-cta { margin-top: 14px; min-height: 40px; padding: 0 16px; border: 0; border-radius: 4px; background: var(--ink); color: #fff; cursor: pointer; }
+.meeting-control > button:disabled { opacity: .38; cursor: not-allowed; }
+.safety-actions { margin-top: 10px; display: flex; justify-content: center; gap: 16px; }
+.safety-actions button { border: 0; background: transparent; color: var(--muted); font-size: 10px; text-decoration: underline; cursor: pointer; }
+.venue-modal, .evidence-modal { max-width: 560px; }
+.venue-modal select { width: 100%; min-height: 44px; padding: 0 11px; border: 1px solid var(--line); border-radius: 4px; background: #fff; color: var(--ink); }
+.evidence-rules { margin: 22px 0; padding: 16px; display: grid; gap: 8px; border: 1px solid var(--line); border-radius: 5px; background: var(--paper); }
+.evidence-rules strong { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.evidence-rules span { font-size: 11px; color: var(--muted); }
+
+:focus-visible { outline: 3px solid #e28d5b; outline-offset: 3px; }
+
+@media (max-width: 700px) {
+  .decision-path { grid-template-columns: 1fr; }
+}

@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { NIGHT_CENTER, NIGHT_RADIUS_MILES, getTonightEvents, isWithinNightRadius } from "./eventService";
 import { getSession, isCloudAuthEnabled, signIn, signOut, signUp, updateSessionProfile } from "./authService";
 import { getCampusRidePreview, getRideLink } from "./rideService";
+import { exportExperimentEvents, getExperimentEvents, trackExperimentEvent } from "./experimentService";
 
 const NIGHT_LAT_DELTA = NIGHT_RADIUS_MILES / 69;
 const NIGHT_LNG_DELTA = NIGHT_RADIUS_MILES / (69 * Math.cos(NIGHT_CENTER.lat * Math.PI / 180));
@@ -188,11 +189,16 @@ function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState("signup");
   const [accountOpen, setAccountOpen] = useState(false);
+  const [venueOpen, setVenueOpen] = useState(false);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [toast, setToast] = useState("");
+  const [planConfigured, setPlanConfigured] = useState(false);
+  const [planLocked, setPlanLocked] = useState(false);
   const [plan, setPlan] = useState({ crew: "The usual four", area: "High Street", night: "Drinks, then decide", time: "9:30 PM", event: "Open plan" });
   const tonightLabel = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" }).format(new Date());
 
   useEffect(() => {
+    trackExperimentEvent("landing_viewed", { source: "github_pages" });
     const controller = new AbortController();
     getTonightEvents({ city: "Columbus", signal: controller.signal }).then(({ events: nextEvents, source }) => {
       setEvents(nextEvents);
@@ -247,22 +253,27 @@ function App() {
   }, [selectedEvent?.id, visibleEvents]);
 
   const joinEvent = (event) => {
+    trackExperimentEvent("destination_added", { eventId: event.id, venue: event.venue });
     setPlan((current) => ({ ...current, event: event.title, area: event.area }));
     setToast(`${event.title} added to your night`);
   };
 
   const setIntent = (event, intent) => {
-    setIntentions((current) => ({ ...current, [event.id]: intent }));
+    const nextIntent = intentions[event.id] === intent ? null : intent;
+    setIntentions((current) => ({ ...current, [event.id]: nextIntent }));
     setPlan((current) => ({ ...current, event: event.title, area: event.area }));
-    setToast(intent === "here" ? `Checked in at ${event.venue}` : intent === "heading" ? `Your crew is heading to ${event.venue}` : `${event.venue} added to your shortlist`);
+    trackExperimentEvent(nextIntent ? "crew_status_shared" : "crew_status_removed", { eventId: event.id, status: nextIntent });
+    setToast(!nextIntent ? `Status removed from ${event.venue}` : nextIntent === "here" ? `Checked in at ${event.venue}` : nextIntent === "heading" ? `Your crew is heading to ${event.venue}` : `${event.venue} added to your shortlist`);
   };
 
   const claimDeal = (event) => {
+    trackExperimentEvent("deal_saved", { eventId: event.id, venue: event.venue });
     setClaimedDeals((current) => current.includes(event.id) ? current : [...current, event.id]);
     setToast(`Crew deal saved for ${event.venue}`);
   };
 
   const sendWave = (group) => {
+    trackExperimentEvent("introduction_requested", { groupId: group.id });
     if (group.id === 1) {
       setMatchedGroup(group);
       setProfile(null);
@@ -284,9 +295,17 @@ function App() {
       <main>
         <section className="tonight shell" id="tonight">
           <div className="map-first-heading">
-            <div><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>Ohio State tonight</span></div><h1>Campus,<br/><em>at a glance.</em></h1></div>
-            <div className="map-head-actions"><p>People, plans, prices, and food—one quick look before your group decides.</p>{!account && <button onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}>Join your campus<Icon name="arrow"/></button>}</div>
+            <div><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>Ohio State tonight</span></div><h1>Stop losing 30 minutes<br/><em>deciding where to go.</em></h1></div>
+            <div className="map-head-actions"><p>For OSU crews planning tonight: compare the crowd, cost, and group fit in one place, then lock a destination together.</p><button onClick={() => { trackExperimentEvent("plan_started"); setPlanOpen(true); }}>Start tonight's plan<Icon name="arrow"/></button></div>
           </div>
+
+          <ol className="decision-path" aria-label="Three steps to choose tonight's destination">
+            <li className={planConfigured ? "complete" : "current"}><span>{planConfigured ? <Icon name="check" size={13}/> : "1"}</span><strong>Set your night</strong><small>{planConfigured ? "Preferences saved" : "Choose the area, timing, and vibe."}</small></li>
+            <li className={planConfigured && !planLocked ? "current" : planLocked ? "complete" : ""}><span>{planLocked ? <Icon name="check" size={13}/> : "2"}</span><strong>Compare three places</strong><small>{planConfigured ? "Use the map and recommendation cards." : "Available after step one."}</small></li>
+            <li className={planLocked ? "complete" : ""}><span>{planLocked ? <Icon name="check" size={13}/> : "3"}</span><strong>Vote and lock it</strong><small>{planLocked ? `${plan.event} is locked` : "Finish with one shared destination."}</small></li>
+          </ol>
+
+          <div className="prototype-banner" role="note"><Icon name="shield" size={16}/><span><strong>Concept test:</strong> crowd counts, profiles, matches, and offers are fictional or modeled unless explicitly labeled live. Do not enter real credentials.</span></div>
 
           <div className="night-lenses" aria-label="Explore tonight">{lensStats.map((lens) => <button className={mapFilter === lens.label ? "active" : ""} onClick={() => setMapFilter(lens.label)} key={lens.label}><span><Icon name={lens.icon} size={15}/>{lens.label}</span><strong>{lens.value}</strong><small>{lens.detail}</small></button>)}</div>
 
@@ -304,37 +323,37 @@ function App() {
           <button onClick={() => setPlanOpen(true)}><Icon name="spark"/><span><small>Type of night</small><strong>{plan.night}</strong></span></button>
           <button onClick={() => setPlanOpen(true)}><Icon name="clock"/><span><small>Start</small><strong>{plan.time}</strong></span></button>
           <div className="plan-event"><span><small>Plan</small><strong>{plan.event}</strong></span></div>
-          <div className="plan-actions"><button onClick={() => setPlanOpen(true)}>Edit</button><button onClick={() => setPollOpen(true)}>Crew vote</button></div>
+          <div className="plan-actions"><button onClick={() => setPlanOpen(true)}>Edit</button><button className="lock-plan-cta" disabled={!events.length} onClick={() => { trackExperimentEvent("crew_vote_opened"); setPollOpen(true); }}>{planLocked ? "Vote again" : "Vote + lock plan"}</button></div>
         </section>
 
         <NextMoves events={events} onSelect={(event) => { setSelectedEvent(event); document.getElementById("tonight")?.scrollIntoView({ behavior: "smooth" }); }}/>
 
         <section className="matches shell" id="matches">
           <div className="section-title-row matches-heading">
-            <div><span className="kicker">{openToMeet ? "OPEN TO ONE INTRODUCTION" : "DISCOVERY PAUSED"}</span><h2>Crews whose plans overlap.</h2></div>
+            <div><span className="kicker">{!planLocked ? "AVAILABLE AFTER YOUR PLAN IS LOCKED" : openToMeet ? "OPEN TO ONE INTRODUCTION" : "DISCOVERY PAUSED"}</span><h2>Crews whose plans overlap.</h2></div>
             <div className="filter-row"><Icon name="tune" size={17}/>{filters.map((filter) => <button className={matchFilter === filter ? "active" : ""} onClick={() => setMatchFilter(filter)} key={filter}>{filter}</button>)}</div>
           </div>
-          <div className="meeting-control"><div><span className="live-dot"></span><p><strong>Meet another crew tonight</strong><small>Only groups near the same place and time can see you.</small></p></div><button className={openToMeet ? "on" : ""} onClick={() => setOpenToMeet((current) => !current)} aria-pressed={openToMeet}><i></i></button></div>
-          {openToMeet ? <div className="match-grid">{orderedMatches.map((group, index) => <MatchCard group={group} featured={index === 0} onOpen={() => setProfile(group)} onPerson={(person) => setPersonProfile({ person, group })} onWave={() => sendWave(group)} key={group.id}/>)}</div> : <div className="matches-paused"><Icon name="lock" size={24}/><strong>Introductions are paused</strong><p>Your plan remains visible only to your crew.</p></div>}
+          <div className="meeting-control"><div><span className="live-dot"></span><p><strong>Meet another crew tonight</strong><small>{planLocked ? "Only groups near the same place and time can see you." : "First lock a destination so matching has a real place and time."}</small></p></div><button disabled={!planLocked} className={planLocked && openToMeet ? "on" : ""} onClick={() => setOpenToMeet((current) => !current)} aria-pressed={planLocked && openToMeet} aria-label={planLocked ? "Toggle crew introductions" : "Crew introductions unavailable until a destination is locked"}><i></i></button></div>
+          {!planLocked ? <div className="matches-paused"><Icon name="lock" size={24}/><strong>Lock a destination before meeting other crews</strong><p>This keeps the first decision focused and only shows groups whose plans overlap with yours.</p><button className="section-cta" onClick={() => setPollOpen(true)}>Vote + lock tonight's plan</button></div> : openToMeet ? <div className="match-grid">{orderedMatches.map((group, index) => <MatchCard group={group} featured={index === 0} onOpen={() => setProfile(group)} onPerson={(person) => setPersonProfile({ person, group })} onWave={() => sendWave(group)} key={group.id}/>)}</div> : <div className="matches-paused"><Icon name="lock" size={24}/><strong>Introductions are paused</strong><p>Your plan remains visible only to your crew.</p></div>}
         </section>
 
         <section className="privacy shell" id="safety">
           <div className="privacy-mark"><Icon name="shield" size={30}/></div>
           <div><span className="kicker">DESIGNED FOR DISCRETION</span><h2>People visible.<br/>Access controlled.</h2></div>
           <p>See who you may meet and open individual profiles. Direct social handles, messaging, and contact details stay private until both groups match.</p>
-          <div className="privacy-points"><span><Icon name="check" size={15}/>Real photos up front</span><span><Icon name="check" size={15}/>Handles after matching</span><span><Icon name="check" size={15}/>Group-only introductions</span></div>
+          <div className="privacy-points"><span><Icon name="check" size={15}/>Fictional profiles in this concept</span><span><Icon name="check" size={15}/>Handles after matching</span><span><Icon name="check" size={15}/>Status sharing is reversible</span><span><Icon name="check" size={15}/>Report and block controls</span></div>
         </section>
 
         <DealsSection events={events} claimedDeals={claimedDeals} onClaim={claimDeal}/>
       </main>
 
-      <footer className="footer shell"><Logo/><p>One plan. More possibilities.</p><div><a href="#safety">Safety</a><button onClick={() => setToast("Venue partner form coming next")}>For venues</button><span>Concept MVP</span></div></footer>
+      <footer className="footer shell"><Logo/><p>One plan. More possibilities.</p><div><a href="#safety">Safety</a><button onClick={() => { trackExperimentEvent("venue_interest_opened"); setVenueOpen(true); }}>For venues</button><button onClick={() => setEvidenceOpen(true)}>Test evidence</button><span>Concept MVP</span></div></footer>
 
       {planOpen && (
-        <PlanModal plan={plan} onClose={() => setPlanOpen(false)} onSave={(next) => { setPlan(next); setPlanOpen(false); setToast("Tonight’s plan is live"); }}/>
+        <PlanModal plan={plan} onClose={() => setPlanOpen(false)} onSave={(next) => { trackExperimentEvent("plan_configured", { area: next.area, night: next.night, time: next.time }); setPlan(next); setPlanConfigured(true); setPlanOpen(false); setToast("Step 1 complete. Compare places, then vote."); }}/>
       )}
       {pollOpen && (
-        <CrewPoll events={events.slice(0, 3)} onClose={() => setPollOpen(false)} onChoose={(event) => { joinEvent(event); setPollOpen(false); setToast(`${event.venue} won the crew vote`); }}/>
+        <CrewPoll events={events.slice(0, 3)} onClose={() => setPollOpen(false)} onChoose={(event) => { trackExperimentEvent("destination_locked", { eventId: event.id, venue: event.venue }); joinEvent(event); setPlanConfigured(true); setPlanLocked(true); setPollOpen(false); setToast(`${event.venue} is locked as tonight's plan`); }}/>
       )}
       {authOpen && (
         <AuthModal initialMode={authMode} onClose={() => setAuthOpen(false)} onAuthenticated={(session) => { setAccount(session.profile); setAuthOpen(false); setToast(session.needsVerification ? "Check your email to verify your account" : `Welcome${session.profile.name ? `, ${session.profile.name.split(" ")[0]}` : ""}`); }}/>
@@ -351,7 +370,9 @@ function App() {
       {matchedGroup && (
         <MatchModal group={matchedGroup} onClose={() => setMatchedGroup(null)} onMessage={() => { setMatchedGroup(null); setToast("Group chat opened"); }}/>
       )}
-      {toast && <div className="toast" role="status"><Icon name="check" size={17}/>{toast}</div>}
+      {venueOpen && <VenueInterestModal onClose={() => setVenueOpen(false)} onSubmit={(details) => { trackExperimentEvent("venue_interest_submitted", details); setVenueOpen(false); setToast("Venue interest recorded for this prototype"); }}/>} {/* local payer test */}
+      {evidenceOpen && <EvidenceModal onClose={() => setEvidenceOpen(false)}/>} {/* local evidence export */}
+      {toast && <div className="toast" role="status" aria-live="polite"><Icon name="check" size={17}/>{toast}</div>}
     </div>
   );
 }
@@ -733,7 +754,7 @@ function CrewPoll({ events, onClose, onChoose }) {
     setYourVote(index);
   };
   const winner = votes.indexOf(Math.max(...votes));
-  return <ModalShell onClose={onClose} label="Crew destination vote" className="poll-modal"><span className="kicker">THE USUAL FOUR</span><h2>Where should we start?</h2><p>One tap each. Highest vote becomes the plan.</p><div className="poll-members"><AvatarStack/><span>3 of 4 voted</span></div><div className="poll-options">{events.map((event,index) => <button className={yourVote === index ? "selected" : ""} onClick={() => vote(index)} key={event.id}><span><strong>{event.venue}</strong><small>{event.wait} wait · {event.cover}</small></span><b>{votes[index]}</b></button>)}</div><button className="modal-primary" onClick={() => onChoose(events[winner])}>Lock the winner <Icon name="arrow"/></button></ModalShell>;
+  return <ModalShell onClose={onClose} label="Crew destination vote" className="poll-modal"><span className="kicker">STEP 3 OF 3 · THE USUAL FOUR</span><h2>Where should we start?</h2><p>Cast your vote before locking the group winner.</p><div className="poll-members"><AvatarStack/><span>{yourVote === null ? "3 of 4 voted · your vote is next" : "4 of 4 voted · ready to lock"}</span></div><div className="poll-options">{events.map((event,index) => <button className={yourVote === index ? "selected" : ""} onClick={() => vote(index)} key={event.id}><span><strong>{event.venue}</strong><small>{event.wait} wait · {event.cover}</small></span><b>{votes[index]}</b></button>)}</div><button className="modal-primary" disabled={yourVote === null || !events.length} onClick={() => onChoose(events[winner])}>{yourVote === null ? "Vote to continue" : "Lock the winner"} <Icon name="arrow"/></button></ModalShell>;
 }
 
 function AuthModal({ initialMode, onClose, onAuthenticated }) {
@@ -796,7 +817,26 @@ function MatchCard({ group, featured, onOpen, onPerson, onWave }) {
 }
 
 function ModalShell({ children, onClose, label, className = "" }) {
-  return <div className="modal-layer" role="dialog" aria-modal="true" aria-label={label}><button className="modal-backdrop" onClick={onClose} aria-label="Close"></button><div className={`modal ${className}`}><button className="modal-close" onClick={onClose} aria-label="Close"><Icon name="close"/></button>{children}</div></div>;
+  const modalRef = useRef(null);
+  useEffect(() => {
+    const previous = document.activeElement;
+    const modal = modalRef.current;
+    const focusable = () => [...(modal?.querySelectorAll("button, a, input, select, textarea, [tabindex]:not([tabindex='-1'])") || [])].filter((item) => !item.disabled);
+    focusable()[0]?.focus();
+    const handleKey = (event) => {
+      if (event.key === "Escape") onClose();
+      if (event.key !== "Tab") return;
+      const items = focusable();
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => { document.removeEventListener("keydown", handleKey); previous?.focus?.(); };
+  }, [onClose]);
+  return <div className="modal-layer" role="dialog" aria-modal="true" aria-label={label}><button className="modal-backdrop" onClick={onClose} aria-label="Close"></button><div className={`modal ${className}`} ref={modalRef}><button className="modal-close" onClick={onClose} aria-label="Close"><Icon name="close"/></button>{children}</div></div>;
 }
 
 function PlanModal({ plan, onClose, onSave }) {
@@ -822,6 +862,42 @@ function ProfileModal({ group, onClose, onPerson, onWave }) {
     <section><span className="kicker">A LITTLE CONTEXT</span><p>{group.blurb}</p><div className="interest-list">{group.interests.map((interest) => <span key={interest}>{interest}</span>)}</div></section>
     <div className="account-links"><span><Icon name="shield" size={16}/>{group.verified}/{group.members} identity verified</span><span><Icon name="instagram" size={16}/>{group.socials.join(" + ")} connected</span><span><Icon name="users" size={16}/>{group.mutuals || "No"} mutual connections</span></div>
     <button className="modal-primary" onClick={onWave}>We’d meet them <Icon name="arrow"/></button>
+    <div className="safety-actions"><button onClick={() => { trackExperimentEvent("profile_reported", { groupId: group.id }); onClose(); }}>Report profile</button><button onClick={() => { trackExperimentEvent("profile_blocked", { groupId: group.id }); onClose(); }}>Block this crew</button></div>
+  </ModalShell>;
+}
+
+function VenueInterestModal({ onClose, onSubmit }) {
+  const [form, setForm] = useState({ venue: "", role: "", pricing: "$75/month + $1 per redeemed offer" });
+  return <ModalShell onClose={onClose} label="Venue partner interest" className="venue-modal">
+    <span className="kicker">PAYER TEST</span><h2>Bring more groups through the door.</h2>
+    <p>Hangtime is testing whether campus venues will pay for measurable group commitments instead of generic impressions.</p>
+    <form className="auth-form" onSubmit={(event) => { event.preventDefault(); onSubmit(form); }}>
+      <label><span>Venue name</span><input required value={form.venue} onChange={(event) => setForm({ ...form, venue: event.target.value })}/></label>
+      <label><span>Your role</span><input required value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })} placeholder="Owner, manager, promoter"/></label>
+      <label><span>Offer being tested</span><select value={form.pricing} onChange={(event) => setForm({ ...form, pricing: event.target.value })}><option>$75/month + $1 per redeemed offer</option><option>$150/month flat</option><option>$2 per redeemed group offer</option><option>Interested, but pricing needs work</option></select></label>
+      <p className="prototype-note">This concept form stores only an anonymous interaction event in this browser; it does not send contact information.</p>
+      <button className="modal-primary">Record interest <Icon name="arrow"/></button>
+    </form>
+  </ModalShell>;
+}
+
+function EvidenceModal({ onClose }) {
+  const events = getExperimentEvents();
+  const download = () => {
+    const blob = new Blob([exportExperimentEvents()], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `hangtime-test-events-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+  return <ModalShell onClose={onClose} label="MVP test evidence" className="evidence-modal">
+    <span className="kicker">HONEST MVP TEST</span><h2>{events.length} anonymous interactions recorded.</h2>
+    <p>The browser records the core behavioral funnel only: plan starts, destination comparisons, crew votes, locked destinations, deal saves, introductions, and venue interest.</p>
+    <div className="evidence-rules"><strong>Precommitted decision rule</strong><span>Continue: at least 50% of qualified groups lock a destination within five minutes.</span><span>Change: 25-49% complete, or repeated help is required.</span><span>Stop/reframe: fewer than 25% complete.</span></div>
+    <button className="modal-primary" onClick={download}>Download this browser's events <Icon name="arrow"/></button>
+    <p className="prototype-note">Review the export before sharing. No names, emails, precise locations, or message content are included.</p>
   </ModalShell>;
 }
 
