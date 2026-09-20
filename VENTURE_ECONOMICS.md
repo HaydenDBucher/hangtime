@@ -54,6 +54,31 @@ These are assumptions, not observed results.
 
 At the illustrative $1,450 monthly contribution, Hangtime does not yet support full-time labor. Approximately 55 venues at the same activity level would produce about $4,000 monthly contribution before founder compensation and fixed overhead. Campus density, sales cycle, moderation, insurance, and compliance may make this threshold materially higher.
 
+## Sensitivity cases
+
+All figures below are planning assumptions, not observed performance.
+
+| Case | Paying venues | Base revenue | Usage revenue | Variable/near-variable cost | Monthly contribution |
+|---|---:|---:|---:|---:|---:|
+| Downside | 8 | $600 | $80 | $350 | $330 |
+| Base | 20 | $1,500 | $400 | $450 | $1,450 |
+| Upside | 55 | $4,125 | $1,375 | $1,100 | $4,400 |
+
+The downside case shows that low local density produces too little cash to support labor even with positive contribution. The base case supports continued testing but not a full-time team. The upside case approaches one modest founder salary before fixed legal, insurance, sales, and compliance costs.
+
+## Evidence-to-assumption ledger
+
+| Input | Current classification | Evidence required to upgrade it |
+|---|---|---|
+| $75 monthly price | Assumption under test | Selection by a budget owner plus pilot commitment |
+| $1 redemption fee | Assumption under test | Venue reconciliation and willingness-to-pay behavior |
+| 20 venues | Planning scenario | Measured outreach and pilot conversion funnel |
+| $450 monthly variable cost | Estimate | Provider invoices and observed moderation/support load |
+| Under-$100 acquisition cost | Estimate | Outreach hours and cash spend divided by paying venues |
+| 76% contribution margin | Derived from assumptions | Recalculation using observed revenue and cost inputs |
+
+No assumed input should be presented as validated traction. The arithmetic is explicit so each assumption can be replaced without changing the model's logic.
+
 ## Evidence required next
 
 - Five or more payer conversations using the in-product price choices.

@@ -13,6 +13,16 @@ const NIGHT_BOUNDS = [
   [NIGHT_CENTER.lat + NIGHT_LAT_DELTA, NIGHT_CENTER.lng + NIGHT_LNG_DELTA],
 ];
 const SOUTH_VIEW_ANCHOR = [39.9505, -83.0010];
+const PLAN_STATE_KEY = "hangtime.plan.v1";
+
+function readSavedPlanState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PLAN_STATE_KEY));
+    return saved && typeof saved === "object" ? saved : null;
+  } catch {
+    return null;
+  }
+}
 
 const crew = [
   { name: "You", initials: "HB", tone: "ink" },
@@ -170,6 +180,7 @@ function PhotoStack({ people, onPerson, size = "normal" }) {
 }
 
 function App() {
+  const savedPlanState = useMemo(() => readSavedPlanState(), []);
   const [events, setEvents] = useState([]);
   const [eventSource, setEventSource] = useState("loading");
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -192,9 +203,9 @@ function App() {
   const [venueOpen, setVenueOpen] = useState(false);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [toast, setToast] = useState("");
-  const [planConfigured, setPlanConfigured] = useState(false);
-  const [planLocked, setPlanLocked] = useState(false);
-  const [plan, setPlan] = useState({ crew: "The usual four", area: "High Street", night: "Drinks, then decide", time: "9:30 PM", event: "Open plan" });
+  const [planConfigured, setPlanConfigured] = useState(() => Boolean(savedPlanState?.planConfigured));
+  const [planLocked, setPlanLocked] = useState(() => Boolean(savedPlanState?.planLocked));
+  const [plan, setPlan] = useState(() => savedPlanState?.plan || { crew: "The usual four", area: "High Street", night: "Drinks, then decide", time: "9:30 PM", event: "Open plan" });
   const tonightLabel = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" }).format(new Date());
 
   useEffect(() => {
@@ -213,6 +224,14 @@ function App() {
     const timer = window.setTimeout(() => setToast(""), 2800);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PLAN_STATE_KEY, JSON.stringify({ plan, planConfigured, planLocked }));
+    } catch {
+      // The planning flow remains usable when browser storage is unavailable.
+    }
+  }, [plan, planConfigured, planLocked]);
 
   const orderedMatches = useMemo(() => {
     const next = [...matches];

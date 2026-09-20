@@ -10,18 +10,26 @@ function read(key, fallback) {
 }
 
 function sessionId() {
-  let id = localStorage.getItem(SESSION_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(SESSION_KEY, id);
+  try {
+    let id = localStorage.getItem(SESSION_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(SESSION_KEY, id);
+    }
+    return id;
+  } catch {
+    return "storage-unavailable";
   }
-  return id;
 }
 
 export function trackExperimentEvent(name, properties = {}) {
-  const events = read(EVENTS_KEY, []);
-  events.push({ name, properties, sessionId: sessionId(), timestamp: new Date().toISOString() });
-  localStorage.setItem(EVENTS_KEY, JSON.stringify(events.slice(-250)));
+  try {
+    const events = read(EVENTS_KEY, []);
+    events.push({ name, properties, sessionId: sessionId(), timestamp: new Date().toISOString() });
+    localStorage.setItem(EVENTS_KEY, JSON.stringify(events.slice(-250)));
+  } catch {
+    // Measurement must never prevent the user from completing the MVP task.
+  }
 }
 
 export function getExperimentEvents() {
