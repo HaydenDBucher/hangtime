@@ -27,9 +27,9 @@ The venue will provide:
 
 ## Commercial intent
 
-The proposed pilot price is **$75 for 30 days plus $1 per redeemed group offer**. Check one:
+The proposed pilot price is **$149 for 30 days**. Check one:
 
-- [ ] We intend to enter the paid pilot at $75 plus $1 per redeemed group offer, subject to final agreement.
+- [ ] We intend to enter the paid pilot at $149, subject to final agreement.
 - [ ] We intend to participate only if the following condition is met: `[condition]`.
 - [ ] We are not ready to participate because: `[reason]`.
 

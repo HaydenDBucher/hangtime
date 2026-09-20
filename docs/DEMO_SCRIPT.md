@@ -59,7 +59,7 @@ Show slide 4 in the deck. Explain that early Hangtime centered on matching group
 
 ### Minute 3:20–4:10 — Test and economics
 
-State the frozen decision rule exactly: 50% of qualified groups must lock a destination within five minutes without help. Explain the $75/month plus $1/redemption venue offer and the base scenario, then say clearly that the pricing and unit economics are hypotheses.
+State the four pass/fail metrics exactly. Explain the $149/month venue pilot and the base scenario, then say clearly that the pricing and unit economics are hypotheses.
 
 ### Minute 4:10–5:00 — Candor and next move
 

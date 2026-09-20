@@ -32,10 +32,10 @@ If college crews can see where aggregate crowds are moving, what is happening, w
 
 ### Falsifiable tests
 
-1. **Decision utility — frozen primary rule:** At least 50% of qualified groups lock a destination within five minutes without moderator help.
-2. **Friction:** If 25–49% complete, or at least 30% require help at the same step, change the experience and retest. Below 25% is a stop-or-reframe result.
+1. **Decision utility:** At least 40% of qualified test crews select a destination and share or lock a plan within two minutes, without coaching.
+2. **Repeat value:** At least 25% of activated testers return for a second night-out session within 14 days.
 3. **Information trust:** At least 70% of pilot crowd, wait, and deal statuses remain accurate within a 20-minute window.
-4. **Willingness to pay:** Show the complete offer to at least five qualified venue decision-makers. Price selection measures interest; willingness to pay requires at least two written commitments or deposits.
+4. **Willingness to pay:** At least 3 of 10 qualified venue decision-makers sign a paid pilot or letter of intent at a proposed $149 monthly starting price. Fewer than 2 is a stop-and-rework signal.
 
 The two-week pilot, recruitment rules, comparison condition, metrics, and failure thresholds are specified in [EXPERIMENT_PLAN.md](EXPERIMENT_PLAN.md). These are **planned tests, not completed traction**. That distinction prevents friendly feedback from being presented as proof.
 
@@ -61,13 +61,13 @@ The interface, interaction path, map, filters, planning flow, voting, matching, 
 
 The initial business model is free for students and paid by local venues:
 
-- Partner listing and tools: **$75/month** base-price hypothesis.
-- Verified redemption fee: **$1/redemption**.
-- Alternatives under test: **$150/month flat** or **$2/redemption**.
+- Partner listing and tools: **$149/month** starting hypothesis.
+- Promoted placement budget: **$150/month** base-case average.
+- Verified redemption fee: **$1.25/redemption**.
 
-In the base scenario, 20 campus partners pay $75/month and produce 400 total monthly redemptions at $1 each. Modeled revenue is $1,900/month. After $450 in variable and near-variable costs, modeled contribution is $1,450/month, or about 76% before labor and acquisition.
+In the base scenario, 15 of 30 addressable campus partners pay. At 80 monthly redemptions each, modeled revenue is $5,985/month. After $1,050 in direct venue-service costs and $1,250 in campus operations, modeled contribution is $3,685/month, or 61.6%. At a hypothesized $450 venue acquisition cost, contribution payback is about 1.4 months.
 
-These figures are transparent assumptions—not historical performance. The downside scenario contributes only $330/month and exposes the central economic risk: a low-density campus cannot support labor even if it remains contribution-positive. Full assumptions, sensitivity, and validation priorities are in [VENTURE_ECONOMICS.md](VENTURE_ECONOMICS.md).
+These figures are transparent assumptions—not historical performance. The bear scenario loses $128/month and exposes the central economic risk: without enough payer density or promotion value, a campus does not support operations. Full assumptions, sensitivity, and validation priorities are in [VENTURE_ECONOMICS.md](VENTURE_ECONOMICS.md).
 
 ## 5. User evidence and revision — 15%
 
