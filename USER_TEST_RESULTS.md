@@ -2,9 +2,30 @@
 
 ## Evidence status
 
-No user-test outcomes are claimed in this repository yet. Complete this document only from observed sessions. Do not estimate, backfill, or convert team opinions into participant evidence.
+No structured task-completion outcomes are claimed in this repository yet. One exploratory user interaction is recorded below because it materially influenced the product direction. Do not estimate, backfill, or convert that single directional interaction into a completion rate or broader market claim.
 
 The separate `SIMULATED_USABILITY_REVIEW.md` contains hypothetical walkthroughs used for design preparation. Its scenarios and predictions must not be copied into the tables below as participant evidence.
+
+## Exploratory input that informed the current build
+
+- Participants represented: one user.
+- Interaction date and participant characteristics: not supplied.
+- Date added to the repository: 2026-09-20.
+- Method: informal exploratory interaction reported by the project owner; not the structured task below.
+- Wording supplied by the project owner: “The matching itself felt off, but the ability to follow trends, see where people are, like a one spot hub for going out and seeing where people are.”
+
+### Interpretation and revision
+
+The input suggested that matching strangers was not the strongest opening value for this user. The useful job was following nightlife movement and gathering fragmented information in one place. The product therefore moved from matching-first to map-and-planning-first. The resulting build added or emphasized:
+
+- a real geographic map with aggregate crowd clusters;
+- campus and nightlife corridor zones;
+- demand direction and ranked destinations;
+- deals, events, food, waits, cover, and ride estimates;
+- an explicit group plan, vote, and destination lock;
+- optional matching only after a destination is locked.
+
+This is evidence of a user-informed revision, not evidence that the revision succeeded. Success must be measured with the unchanged task and decision rule below.
 
 ## Test protocol
 

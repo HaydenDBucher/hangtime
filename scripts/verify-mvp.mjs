@@ -10,7 +10,7 @@ const checks = [
   ["named hypothesis", read("MVP_EXPERIMENT.md").includes("## Named hypothesis")],
   ["precommitted decision rule", read("MVP_EXPERIMENT.md").includes("## Precommitted decision rule")],
   ["decision-rule freeze receipt", read("DECISION_RULE_RECEIPT.md").includes("Results reviewed at time of freeze: none claimed")],
-  ["honest evidence status", read("USER_TEST_RESULTS.md").includes("No user-test outcomes are claimed")],
+  ["honest evidence status", read("USER_TEST_RESULTS.md").includes("No structured task-completion outcomes are claimed")],
   ["venture contribution logic", read("VENTURE_ECONOMICS.md").includes("Contribution margin")],
   ["limitations disclosure", read("LIMITATIONS.md").includes("Not production-ready")],
   ["team ownership receipt", read("TEAM_OWNERSHIP.md").includes("Team review receipt")],
