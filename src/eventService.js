@@ -1,17 +1,17 @@
 const API_URL = "https://app.ticketmaster.com/discovery/v2/events.json";
 
-export const CAMPUS_CENTER = { lat: 40.0017, lng: -83.0129 };
-export const CAMPUS_RADIUS_MILES = 2.5;
+export const NIGHT_CENTER = { lat: 39.9825, lng: -83.0045 };
+export const NIGHT_RADIUS_MILES = 3.6;
 
 const toRadians = (degrees) => degrees * Math.PI / 180;
 
-export function isWithinCampusRadius(event, radiusMiles = CAMPUS_RADIUS_MILES) {
+export function isWithinNightRadius(event, radiusMiles = NIGHT_RADIUS_MILES) {
   const lat = Number(event?.lat);
   const lng = Number(event?.lng);
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
-  const latDistance = toRadians(lat - CAMPUS_CENTER.lat);
-  const lngDistance = toRadians(lng - CAMPUS_CENTER.lng);
-  const centerLat = toRadians(CAMPUS_CENTER.lat);
+  const latDistance = toRadians(lat - NIGHT_CENTER.lat);
+  const lngDistance = toRadians(lng - NIGHT_CENTER.lng);
+  const centerLat = toRadians(NIGHT_CENTER.lat);
   const eventLat = toRadians(lat);
   const a = Math.sin(latDistance / 2) ** 2 + Math.cos(centerLat) * Math.cos(eventLat) * Math.sin(lngDistance / 2) ** 2;
   return 3958.8 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) <= radiusMiles;
@@ -163,6 +163,274 @@ const fallbackEvents = [
     age: "All ages",
     tone: "pink",
   },
+  {
+    id: "bodega-patio",
+    title: "Patio start",
+    venue: "Bodega",
+    area: "Short North",
+    time: "7:30 PM",
+    category: "Social",
+    attending: 72,
+    groups: 16,
+    lat: 39.9841,
+    lng: -83.0043,
+    deal: "$6 crew appetizers before 9",
+    wait: "5–10 min",
+    cover: "No cover",
+    trend: "Rising",
+    peak: "9:15 PM",
+    updated: "4 min ago",
+    confidence: "Modeled crowd signal",
+    friends: 6,
+    age: "21+",
+    tone: "blue",
+  },
+  {
+    id: "townhall-short-north",
+    title: "Dinner into a night out",
+    venue: "TownHall",
+    area: "Short North",
+    time: "8:00 PM",
+    category: "Food",
+    attending: 118,
+    groups: 26,
+    lat: 39.9765,
+    lng: -83.0035,
+    promoted: true,
+    offer: "Early crew table",
+    deal: "Crew table priority before 8:30",
+    wait: "15–20 min",
+    cover: "Avg $18/person",
+    trend: "Filling fast",
+    peak: "9:30 PM",
+    updated: "2 min ago",
+    confidence: "Modeled crowd signal",
+    friends: 12,
+    age: "21+ after 10",
+    tone: "lime",
+  },
+  {
+    id: "pins-short-north",
+    title: "Duckpin and drinks",
+    venue: "Pins Mechanical Co.",
+    area: "Short North",
+    time: "8:15 PM",
+    category: "Games",
+    attending: 105,
+    groups: 23,
+    lat: 39.9744,
+    lng: -83.0058,
+    deal: "One free game for crews of 5+",
+    wait: "10 min",
+    cover: "No cover",
+    trend: "Rising",
+    peak: "10:00 PM",
+    updated: "5 min ago",
+    confidence: "Modeled crowd signal",
+    friends: 9,
+    age: "21+ after 9",
+    tone: "coral",
+  },
+  {
+    id: "mikeys-late-slice",
+    title: "Late slice stop",
+    venue: "Mikey's Late Night Slice",
+    area: "Short North",
+    time: "9:30 PM",
+    category: "Food",
+    attending: 81,
+    groups: 19,
+    lat: 39.9728,
+    lng: -83.0032,
+    deal: "$2 off a whole pie after 10",
+    wait: "8–12 min",
+    cover: "Avg $7/person",
+    trend: "Steady",
+    peak: "11:45 PM",
+    updated: "7 min ago",
+    confidence: "Modeled crowd signal",
+    friends: 4,
+    age: "All ages",
+    tone: "amber",
+  },
+  {
+    id: "north-market-night-bites",
+    title: "Market bites and drinks",
+    venue: "North Market",
+    area: "Arena District",
+    time: "7:00 PM",
+    category: "Food",
+    attending: 78,
+    groups: 17,
+    lat: 39.9717,
+    lng: -83.0045,
+    deal: "Crew tasting card: four stops for $24",
+    wait: "No line",
+    cover: "Free entry",
+    trend: "Steady",
+    peak: "8:15 PM",
+    updated: "10 min ago",
+    confidence: "Modeled crowd signal",
+    friends: 7,
+    age: "All ages",
+    tone: "violet",
+  },
+  {
+    id: "kemba-plaza-show",
+    title: "Plaza show and afters",
+    venue: "KEMBA Live!",
+    area: "Arena District",
+    time: "8:00 PM",
+    category: "Live music",
+    attending: 142,
+    groups: 31,
+    lat: 39.9692,
+    lng: -83.0100,
+    promoted: true,
+    offer: "Student rush inventory",
+    deal: "$12 student rush tickets while available",
+    wait: "20–30 min",
+    cover: "From $12",
+    trend: "Filling fast",
+    peak: "9:10 PM",
+    updated: "Just now",
+    confidence: "Modeled event signal",
+    friends: 18,
+    age: "All ages",
+    tone: "pink",
+  },
+  {
+    id: "jackie-os-fourth",
+    title: "Brewery meetup",
+    venue: "Jackie O's on Fourth",
+    area: "Italian Village",
+    time: "7:45 PM",
+    category: "Social",
+    attending: 88,
+    groups: 20,
+    lat: 39.9788,
+    lng: -82.9994,
+    deal: "$5 first pour with student ID",
+    wait: "5 min",
+    cover: "No cover",
+    trend: "Rising",
+    peak: "9:40 PM",
+    updated: "6 min ago",
+    confidence: "Modeled crowd signal",
+    friends: 8,
+    age: "21+",
+    tone: "blue",
+  },
+  {
+    id: "goodale-station-rooftop",
+    title: "Rooftop first round",
+    venue: "Goodale Station",
+    area: "Downtown North",
+    time: "8:30 PM",
+    category: "Social",
+    attending: 63,
+    groups: 14,
+    lat: 39.9681,
+    lng: -83.0057,
+    deal: "Crew mocktail or cocktail flight for $24",
+    wait: "15 min",
+    cover: "No cover",
+    trend: "Steady",
+    peak: "9:45 PM",
+    updated: "8 min ago",
+    confidence: "Modeled crowd signal",
+    friends: 3,
+    age: "21+",
+    tone: "coral",
+  },
+  {
+    id: "parlay-arena-watch",
+    title: "Big-screen watch party",
+    venue: "Parlay Sporting Club",
+    area: "Arena District",
+    time: "7:30 PM",
+    category: "Sports",
+    attending: 96,
+    groups: 22,
+    lat: 39.9667,
+    lng: -83.0066,
+    deal: "$20 pitcher and shareable bundle",
+    wait: "10–15 min",
+    cover: "No cover",
+    trend: "Rising",
+    peak: "9:00 PM",
+    updated: "3 min ago",
+    confidence: "Modeled crowd signal",
+    friends: 10,
+    age: "21+",
+    tone: "lime",
+  },
+  {
+    id: "commons-night-market",
+    title: "Night market meetup",
+    venue: "Columbus Commons",
+    area: "Downtown",
+    time: "7:00 PM",
+    category: "Event",
+    attending: 109,
+    groups: 25,
+    lat: 39.9564,
+    lng: -82.9992,
+    deal: "Free entry and student vendor specials",
+    wait: "Walk in",
+    cover: "Free",
+    trend: "Filling fast",
+    peak: "8:30 PM",
+    updated: "Just now",
+    confidence: "Modeled event signal",
+    friends: 14,
+    age: "All ages",
+    tone: "violet",
+  },
+  {
+    id: "dirty-franks-food-run",
+    title: "Downtown food run",
+    venue: "Dirty Frank's Hot Dog Palace",
+    area: "Downtown",
+    time: "9:00 PM",
+    category: "Food",
+    attending: 57,
+    groups: 13,
+    lat: 39.9575,
+    lng: -82.9977,
+    deal: "Crew combo: four dogs and fries for $22",
+    wait: "10 min",
+    cover: "Avg $8/person",
+    trend: "Rising",
+    peak: "10:45 PM",
+    updated: "9 min ago",
+    confidence: "Modeled crowd signal",
+    friends: 5,
+    age: "All ages",
+    tone: "amber",
+  },
+  {
+    id: "sixth-street-dance",
+    title: "DJs after ten",
+    venue: "Downtown Social Club",
+    area: "Downtown",
+    time: "10:00 PM",
+    category: "Dance",
+    attending: 91,
+    groups: 21,
+    lat: 39.9631,
+    lng: -83.0010,
+    deal: "No cover before 10:30 with student ID",
+    wait: "5–10 min",
+    cover: "$8 after 10:30",
+    trend: "Rising",
+    peak: "11:30 PM",
+    updated: "5 min ago",
+    confidence: "Prototype venue",
+    friends: 11,
+    age: "21+",
+    tone: "pink",
+  },
 ];
 
 const formatTime = (date) => {
@@ -222,7 +490,8 @@ const normalizeEvent = (event, index) => {
 
 export async function getTonightEvents({ city = "Columbus", signal } = {}) {
   const apiKey = import.meta.env.VITE_TICKETMASTER_API_KEY;
-  if (!apiKey) return { events: fallbackEvents.filter((event) => isWithinCampusRadius(event)), source: "demo" };
+  const modeledEvents = fallbackEvents.filter((event) => isWithinNightRadius(event));
+  if (!apiKey) return { events: modeledEvents, source: "demo" };
 
   const start = new Date();
   const end = new Date(start);
@@ -232,25 +501,27 @@ export async function getTonightEvents({ city = "Columbus", signal } = {}) {
     city,
     stateCode: "OH",
     countryCode: "US",
-    latlong: "40.0030,-83.0120",
-    radius: String(CAMPUS_RADIUS_MILES),
+    latlong: `${NIGHT_CENTER.lat},${NIGHT_CENTER.lng}`,
+    radius: String(NIGHT_RADIUS_MILES),
     unit: "miles",
     startDateTime: start.toISOString().replace(/\.\d{3}Z$/, "Z"),
     endDateTime: end.toISOString().replace(/\.\d{3}Z$/, "Z"),
     sort: "date,asc",
-    size: "18",
+    size: "24",
   });
 
   try {
     const response = await fetch(`${API_URL}?${params}`, { signal });
     if (!response.ok) throw new Error(`Ticketmaster returned ${response.status}`);
     const payload = await response.json();
-    const events = (payload?._embedded?.events?.map(normalizeEvent) || []).filter((event) => isWithinCampusRadius(event));
-    return events.length ? { events, source: "live" } : { events: fallbackEvents, source: "demo" };
+    const liveEvents = (payload?._embedded?.events?.map(normalizeEvent) || []).filter((event) => isWithinNightRadius(event));
+    const liveVenues = new Set(liveEvents.map((event) => event.venue.toLowerCase()));
+    const events = [...liveEvents, ...modeledEvents.filter((event) => !liveVenues.has(event.venue.toLowerCase()))].slice(0, 30);
+    return liveEvents.length ? { events, source: "live" } : { events: modeledEvents, source: "demo" };
   } catch (error) {
     if (error.name === "AbortError") throw error;
     console.warn("Live events unavailable; using Hangtime demo events.", error);
-    return { events: fallbackEvents.filter((event) => isWithinCampusRadius(event)), source: "demo" };
+    return { events: modeledEvents, source: "demo" };
   }
 }
 

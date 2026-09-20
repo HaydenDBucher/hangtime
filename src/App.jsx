@@ -1,29 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { CAMPUS_CENTER, CAMPUS_RADIUS_MILES, getTonightEvents, isWithinCampusRadius } from "./eventService";
+import { NIGHT_CENTER, NIGHT_RADIUS_MILES, getTonightEvents, isWithinNightRadius } from "./eventService";
 import { getSession, isCloudAuthEnabled, signIn, signOut, signUp, updateSessionProfile } from "./authService";
 import { getCampusRidePreview, getRideLink } from "./rideService";
 
-const CAMPUS_RADIUS_METERS = CAMPUS_RADIUS_MILES * 1609.344;
-const CAMPUS_LAT_DELTA = CAMPUS_RADIUS_MILES / 69;
-const CAMPUS_LNG_DELTA = CAMPUS_RADIUS_MILES / (69 * Math.cos(CAMPUS_CENTER.lat * Math.PI / 180));
-const CAMPUS_BOUNDS = [
-  [CAMPUS_CENTER.lat - CAMPUS_LAT_DELTA, CAMPUS_CENTER.lng - CAMPUS_LNG_DELTA],
-  [CAMPUS_CENTER.lat + CAMPUS_LAT_DELTA, CAMPUS_CENTER.lng + CAMPUS_LNG_DELTA],
+const NIGHT_LAT_DELTA = NIGHT_RADIUS_MILES / 69;
+const NIGHT_LNG_DELTA = NIGHT_RADIUS_MILES / (69 * Math.cos(NIGHT_CENTER.lat * Math.PI / 180));
+const NIGHT_BOUNDS = [
+  [NIGHT_CENTER.lat - NIGHT_LAT_DELTA, NIGHT_CENTER.lng - NIGHT_LNG_DELTA],
+  [NIGHT_CENTER.lat + NIGHT_LAT_DELTA, NIGHT_CENTER.lng + NIGHT_LNG_DELTA],
 ];
-
-function campusBoundaryRing(steps = 80) {
-  const ring = [];
-  for (let index = steps; index >= 0; index -= 1) {
-    const angle = index / steps * Math.PI * 2;
-    ring.push([
-      CAMPUS_CENTER.lat + CAMPUS_LAT_DELTA * Math.sin(angle),
-      CAMPUS_CENTER.lng + CAMPUS_LNG_DELTA * Math.cos(angle),
-    ]);
-  }
-  return ring;
-}
+const SOUTH_VIEW_ANCHOR = [39.9505, -83.0010];
 
 const crew = [
   { name: "You", initials: "HB", tone: "ink" },
@@ -71,6 +59,46 @@ const matches = [
       { name: "Kiara", age: 24, role: "Event producer", photo: 13, bio: "A very reliable judge of whether a place is worth it.", interests: ["Events", "Fashion", "Podcasts"] },
       { name: "Sam", age: 26, role: "Physical therapist", photo: 14, bio: "Here for jokes, sports, and exactly one round.", interests: ["Soccer", "Comedy", "Travel"] },
       { name: "Delaney", age: 24, role: "Copywriter", photo: 15, bio: "Always has a backup plan within walking distance.", interests: ["Writing", "Wine", "Yoga"] },
+    ],
+  },
+  {
+    id: 5, name: "High Street house", score: 89, members: 4, range: "21–23", distance: "0.5 mi", night: "Try a few places", status: "Bodega at 8:45 → Pins if there is room", overlap: "Same route south", mutuals: 2, verified: 4, socials: ["Instagram", "TikTok"], interests: ["Games", "Patios", "House music"], blurb: "Four roommates heading south with no commitment beyond the first stop.",
+    timeline: [{ time: "8:45", action: "Start on the patio", place: "Bodega" }, { time: "10:15", action: "Games or keep moving", place: "Short North" }],
+    people: [
+      { name: "Avery", age: 22, role: "Public policy major", photo: 3, bio: "Keeps the group moving when a line gets too long.", interests: ["Patios", "Politics", "Dance"] },
+      { name: "Jordan", age: 23, role: "Analyst", photo: 8, bio: "Always down for one competitive game.", interests: ["Basketball", "Games", "DJs"] },
+      { name: "Nia", age: 21, role: "Communications major", photo: 13, bio: "Knows which room has the better music.", interests: ["Fashion", "R&B", "Travel"] },
+      { name: "Ben", age: 22, role: "Engineering major", photo: 6, bio: "The route planner who pretends not to be.", interests: ["Cycling", "Trivia", "Food"] },
+    ],
+  },
+  {
+    id: 6, name: "Short North roommates", score: 86, members: 4, range: "22–25", distance: "1.4 mi", night: "Dinner into drinks", status: "TownHall at 8:00 → rooftop around 10", overlap: "Same second stop", mutuals: 4, verified: 4, socials: ["Instagram"], interests: ["Restaurants", "Rooftops", "Live music"], blurb: "Roommates and coworkers meeting for dinner before deciding how late the night goes.",
+    timeline: [{ time: "8:00", action: "Dinner reservation", place: "TownHall" }, { time: "10:00", action: "Find a rooftop", place: "Downtown North" }],
+    people: [
+      { name: "Priya", age: 24, role: "Research coordinator", photo: 1, bio: "Books the table and lets everyone else choose the next stop.", interests: ["Food", "Pilates", "Indie"] },
+      { name: "Marcus", age: 25, role: "Civil engineer", photo: 10, bio: "Prefers a view and a drink you can pronounce.", interests: ["Architecture", "Soccer", "Travel"] },
+      { name: "Elise", age: 23, role: "Media planner", photo: 5, bio: "Usually has tickets saved for something nearby.", interests: ["Concerts", "Film", "Running"] },
+      { name: "Cam", age: 24, role: "UX designer", photo: 14, bio: "Picks the place based on how easy it is to keep talking.", interests: ["Design", "Coffee", "Vinyl"] },
+    ],
+  },
+  {
+    id: 7, name: "Downtown new grads", score: 84, members: 4, range: "22–26", distance: "2.6 mi", night: "Watch the game", status: "Arena District at 7:30 → downtown after", overlap: "Same destination", mutuals: 2, verified: 3, socials: ["Instagram", "LinkedIn"], interests: ["Sports", "Food", "Concerts"], blurb: "Recent grads starting near the arena and looking for a bigger group downtown afterward.",
+    timeline: [{ time: "7:30", action: "Watch party", place: "Arena District" }, { time: "10:00", action: "Walk downtown", place: "High Street" }],
+    people: [
+      { name: "Taylor", age: 23, role: "Consultant", photo: 11, bio: "Will stay for overtime and still make the next plan.", interests: ["Hockey", "Food", "Podcasts"] },
+      { name: "Owen", age: 25, role: "Sales associate", photo: 0, bio: "Talks to the next table before the group does.", interests: ["Football", "Golf", "Comedy"] },
+      { name: "Jules", age: 24, role: "Lab technician", photo: 7, bio: "Always checks the set list before choosing a route.", interests: ["Live music", "Science", "Photos"] },
+      { name: "Micah", age: 22, role: "Financial analyst", photo: 12, bio: "The dependable ride-home coordinator.", interests: ["Basketball", "Cooking", "Travel"] },
+    ],
+  },
+  {
+    id: 8, name: "Med campus crew", score: 80, members: 4, range: "23–27", distance: "1.2 mi", night: "Meet for one round", status: "Jackie O's at 9:00 → KEMBA plaza", overlap: "Similar timing", mutuals: 1, verified: 4, socials: ["Instagram"], interests: ["Breweries", "Shows", "Running"], blurb: "A post-shift crew meeting halfway between campus and downtown.",
+    timeline: [{ time: "9:00", action: "First round", place: "Italian Village" }, { time: "10:15", action: "Walk toward the show", place: "Arena District" }],
+    people: [
+      { name: "Leah", age: 26, role: "Medical student", photo: 9, bio: "Off the clock and looking for somewhere lively but easy.", interests: ["Running", "Concerts", "Food"] },
+      { name: "Dev", age: 25, role: "Resident", photo: 4, bio: "Will choose the shortest line every time.", interests: ["Soccer", "Coffee", "Comedy"] },
+      { name: "Grace", age: 24, role: "PA student", photo: 15, bio: "The friend who gets everyone into one photo.", interests: ["Photos", "Dance", "Travel"] },
+      { name: "Cole", age: 27, role: "Physical therapist", photo: 2, bio: "A live-show regular with a reliable food stop after.", interests: ["Guitar", "Climbing", "Pizza"] },
     ],
   },
 ];
@@ -192,7 +220,7 @@ function App() {
     const rideFrom = rideMins.length ? Math.min(...rideMins) : 6;
     return [
       { label: "Crowds", icon: "users", value: `${people} nearby`, detail: "Where people are going" },
-      { label: "Deals", icon: "spark", value: `${deals} live`, detail: "Student offers tonight" },
+      { label: "Deals", icon: "spark", value: `${deals} tonight`, detail: "Modeled student offers" },
       { label: "Events", icon: "calendar", value: `${events.length} tonight`, detail: "Music, games, comedy" },
       { label: "Food", icon: "food", value: `${food} late spots`, detail: "Food around campus" },
       { label: "Ride cost", icon: "car", value: `from $${rideFrom}`, detail: "From Ohio Union" },
@@ -256,10 +284,10 @@ function App() {
 
           <div className="night-lenses" aria-label="Explore tonight">{lensStats.map((lens) => <button className={mapFilter === lens.label ? "active" : ""} onClick={() => setMapFilter(lens.label)} key={lens.label}><span><Icon name={lens.icon} size={15}/>{lens.label}</span><strong>{lens.value}</strong><small>{lens.detail}</small></button>)}</div>
 
-          <div className="map-toolbar compact"><label><Icon name="compass" size={17}/><input value={mapSearch} onChange={(event) => setMapSearch(event.target.value)} placeholder="Search around campus"/></label><div className="view-tabs" aria-label="Choose view">{["map", "events"].map((view) => <button className={activeView === view ? "active" : ""} onClick={() => setActiveView(view)} key={view}>{view === "map" ? <Icon name="compass" size={17}/> : <Icon name="calendar" size={17}/>} {view}</button>)}</div></div>
+          <div className="map-toolbar compact"><label><Icon name="compass" size={17}/><input value={mapSearch} onChange={(event) => setMapSearch(event.target.value)} placeholder="Search High Street + downtown"/></label><div className="view-tabs" aria-label="Choose view">{["map", "events"].map((view) => <button className={activeView === view ? "active" : ""} onClick={() => setActiveView(view)} key={view}>{view === "map" ? <Icon name="compass" size={17}/> : <Icon name="calendar" size={17}/>} {view}</button>)}</div></div>
 
           <div className={`city-board ${activeView}`}>
-            <NightMap events={visibleEvents} selected={selectedEvent} intentions={intentions} lens={mapFilter} onSelect={setSelectedEvent}/>
+            {eventSource === "loading" ? <div className="map-panel map-loading"><span className="live-dot"></span><strong>Building tonight's map</strong></div> : <NightMap events={visibleEvents} selected={selectedEvent} intentions={intentions} lens={mapFilter} onSelect={setSelectedEvent}/>}
             <EventRail events={visibleEvents} source={eventSource} selected={selectedEvent} intention={selectedEvent ? intentions[selectedEvent.id] : null} claimed={selectedEvent ? claimedDeals.includes(selectedEvent.id) : false} onSelect={setSelectedEvent} onJoin={joinEvent} onIntent={setIntent} onClaim={claimDeal}/>
           </div>
         </section>
@@ -380,6 +408,7 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
   const [horizon, setHorizon] = useState(0);
   const [tick, setTick] = useState(0);
   const [locating, setLocating] = useState(false);
+  const [mapZoom, setMapZoom] = useState(13.5);
   const activityCenter = useMemo(() => getCrowdFocus(events, horizon, intentions), [events, horizon, intentions]);
 
   useEffect(() => {
@@ -388,22 +417,14 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
   }, []);
 
   useEffect(() => {
-    if (!activityCenter || !mapInstance.current) return undefined;
-    const timer = window.setTimeout(() => {
-      mapInstance.current?.invalidateSize({ animate: false, pan: false });
-      mapInstance.current?.setView([activityCenter.lat, activityCenter.lng], 15, { animate: false });
-    }, 180);
-    return () => window.clearTimeout(timer);
-  }, [activityCenter]);
-
-  useEffect(() => {
     if (!mapNode.current || mapInstance.current) return undefined;
     const map = L.map(mapNode.current, {
-      center: [CAMPUS_CENTER.lat, CAMPUS_CENTER.lng],
-      zoom: 14,
+      center: [activityCenter?.lat || NIGHT_CENTER.lat, activityCenter?.lng || NIGHT_CENTER.lng],
+      zoom: 13.5,
+      zoomSnap: .5,
       minZoom: 13,
       maxZoom: 18,
-      maxBounds: CAMPUS_BOUNDS,
+      maxBounds: NIGHT_BOUNDS,
       maxBoundsViscosity: 1,
       zoomControl: false,
       attributionControl: true,
@@ -412,26 +433,10 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
-    map.createPane("campusMaskPane");
-    map.getPane("campusMaskPane").style.zIndex = "350";
-    map.getPane("campusMaskPane").style.pointerEvents = "none";
-    L.polygon([
-      [[85, -180], [85, 180], [-85, 180], [-85, -180]],
-      campusBoundaryRing(),
-    ], { pane: "campusMaskPane", stroke: false, fillColor: "#edece7", fillOpacity: 1, interactive: false }).addTo(map);
-    L.circle([CAMPUS_CENTER.lat, CAMPUS_CENTER.lng], {
-      pane: "campusMaskPane",
-      radius: CAMPUS_RADIUS_METERS,
-      color: "#4053c7",
-      weight: 1.5,
-      opacity: .58,
-      dashArray: "5 7",
-      fill: false,
-      interactive: false,
-    }).addTo(map);
     crowdLayer.current = L.layerGroup().addTo(map);
     locationLayer.current = L.layerGroup().addTo(map);
     mapInstance.current = map;
+    map.on("zoomend", () => setMapZoom(map.getZoom()));
     const resizeObserver = new ResizeObserver(() => map.invalidateSize({ animate: false }));
     resizeObserver.observe(mapNode.current);
     window.setTimeout(() => map.invalidateSize({ animate: false }), 120);
@@ -443,10 +448,77 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
   }, []);
 
   useEffect(() => {
+    if (!activityCenter || !mapInstance.current) return undefined;
+    const timer = window.setTimeout(() => {
+      mapInstance.current?.invalidateSize({ animate: false, pan: false });
+      const points = events
+        .map((event) => [Number(event.lat), Number(event.lng)])
+        .filter(([lat, lng]) => Number.isFinite(lat) && Number.isFinite(lng));
+      if (points.length > 1) {
+        mapInstance.current?.fitBounds(L.latLngBounds([...points, SOUTH_VIEW_ANCHOR]).pad(.06), { padding: [28, 28], maxZoom: 13.5, animate: false });
+      } else {
+        mapInstance.current?.setView([activityCenter.lat, activityCenter.lng], 13.5, { animate: false });
+      }
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [activityCenter, events]);
+
+  useEffect(() => {
     const map = mapInstance.current;
     const layer = crowdLayer.current;
     if (!map || !layer) return;
     layer.clearLayers();
+
+    const showVenueDetail = mapZoom >= 14.5 || events.length <= 8;
+    if (!showVenueDetail) {
+      const districtName = (area = "") => {
+        if (/downtown$/i.test(area)) return "Downtown";
+        if (/arena|downtown north/i.test(area)) return "Arena District";
+        if (/short north|italian/i.test(area)) return "Short North";
+        return "Campus";
+      };
+      const districts = Object.values(events.reduce((result, event) => {
+        const lat = Number(event.lat);
+        const lng = Number(event.lng);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return result;
+        const district = districtName(event.area);
+        const groups = projectedGroups(event, horizon, tick);
+        const current = result[district] || { district, groups: 0, latTotal: 0, lngTotal: 0, events: [] };
+        current.groups += groups;
+        current.latTotal += lat * groups;
+        current.lngTotal += lng * groups;
+        current.events.push(event);
+        result[district] = current;
+        return result;
+      }, {}));
+
+      districts.forEach((district) => {
+        const point = [district.latTotal / district.groups, district.lngTotal / district.groups];
+        const representative = [...district.events].sort((a, b) => b.groups - a.groups)[0];
+        const selectedHere = district.events.some((event) => event.id === selected?.id);
+        const value = lens === "Deals" ? district.events.filter((event) => event.deal).length : lens === "Events" || lens === "Food" ? district.events.length : district.groups;
+        const unit = lens === "Deals" ? "deals" : lens === "Events" || lens === "Food" ? "spots" : "crews";
+        L.circle(point, {
+          radius: 240 + district.groups * 6,
+          color: selectedHere ? "#4053c7" : "#17191f",
+          weight: selectedHere ? 2 : 1,
+          opacity: .3,
+          fillColor: selectedHere ? "#4053c7" : "#17191f",
+          fillOpacity: .08,
+          interactive: false,
+          className: "crowd-heat-circle",
+        }).addTo(layer);
+        const icon = L.divIcon({
+          className: "hangtime-div-icon district-icon",
+          html: `<div class="district-map-marker ${selectedHere ? "selected" : ""}"><strong>${value}</strong><span>${district.district}</span><small>${unit}</small></div>`,
+          iconSize: [120, 48],
+          iconAnchor: [60, 24],
+        });
+        L.marker(point, { icon, title: `${district.district}: ${district.groups} crews` })
+          .on("click", () => onSelect(representative))
+          .addTo(layer);
+      });
+    }
 
     events.forEach((event, index) => {
       const lat = Number(event.lat);
@@ -461,31 +533,33 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
       const markerValue = lens === "Ride cost" ? `$${rideMinimum}` : lens === "Deals" ? (event.deal ? "Deal" : "—") : count;
       const markerLabel = lens === "Ride cost" ? "ride" : lens === "Deals" ? "tonight" : lens === "Food" ? "people" : "crews";
 
-      L.circle(point, {
-        radius: 115 + count * 10,
-        color,
-        weight: isSelected ? 2 : 1,
-        opacity: isSelected ? .72 : .3,
-        fillColor: color,
-        fillOpacity: isSelected ? .18 : .1,
-        interactive: false,
-        className: "crowd-heat-circle",
-      }).addTo(layer);
+      if (showVenueDetail) {
+        L.circle(point, {
+          radius: 115 + count * 10,
+          color,
+          weight: isSelected ? 2 : 1,
+          opacity: isSelected ? .72 : .3,
+          fillColor: color,
+          fillOpacity: isSelected ? .18 : .1,
+          interactive: false,
+          className: "crowd-heat-circle",
+        }).addTo(layer);
 
-      const venueIcon = L.divIcon({
-        className: "hangtime-div-icon",
-        html: `<div class="venue-map-marker ${isSelected ? "selected" : ""} ${intentions[event.id] ? "committed" : ""}" style="--marker:${color}"><strong>${markerValue}</strong><span>${markerLabel}</span>${intentions[event.id] ? '<i>✓</i>' : ""}</div>`,
-        iconSize: [58, 58],
-        iconAnchor: [29, 29],
-      });
-      L.marker(point, { icon: venueIcon, title: `${event.venue}: ${count} crews` })
-        .on("click", () => onSelect(event))
-        .addTo(layer);
+        const venueIcon = L.divIcon({
+          className: "hangtime-div-icon",
+          html: `<div class="venue-map-marker ${events.length > 12 ? "dense" : ""} ${isSelected ? "selected" : ""} ${intentions[event.id] ? "committed" : ""}" style="--marker:${color}"><strong>${markerValue}</strong><span>${markerLabel}</span>${intentions[event.id] ? '<i>✓</i>' : ""}</div>`,
+          iconSize: events.length > 12 ? [48, 48] : [58, 58],
+          iconAnchor: events.length > 12 ? [24, 24] : [29, 29],
+        });
+        L.marker(point, { icon: venueIcon, title: `${event.venue}: ${count} crews` })
+          .on("click", () => onSelect(event))
+          .addTo(layer);
+      }
 
-      if (lens === "Crowds" && index < 5) {
+      if (showVenueDetail && lens === "Crowds" && index < 8) {
         const offset = crowdOffsets[index % crowdOffsets.length];
         let origin = [lat + offset[0], lng + offset[1]];
-        if (!isWithinCampusRadius({ lat: origin[0], lng: origin[1] })) origin = [lat + offset[0] * .4, lng + offset[1] * .4];
+        if (!isWithinNightRadius({ lat: origin[0], lng: origin[1] })) origin = [lat + offset[0] * .4, lng + offset[1] * .4];
         const progress = Math.min(.88, .28 + ((tick + index) % 4) * .13 + horizon / 100);
         const moving = [origin[0] + (lat - origin[0]) * progress, origin[1] + (lng - origin[1]) * progress];
         const inbound = Math.max(1, Math.round(count * (/rising|filling/i.test(event.trend || "") ? .24 : .12)));
@@ -502,7 +576,7 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
       }
     });
 
-  }, [activityCenter, events, horizon, intentions, lens, onSelect, selected?.id, tick]);
+  }, [activityCenter, events, horizon, intentions, lens, mapZoom, onSelect, selected?.id, tick]);
 
   useEffect(() => {
     const map = mapInstance.current;
@@ -511,12 +585,12 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
       initialSelectionSkipped.current = true;
       return;
     }
-    map.setView([selected.lat, selected.lng], Math.max(map.getZoom(), 14), { animate: false });
+    map.setView([selected.lat, selected.lng], Math.max(map.getZoom(), 15), { animate: false });
   }, [selected?.id]);
 
   const centerOnCrowd = () => {
     if (!activityCenter || !mapInstance.current) return;
-    mapInstance.current.flyTo([activityCenter.lat, activityCenter.lng], Math.max(mapInstance.current.getZoom(), 15), { duration: .65 });
+    mapInstance.current.flyTo([activityCenter.lat, activityCenter.lng], 13.5, { duration: .65 });
   };
 
   const locate = () => {
@@ -542,10 +616,10 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
     Deals: { title: `${events.length} student deals tonight`, detail: "Tap a marker to see the offer and deadline." },
     Events: { title: `${events.length} events around campus`, detail: "Music, games, comedy, and student programming." },
     Food: { title: `${events.length} late food stops`, detail: "See where people are eating before and after." },
-    "Ride cost": { title: `Campus rides from ${leader ? getCampusRidePreview({ name: leader.venue, lat: leader.lat, lng: leader.lng }).providers[0].fare : "$6"}`, detail: "Modeled from Ohio Union. Open an app for the live fare." },
-  }[lens] || { title: "Tonight around campus", detail: "Tap any place to see the details." };
+    "Ride cost": { title: `Corridor rides from ${leader ? getCampusRidePreview({ name: leader.venue, lat: leader.lat, lng: leader.lng }).providers[0].fare : "$6"}`, detail: "Modeled from Ohio Union. Open an app for the live fare." },
+  }[lens] || { title: "Tonight along High Street", detail: "Tap any place to see the details." };
 
-  return <div className="map-panel real-map-panel" aria-label="Live Ohio State campus crowd activity map">
+  return <div className="map-panel real-map-panel" aria-label="Live High Street to downtown Columbus crowd activity map">
     <div className="leaflet-map" ref={mapNode}></div>
     <div className="crowd-live-card">
       <div><span className="live-dot"></span><strong>{lens}</strong><small>Live activity center</small></div>
@@ -554,7 +628,7 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
       {lens === "Crowds" && <div className="forecast-tabs" aria-label="Crowd forecast time">{[0, 15, 30].map((minutes) => <button className={horizon === minutes ? "active" : ""} onClick={() => setHorizon(minutes)} key={minutes}>{minutes === 0 ? "Now" : `+${minutes} min`}</button>)}</div>}
     </div>
     {lens === "Crowds" && feedEvent && <div className="movement-feed"><span className="movement-pulse"></span><strong>{Math.max(2, Math.round(feedEvent.groups * .18))} crews moving toward {feedEvent.venue}</strong><small>updated just now</small></div>}
-    <div className="map-privacy-note"><Icon name="shield" size={13}/>{CAMPUS_RADIUS_MILES} mi campus radius · approximate groups</div>
+    <div className="map-privacy-note"><Icon name="shield" size={13}/>High Street → downtown · approximate groups</div>
     <div className="map-controls"><button onClick={() => mapInstance.current?.zoomIn()} aria-label="Zoom in">+</button><button onClick={() => mapInstance.current?.zoomOut()} aria-label="Zoom out">−</button><button onClick={centerOnCrowd} aria-label="Center on live crowd"><Icon name="users" size={16}/></button><button aria-label="Use my location" onClick={locate} className={locating ? "locating" : ""}><Icon name="compass" size={16}/></button></div>
     {!events.length && <div className="map-empty"><strong>No places match that view</strong><span>Try another filter or search.</span></div>}
   </div>;
@@ -603,7 +677,7 @@ function EventRail({ events, source, selected, intention, claimed, onSelect, onJ
       <div className="event-info">{event.promoted && <small className="promoted-label">PROMOTED</small>}<h3>{event.venue}</h3><p>{event.title} · {event.area}</p><div><span><Icon name="users" size={13}/>{event.groups} crews</span><span className="trend-chip">{event.trend || "Steady"}</span><span>{event.age || "Check age"}</span></div></div>
       <button className="row-arrow" onClick={(eventClick) => { eventClick.stopPropagation(); onJoin(event); }} aria-label={`Add ${event.title} to plan`}><Icon name="arrow" size={17}/></button>
     </article>)}</div>
-    {source === "demo" && <p className="data-note">Modeled crowd movement shows how live, privacy-safe group signals would work. Add a Ticketmaster key for the current event lineup.</p>}
+    <p className="data-note">{source === "live" ? "Live event listings are mixed with modeled, privacy-safe crowds and prototype offers." : "Prototype data: crowds, waits, and offers are modeled to show the complete live experience."}</p>
   </aside>;
 }
 
@@ -618,10 +692,10 @@ function NextMoves({ events, onSelect }) {
 }
 
 function DealsSection({ events, claimedDeals, onClaim }) {
-  const deals = events.filter((event) => event.deal).slice(0, 2);
+  const deals = events.filter((event) => event.deal).slice(0, 3);
   if (!deals.length) return null;
   return <section className="promotions shell">
-    <div className="promo-copy"><span className="sponsor-tag">CREW UNLOCKS · VERIFIED</span><h2>Deals worth<br/>changing plans for.</h2><p>No generic ads. These activate only when your group commits.</p></div>
+    <div className="promo-copy"><span className="sponsor-tag">CREW UNLOCKS · TONIGHT</span><h2>Deals worth<br/>changing plans for.</h2><p>Prototype offers show how local partners can reward groups that commit together.</p></div>
     {deals.map((event, index) => { const claimed = claimedDeals.includes(event.id); return <article className={`promo-card ${index === 0 ? "coral" : "dark"}`} key={event.id}><span>{event.venue.toUpperCase()} · TONIGHT</span><h3>{event.deal}</h3><p>{event.area} · {event.cover}</p><div className="unlock-progress"><div><i style={{ width: claimed ? "100%" : "75%" }}></i></div><small>{claimed ? "Unlocked for your crew" : "3 of 4 crew members committed"}</small></div><button onClick={() => onClaim(event)}>{claimed ? "Deal saved" : "Commit and unlock"}<Icon name={claimed ? "check" : "arrow"} size={18}/></button></article>; })}
   </section>;
 }
