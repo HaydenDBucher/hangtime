@@ -117,6 +117,10 @@ const nightOptions = [
   { label: "Open to anything", detail: "See what’s busy and decide together." },
 ];
 
+function estimatedPeople(event) {
+  return Math.max(0, Math.round(Number(event?.attending) || Number(event?.groups || 0) * 4));
+}
+
 function Icon({ name, size = 20 }) {
   const paths = {
     arrow: <><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></>,
@@ -193,7 +197,7 @@ function App() {
     getTonightEvents({ city: "Columbus", signal: controller.signal }).then(({ events: nextEvents, source }) => {
       setEvents(nextEvents);
       setEventSource(source);
-      setSelectedEvent(nextEvents[0]);
+      setSelectedEvent([...nextEvents].sort((a, b) => estimatedPeople(b) - estimatedPeople(a))[0] || null);
     }).catch(() => {});
     return () => controller.abort();
   }, []);
@@ -213,7 +217,7 @@ function App() {
   }, [matchFilter]);
 
   const lensStats = useMemo(() => {
-    const people = events.reduce((total, event) => total + (event.attending || event.groups * 4), 0);
+    const people = events.reduce((total, event) => total + estimatedPeople(event), 0);
     const deals = events.filter((event) => event.deal).length;
     const food = events.filter((event) => /food|dinner|pizza|donut/i.test(`${event.category} ${event.title}`)).length;
     const rideMins = events.flatMap((event) => getCampusRidePreview({ name: event.venue, lat: event.lat, lng: event.lng }).providers.map((provider) => Number(provider.fare.match(/\d+/)?.[0] || 99)));
@@ -237,7 +241,9 @@ function App() {
   }), [events, mapFilter, mapSearch]);
 
   useEffect(() => {
-    if (visibleEvents.length && !visibleEvents.some((event) => event.id === selectedEvent?.id)) setSelectedEvent(visibleEvents[0]);
+    if (visibleEvents.length && !visibleEvents.some((event) => event.id === selectedEvent?.id)) {
+      setSelectedEvent([...visibleEvents].sort((a, b) => estimatedPeople(b) - estimatedPeople(a))[0]);
+    }
   }, [selectedEvent?.id, visibleEvents]);
 
   const joinEvent = (event) => {
@@ -288,7 +294,7 @@ function App() {
 
           <div className={`city-board ${activeView}`}>
             {eventSource === "loading" ? <div className="map-panel map-loading"><span className="live-dot"></span><strong>Building tonight's map</strong></div> : <NightMap events={visibleEvents} selected={selectedEvent} intentions={intentions} lens={mapFilter} onSelect={setSelectedEvent}/>}
-            <EventRail events={visibleEvents} source={eventSource} selected={selectedEvent} intention={selectedEvent ? intentions[selectedEvent.id] : null} claimed={selectedEvent ? claimedDeals.includes(selectedEvent.id) : false} onSelect={setSelectedEvent} onJoin={joinEvent} onIntent={setIntent} onClaim={claimDeal}/>
+            <EventRail events={visibleEvents} source={eventSource} selected={selectedEvent} intention={selectedEvent ? intentions[selectedEvent.id] : null} claimed={selectedEvent ? claimedDeals.includes(selectedEvent.id) : false} onSelect={setSelectedEvent} onIntent={setIntent} onClaim={claimDeal}/>
           </div>
         </section>
 
@@ -660,23 +666,42 @@ function RideOptions({ event }) {
   </section>;
 }
 
-function EventRail({ events, source, selected, intention, claimed, onSelect, onJoin, onIntent, onClaim }) {
+function EventRail({ events, source, selected, intention, claimed, onSelect, onIntent, onClaim }) {
+  const [showAllRankings, setShowAllRankings] = useState(false);
+  const rankedEvents = useMemo(() => [...events].sort((a, b) => estimatedPeople(b) - estimatedPeople(a)), [events]);
+  const totalPeople = rankedEvents.reduce((total, event) => total + estimatedPeople(event), 0);
+  const maxPeople = Math.max(1, ...rankedEvents.map(estimatedPeople));
+  const topEvents = rankedEvents.slice(0, 6);
+  const selectedRank = selected ? rankedEvents.findIndex((event) => event.id === selected.id) + 1 : 0;
+  const selectedOutsideTop = selectedRank > 0 && !topEvents.some((event) => event.id === selected.id) ? selected : null;
+  const visibleRankings = showAllRankings ? rankedEvents : selectedOutsideTop ? [...topEvents, selectedOutsideTop] : topEvents;
+
   return <aside className="event-rail">
-    <div className="rail-top"><div><span className={`source-dot ${source}`}></span><strong>{source === "live" ? "Live events" : source === "loading" ? "Finding events" : "Tonight preview"}</strong></div><span>{events.length} nearby</span></div>
+    <div className="rail-top"><div><span className={`source-dot ${source}`}></span><strong>{source === "live" ? "Live crowd ranking" : source === "loading" ? "Building ranking" : "Where people are"}</strong></div><span>{events.length} spots</span></div>
+    <div className="ranking-overview"><div><span>TONIGHT, RIGHT NOW</span><strong>{totalPeople.toLocaleString()} people nearby</strong></div><small>Ranked by estimated attendance</small></div>
+    <div className="ranked-places" aria-label="Places ranked by estimated attendance">
+      {visibleRankings.map((event) => {
+        const people = estimatedPeople(event);
+        const rank = rankedEvents.findIndex((candidate) => candidate.id === event.id) + 1;
+        const dealSummary = event.deal || `${event.cover || "No cover info"} · ${event.wait || "Check wait"}`;
+        return <button className={`ranking-row ${selected?.id === event.id ? "selected" : ""}`} onClick={() => onSelect(event)} aria-label={`Rank ${rank}, ${event.venue}, ${people} people`} key={event.id}>
+          <span className="rank-number">{String(rank).padStart(2, "0")}</span>
+          <span className="rank-copy"><strong>{event.venue}</strong><small>{event.area} · {event.trend || "Steady"}</small><span className="rank-deal"><em>{event.deal ? "DEAL" : "INFO"}</em>{dealSummary}</span></span>
+          <span className="rank-count"><strong>{people}</strong><small>people</small></span>
+          <span className="rank-track"><i style={{ width: `${Math.max(12, people / maxPeople * 100)}%` }}></i></span>
+        </button>;
+      })}
+    </div>
+    {rankedEvents.length > 6 && <button className="ranking-toggle" onClick={() => setShowAllRankings((current) => !current)}>{showAllRankings ? "Show top six" : `View all ${rankedEvents.length} ranked places`}<Icon name="chevron" size={14}/></button>}
     {selected && <div className="venue-intel">
-      <div className="intel-live"><span className="live-dot"></span><strong>{selected.trend || "Steady"}</strong><small>Updated {selected.updated || "recently"}</small></div>
+      <div className="intel-live"><span className="live-dot"></span><strong>{selectedRank > 0 ? `#${selectedRank} tonight · ` : ""}{estimatedPeople(selected)} people</strong><small>Updated {selected.updated || "recently"}</small></div>
       <h2>{selected.venue}</h2><p>{selected.title} · {selected.time} · {selected.age || "Check age policy"}</p>
       <div className="intel-grid"><div><small>WAIT</small><strong>{selected.wait || "Check venue"}</strong></div><div><small>COVER</small><strong>{selected.cover || "Check venue"}</strong></div><div><small>PEAK</small><strong>{selected.peak || selected.time}</strong></div><div><small>YOUR NETWORK</small><strong>{selected.friends || 0} going</strong></div></div>
       <div className="confidence"><Icon name="shield" size={13}/>{selected.confidence || "Community estimate"} · {selected.groups} student crews committed</div>
+      {selected.deal && <div className="intel-deal"><span>TONIGHT'S DEAL</span><strong>{selected.deal}</strong><button className={claimed ? "claimed" : ""} onClick={() => onClaim(selected)}>{claimed ? "Saved" : "Save"}</button></div>}
       <RideOptions event={selected}/>
-      {selected.deal && <div className="intel-deal"><span>CREW UNLOCK</span><strong>{selected.deal}</strong><button className={claimed ? "claimed" : ""} onClick={() => onClaim(selected)}>{claimed ? "Saved" : "Save"}</button></div>}
       <div className="intent-picker"><span>Your crew</span><div>{[["considering","Considering"],["heading","Heading there"],["here","Here now"]].map(([value,label]) => <button className={intention === value ? "active" : ""} onClick={() => onIntent(selected,value)} key={value}>{intention === value && <Icon name="check" size={12}/>} {label}</button>)}</div></div>
     </div>}
-    <div className="event-scroll">{events.map((event) => <article className={`event-row ${selected?.id === event.id ? "selected" : ""}`} onClick={() => onSelect(event)} key={event.id}>
-      <div className={`event-time ${event.tone}`}><strong>{event.time.split(" ")[0]}</strong><span>{event.time.split(" ")[1] || ""}</span></div>
-      <div className="event-info">{event.promoted && <small className="promoted-label">PROMOTED</small>}<h3>{event.venue}</h3><p>{event.title} · {event.area}</p><div><span><Icon name="users" size={13}/>{event.groups} crews</span><span className="trend-chip">{event.trend || "Steady"}</span><span>{event.age || "Check age"}</span></div></div>
-      <button className="row-arrow" onClick={(eventClick) => { eventClick.stopPropagation(); onJoin(event); }} aria-label={`Add ${event.title} to plan`}><Icon name="arrow" size={17}/></button>
-    </article>)}</div>
     <p className="data-note">{source === "live" ? "Live event listings are mixed with modeled, privacy-safe crowds and prototype offers." : "Prototype data: crowds, waits, and offers are modeled to show the complete live experience."}</p>
   </aside>;
 }
