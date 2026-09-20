@@ -11,10 +11,10 @@
 
 | ID | Hypothesis | Primary measure | Pass threshold | Failure / action |
 |---|---|---|---|---|
-| H1 | A map-first utility reduces decision friction | Percent of qualified crews that choose and share/lock a destination in ≤2 minutes, without hints | ≥40% | <25%: revisit the core job and information hierarchy; 25–39%: simplify flow and retest |
+| H1 | A map-first utility reduces decision friction | Qualified groups producing `destination_locked` within five minutes of `plan_started`, without help | ≥50% | 25–49%, or ≥30% needing help at the same step: change and retest; <25%: stop or reframe |
 | H2 | The utility has recurring value | 14-day return among activated users on another eligible night | ≥25% | <15%: stop feature expansion and interview non-returners |
 | H3 | The displayed status is credible | Percent of sampled venue statuses confirmed accurate within 20 minutes | ≥70% | <50%: do not market the feed as live; build a confirmation loop first |
-| H4 | A venue will pay | Qualified managers signing a $149/month pilot or LOI | ≥3 of 10 | <2 of 10: reject or materially revise the payer/pricing hypothesis |
+| H4 | Venues will commit money | Qualified venue budget owners providing a written commitment or deposit after seeing the price test | ≥2 commitments after ≥5 conversations | No commitments: revise the offer or payer; a price selection alone does not pass |
 
 An “activated user” opens a venue, compares at least two options, and saves, shares, votes on, or marks a destination. Define this before data collection and do not loosen it after seeing results.
 
@@ -25,7 +25,7 @@ An “activated user” opens a venue, compares at least two options, and saves,
 - Recruit 30–50 students in crews of 2–5, ages 18+.
 - Include at least half of participants outside the founders' immediate friend group.
 - Recruit across two different night types, such as a normal Friday and a game/event night.
-- Recruit 10 venue decision-makers separately for payer interviews.
+- Recruit at least five venue decision-makers separately for the frozen payer test.
 
 ### Conditions
 
@@ -55,7 +55,7 @@ For the pilot, venue staff can confirm deals, wait, and approximate crowd bands 
 
 Show managers a simple outcome report: views from nearby active groups, saves, “heading there” intent, and verified redemptions. Then ask for a concrete commitment:
 
-> We are recruiting five pilot partners at $149 per month, including a verified listing, two promoted offers, and a redemption report. Would you sign a one-page pilot agreement and select a start date?
+> We are recruiting five pilot partners at $75 per month plus $1 per redeemed group offer, including a verified listing, promoted offers, and a redemption report. Would you sign a one-page pilot agreement and select a start date?
 
 Record yes, no, requested changes, who controls the budget, current acquisition spending, and the next action. Praise, introductions, and “keep me posted” do not count as willingness to pay.
 

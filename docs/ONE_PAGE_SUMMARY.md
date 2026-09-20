@@ -26,14 +26,14 @@ The public prototype supports map and ranking discovery, filters, destination de
 
 A two-week OSU pilot will test four pre-registered thresholds:
 
-- At least 40% of crews choose and share/lock a destination in two minutes.
+- At least 50% of qualified groups lock a destination within five minutes without moderator help.
 - At least 25% of activated users return within 14 days.
 - At least 70% of sampled statuses are accurate within 20 minutes.
-- At least 3 of 10 venue decision-makers sign a $149/month pilot or LOI.
+- At least five venue decision-makers see the price test; at least two provide written commitments or deposits.
 
 ### Ask
 
-We are seeking 30–50 student testers, five participating campus-area venues, and 10 qualified venue buyer conversations.
+We are seeking 30–50 student testers, five participating campus-area venues, and at least five qualified venue buyer conversations.
 
 Product: <https://haydendbucher.github.io/hangtime/><br>
 Deck: <https://haydendbucher.github.io/hangtime/pitch-deck.html><br>

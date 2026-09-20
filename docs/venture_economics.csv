@@ -1,4 +1,4 @@
-scenario,addressable_partners,paying_partners,subscription_per_partner,promotion_per_partner,redemptions_per_partner,fee_per_redemption,revenue_per_partner,campus_revenue,direct_cost_per_partner,campus_operating_cost,campus_contribution,contribution_margin,venue_cac,cac_payback_months
-Bear,30,8,99,75,40,1.00,214,1712,80,1200,-128,-7.5%,650,N/A
-Base,30,15,149,150,80,1.25,399,5985,70,1250,3685,61.6%,450,1.37
-Bull,30,22,199,250,140,1.50,659,14498,90,1800,10718,73.9%,350,0.62
+scenario,paying_venues,monthly_base_price,total_monthly_redemptions,redemption_fee,base_revenue,usage_revenue,total_revenue,near_variable_cost,monthly_contribution,contribution_margin,direct_cash_cac_hypothesis
+Downside,8,75,80,1,600,80,680,350,330,48.5%,under 100
+Base,20,75,400,1,1500,400,1900,450,1450,76.3%,under 100
+Upside,55,75,1375,1,4125,1375,5500,1100,4400,80.0%,under 100
