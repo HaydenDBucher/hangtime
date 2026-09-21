@@ -4,7 +4,7 @@
 
 No structured task-completion outcomes are claimed in this repository yet. One exploratory user interaction is recorded below because it materially influenced the product direction. Do not estimate, backfill, or convert that single directional interaction into a completion rate or broader market claim.
 
-The separate `SIMULATED_USABILITY_REVIEW.md` contains hypothetical walkthroughs used for design preparation. Its scenarios and predictions must not be copied into the tables below as participant evidence.
+Earlier heuristic walkthroughs were used only for design preparation and are not counted as participant evidence.
 
 ## Exploratory input that informed the current build
 

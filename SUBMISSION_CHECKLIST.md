@@ -8,14 +8,14 @@
 | Repository and source | `https://github.com/HaydenDBucher/hangtime` | Ready |
 | Named hypothesis | `MVP_EXPERIMENT.md` | Ready |
 | Behavioral measure and denominator | `MVP_EXPERIMENT.md`, browser-local event export | Ready |
-| Precommitted decision rule | `DECISION_RULE_RECEIPT.md` | Ready |
+| Precommitted decision rule | `MVP_EXPERIMENT.md` | Ready |
 | Ethical user evidence | `USER_TEST_RESULTS.md` | Two reported exploratory observations; no structured completion claim |
 | Consequential revision record | `USER_TEST_RESULTS.md`, `BUILD_LOG.md`, commits `0faf2ec` and `eb7cec7` | Ready; effect not independently verified |
 | Venture-economics snapshot | `VENTURE_ECONOMICS.md` | Ready; assumptions labeled |
 | AI and build log | `BUILD_LOG.md` | Ready |
-| Product command and candor | `TEAM_OWNERSHIP.md`, `LIMITATIONS.md` | Ready; no named-role table |
+| Product command and candor | `BUILD_LOG.md`, `LIMITATIONS.md` | Ready |
 | Consolidated narrative | `Hangtime_Rubric_Submission.docx` | Ready |
-| Release verification | `.github/workflows/deploy.yml`, `scripts/verify-mvp.mjs`, `QA_CHECKLIST.md` | Automated checks pass |
+| Release verification | `.github/workflows/deploy.yml`, `scripts/verify-mvp.mjs`, `BUILD_LOG.md` | Automated checks pass |
 
 ## Submit these three items
 
