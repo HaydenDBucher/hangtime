@@ -70,7 +70,7 @@ The team therefore changed the primary job from **“find another group”** to 
 | 2026-09-20 | `c55b873` | Is the nightlife corridor too campus-north heavy? | Represent High Street through Short North toward downtown, favoring the south side | Expanded venue/deal/group data and adjusted corridor framing | Content density is demonstrative, not traction |
 | 2026-09-20 | `0b5c454` | Can users interpret the map without opening every marker? | Put a ranked explanation beside it | Added venue rankings with crowd count and deal summary | Implemented; ranking inputs modeled |
 | 2026-09-20 | `59b0b64` | Does the product make its core decision testable? | Require a plan, comparison, vote, and destination lock before matching | Added the three-step flow, explicit vote, post-lock matching, modeled-data banner, report/block actions, and anonymous event instrumentation | Working path implemented; external completion results not claimed |
-| 2026-09-20 | `633f3e9` | Can the evidence and release process be audited? | Freeze decision rules and fail the build if core evidence controls disappear | Added evidence index, payer case, rule receipt, limitations, QA documentation, persistent state, and 17 automated checks in CI | Automated checks do not replace real users or device QA |
+| 2026-09-20 | `633f3e9` | Can the evidence and release process be audited? | Freeze decision rules and fail the build if core evidence controls disappear | Added evidence index, payer case, rule receipt, limitations, QA documentation, persistent state, and automated checks in CI | Automated checks do not replace real users or device QA |
 | 2026-09-20 | `68ee87a` | How should the course submission be packaged? | Consolidate the rubric case into one Word document | Added `Hangtime_Rubric_Submission.docx` and removed a redundant multi-file presentation package | Document uses only supplied evidence and labeled assumptions |
 
 ## Current working product
@@ -118,7 +118,7 @@ AI-assisted development helped implement interface iterations, code changes, doc
 
 - Review the diff and explain every material product choice.
 - Confirm no participant data, secrets, or precise user locations are committed.
-- Run `npm run check` and confirm all 17 rubric/flow checks pass.
+- Run `npm run check` and confirm every rubric/flow check passes.
 - Run `npm run build` and verify the GitHub Pages workflow succeeds.
 - Test plan start through destination lock with keyboard and pointer input.
 - Test mobile width, empty search, API fallback, sign-in errors, and modal dismissal.

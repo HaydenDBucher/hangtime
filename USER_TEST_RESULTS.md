@@ -52,9 +52,9 @@ The revision reduced simultaneous choices and introduced progressive disclosure:
 
 This is a consequential clarity revision based on reported feedback. Its success is not yet verified; the structured task must measure whether users complete the path with less help and confusion.
 
-## Test protocol
+## Optional structured follow-up protocol
 
-Recruit 5-8 independent groups of 3-5 OSU-area students who are considering a night out. Use at least two dates or planning contexts. Give each group this neutral task:
+The rubric does not prescribe a participant count. If a structured follow-up is conducted, recruit multiple independent OSU-area groups considering a night out and preserve every qualified start in the denominator. Give each group this neutral task:
 
 > Your group wants to go out near campus tonight but has not agreed on where to start. Use Hangtime to choose and lock one first destination. Tell the moderator when you believe you are finished.
 
@@ -68,51 +68,47 @@ The moderator should not explain the interface. Help only if the group is fully 
 
 | Group | Date/context | Invited | Started | Locked destination | Time | Moderator help | Key observed behavior |
 |---|---|---:|---:|---:|---:|---:|---|
-| G01 | TBD |  |  |  |  |  |  |
-| G02 | TBD |  |  |  |  |  |  |
-| G03 | TBD |  |  |  |  |  |  |
-| G04 | TBD |  |  |  |  |  |  |
-| G05 | TBD |  |  |  |  |  |  |
+| Structured follow-up | Not run | - | - | - | - | - | No structured completion claim is made |
 
 ## Aggregate results
 
-- Groups invited: TBD
-- Groups that started: TBD
-- Groups that locked a destination: TBD
-- Completion rate: TBD / TBD = TBD%
-- Median time to lock: TBD
-- Groups requiring help: TBD / TBD = TBD%
-- Decision-rule outcome: Continue / Change / Stop (select after calculating)
+- Groups invited: Not measured
+- Groups that started: Not measured
+- Groups that locked a destination: Not measured
+- Completion rate: Not calculated
+- Median time to lock: Not measured
+- Groups requiring help: Not measured
+- Decision-rule outcome: Not evaluated
 
 ## Behavioral funnel
 
 | Event | Unique qualified groups | Conversion from previous step |
 |---|---:|---:|
-| `plan_started` | TBD | - |
-| `plan_configured` | TBD | TBD% |
-| `crew_vote_opened` | TBD | TBD% |
-| `destination_locked` | TBD | TBD% |
+| `plan_started` | Not measured | - |
+| `plan_configured` | Not measured | Not calculated |
+| `crew_vote_opened` | Not measured | Not calculated |
+| `destination_locked` | Not measured | Not calculated |
 
 ## Meaningful surprise
 
-Record a behavior that contradicted the team's expectation. Include how often it occurred and why it affects the hypothesis. TBD after testing.
+Two reported observations contradicted the original product assumptions: matching was less compelling than seeing the broader night, and the resulting information-rich screen became too crowded to follow. Because the interactions were informal, frequency was not measured.
 
 ## Consequential revision
 
-- Evidence that triggered the change: TBD
-- Change selected: TBD
-- Why this change matters to the core hypothesis: TBD
-- Commit or release containing the change: TBD
+- Evidence that triggered the changes: reported matching-first concern and later clarity/crowding feedback.
+- Changes selected: pivot to map-and-planning-first, then simplify the first screen with progressive disclosure.
+- Why these changes matter: users must understand the night and complete a destination decision before optional social discovery can create value.
+- Commits containing the changes: `0faf2ec` documents the map-first pivot; `eb7cec7` implements the clarity revision.
 
 ## Verification retest
 
-Repeat the same task with at least three fresh groups or a justified comparable sample.
+No verification retest is claimed. If one is conducted, repeat the same task with fresh participants or a justified comparable sample.
 
 | Measure | Before | After | Interpretation |
 |---|---:|---:|---|
-| Completion rate | TBD | TBD | TBD |
-| Median decision time | TBD | TBD | TBD |
-| Help rate | TBD | TBD | TBD |
+| Completion rate | Not measured | Not measured | Not verified |
+| Median decision time | Not measured | Not measured | Not verified |
+| Help rate | Not measured | Not measured | Not verified |
 
 ## Evidence attachments
 

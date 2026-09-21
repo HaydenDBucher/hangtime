@@ -70,6 +70,7 @@ GitHub Pages deploys automatically from `main` using the workflow in `.github/wo
 
 ## MVP evidence packet
 
+- [`SUBMISSION_CHECKLIST.md`](SUBMISSION_CHECKLIST.md): final required-item audit and exact three-item submission package.
 - [`RUBRIC_EVIDENCE.md`](RUBRIC_EVIDENCE.md): criterion-by-criterion evidence map and claim boundaries.
 - [`CUSTOMER_PAYER_CASE.md`](CUSTOMER_PAYER_CASE.md): specific customer, costly job, alternatives, urgency, payer, and buying logic.
 - [`MVP_EXPERIMENT.md`](MVP_EXPERIMENT.md): named hypothesis, behavioral measure, denominator, and precommitted decision rule.
