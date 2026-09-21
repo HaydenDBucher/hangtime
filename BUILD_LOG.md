@@ -125,6 +125,6 @@ AI-assisted development helped implement interface iterations, code changes, doc
 - Confirm modeled and fictional data remain clearly labeled.
 - Record failures, contrary user feedback, and the correcting commit.
 
-## Ownership record
+## Human command of the work
 
-Hayden Bucher is the documented project and repository owner. Product direction, interpretation of the reported user interaction, prioritization, review, and final submission claims remain human-owned. If additional people contribute research, implementation, verification, or economics work, their specific contributions and sign-off should be added here rather than inferred from commit count.
+Product direction, interpretation of reported user interactions, prioritization, review, and final submission claims remain human-controlled. Presenters should be able to explain the product, evidence, economics, limitations, and AI contribution without relying on nominal role assignments.

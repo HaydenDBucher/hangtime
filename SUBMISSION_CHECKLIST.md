@@ -13,7 +13,7 @@
 | Consequential revision record | `USER_TEST_RESULTS.md`, `BUILD_LOG.md`, commits `0faf2ec` and `eb7cec7` | Ready; effect not independently verified |
 | Venture-economics snapshot | `VENTURE_ECONOMICS.md` | Ready; assumptions labeled |
 | AI and build log | `BUILD_LOG.md` | Ready |
-| Ownership and candor | `TEAM_OWNERSHIP.md`, `LIMITATIONS.md` | Ready |
+| Product command and candor | `TEAM_OWNERSHIP.md`, `LIMITATIONS.md` | Ready; no named-role table |
 | Consolidated narrative | `Hangtime_Rubric_Submission.docx` | Ready |
 | Release verification | `.github/workflows/deploy.yml`, `scripts/verify-mvp.mjs`, `QA_CHECKLIST.md` | Automated checks pass |
 

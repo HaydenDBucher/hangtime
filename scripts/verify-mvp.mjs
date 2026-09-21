@@ -13,7 +13,7 @@ const checks = [
   ["honest evidence status", read("USER_TEST_RESULTS.md").includes("No structured task-completion outcomes are claimed")],
   ["venture contribution logic", read("VENTURE_ECONOMICS.md").includes("Contribution margin")],
   ["limitations disclosure", read("LIMITATIONS.md").includes("Not production-ready")],
-  ["documented ownership", read("TEAM_OWNERSHIP.md").includes("Hayden Bucher")],
+  ["command of evidence", read("TEAM_OWNERSHIP.md").includes("## Command of evidence")],
   ["submission checklist", read("SUBMISSION_CHECKLIST.md").includes("## Submit these three items")],
   ["QA claim boundary", read("QA_CHECKLIST.md").includes("Manual checks not claimed")],
   ["simulated review label", read("SIMULATED_USABILITY_REVIEW.md").includes("not user research")],
