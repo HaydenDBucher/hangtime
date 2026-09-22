@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hangtime investor pitch — a campus nightlife decision tool.">
+  <title>Hangtime — Investor Pitch</title>
+  <style>
+    :root {
+      --ink:#181816; --muted:#67645d; --paper:#f7f4ec; --white:#fff;
+      --red:#be282d; --pale-red:#f6e2e0; --blue:#456d8e; --pale-blue:#e2ebf0;
+      --green:#25775b; --pale-green:#e2efe8; --yellow:#def084; --line:#d6d1c6;
+    }
+    * { box-sizing:border-box; }
+    html, body { margin:0; min-height:100%; background:#111; color:var(--ink); font-family:Arial, Helvetica, sans-serif; }
+    button, a { font:inherit; }
+    .deck { min-height:100vh; display:grid; place-items:center; padding:22px; }
+    .slide {
+      display:none; position:relative; width:min(1280px, calc(100vw - 44px)); aspect-ratio:16/9;
+      overflow:hidden; background:var(--paper); padding:4.8% 5.25% 4.2%; box-shadow:0 22px 70px #0009;
+    }
+    .slide.active { display:block; }
+    .eyebrow { margin:0 0 2.4%; color:var(--red); font-size:clamp(9px, .78vw, 14px); font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    h1 { max-width:95%; margin:0 0 2.3%; font:400 clamp(29px, 3.55vw, 58px)/1.04 Georgia, serif; letter-spacing:-.025em; }
+    h2 { margin:0; font:400 clamp(18px, 1.75vw, 29px)/1.13 Georgia, serif; }
+    h3 { margin:0; font-size:clamp(12px, 1.1vw, 18px); }
+    p { font-size:clamp(11px, 1.12vw, 18px); line-height:1.42; }
+    .subhead { max-width:78%; color:var(--muted); font-size:clamp(14px, 1.55vw, 25px); }
+    .tag { display:inline-block; padding:.5em .85em; border-radius:999px; font-size:clamp(7px, .67vw, 11px); font-weight:800; letter-spacing:.045em; text-transform:uppercase; }
+    .observed { color:var(--green); background:var(--pale-green); }
+    .assumption { color:var(--red); background:var(--pale-red); }
+    .calculation { color:var(--blue); background:var(--pale-blue); }
+    .target { color:var(--ink); background:var(--yellow); }
+    .cards { display:grid; gap:2.6%; }
+    .two { grid-template-columns:1fr 1fr; }
+    .three { grid-template-columns:repeat(3,1fr); }
+    .four { grid-template-columns:repeat(4,1fr); }
+    .card { border:1px solid var(--line); border-radius:22px; background:var(--white); padding:6%; }
+    .card.blue { background:var(--pale-blue); }
+    .card p { color:var(--muted); }
+    .big { margin:.12em 0; font:400 clamp(28px, 3.2vw, 52px)/1 Georgia, serif; }
+    .red { color:var(--red); } .blue-text { color:var(--blue); } .green-text { color:var(--green); }
+    .band { border-radius:20px; padding:2.6% 3.3%; background:var(--red); color:var(--white); }
+    .band.dark { background:var(--ink); }
+    .band h2 { text-align:center; }
+    .limit { display:flex; align-items:center; gap:2.2%; padding:1.2% 2%; border-radius:15px; background:var(--pale-red); }
+    .limit p { margin:0; font-family:Georgia,serif; color:var(--ink); }
+    .rows { display:grid; gap:.42rem; }
+    .row { display:grid; grid-template-columns:1fr auto; gap:18px; align-items:end; border-bottom:1px solid var(--line); padding:.42em 0; }
+    .row span { color:var(--muted); font-size:clamp(10px, 1vw, 16px); }
+    .row strong { font-size:clamp(11px, 1.08vw, 18px); }
+    .math { color:var(--ink); font:400 clamp(20px, 2.15vw, 35px)/1.2 Georgia,serif; }
+    .math.good { color:var(--green); }
+    .step-number { display:grid; place-items:center; width:2.15em; height:2.15em; margin-bottom:18%; border-radius:50%; background:var(--red); color:white; font-weight:800; }
+    .source, .slide-number { position:absolute; bottom:2.2%; color:var(--muted); font-size:clamp(6px, .58vw, 9px); }
+    .source { left:5.25%; max-width:72%; }
+    .slide-number { right:5.25%; font-weight:800; }
+    .controls { position:fixed; z-index:5; right:22px; bottom:18px; display:flex; gap:8px; align-items:center; }
+    .controls button, .controls a { border:1px solid #ffffff33; border-radius:999px; background:#222e; color:white; padding:9px 13px; text-decoration:none; cursor:pointer; }
+    .controls button:hover, .controls a:hover { background:#3a3a3a; }
+    .progress { position:fixed; z-index:5; left:0; bottom:0; width:100%; height:4px; background:#ffffff18; }
+    .progress span { display:block; height:100%; width:12.5%; background:var(--red); transition:width .2s ease; }
+    .speaker-note { display:none; position:absolute; left:5.25%; right:5.25%; bottom:5%; border:1px solid #333; border-radius:12px; background:#fffef4; padding:1.1%; color:#333; font-size:clamp(8px,.78vw,13px); box-shadow:0 10px 30px #0003; }
+    body.notes .speaker-note { display:block; }
+    .statement { margin:0; font:700 clamp(13px, 1.22vw, 20px)/1.35 Arial,sans-serif; }
+    .terms { height:72%; background:var(--red); color:white; border:0; }
+    .terms .tag { color:var(--ink); }
+    .targets { grid-template-columns:1fr 1fr; }
+    .target-card { display:grid; grid-template-columns:1.1fr 1fr; align-items:center; gap:5%; padding:4.5%; }
+    .target-card p { margin:0; color:var(--red); font-family:Georgia,serif; }
+    @media (max-width:780px) {
+      .deck { padding:0; align-items:start; }
+      .slide { width:100vw; min-height:100vh; aspect-ratio:auto; padding:8vh 7vw 12vh; overflow:auto; }
+      .two,.three,.four,.targets { grid-template-columns:1fr; }
+      .cards { gap:14px; }
+      .card { padding:18px; }
+      .source,.slide-number { position:static; display:block; margin-top:22px; }
+      .speaker-note { position:static; margin-top:20px; }
+    }
+    @media print {
+      @page { size:13.333in 7.5in; margin:0; }
+      body { background:white; }
+      .deck { display:block; padding:0; }
+      .slide, .slide.active { display:block; width:13.333in; height:7.5in; page-break-after:always; box-shadow:none; }
+      .controls,.progress,.speaker-note { display:none !important; }
+    }
+  </style>
+</head>
+<body>
+<main class="deck" aria-live="polite">
+  <article class="slide active" data-title="The product">
+    <p class="eyebrow">The product</p>
+    <span class="tag target">One job</span>
+    <h1 style="margin-top:5%">Where should we go tonight?</h1>
+    <p class="subhead">Hangtime helps a college group make that decision faster.</p>
+    <div class="band" style="margin-top:7%"><h2>Crowd direction + events and deals + ride estimates + a crew vote</h2></div>
+    <p style="margin-top:5%;color:var(--muted)">Team Hangtime · Investor Pitch · September 24, 2026</p>
+    <div class="speaker-note">Open with the coordination problem, not matching. Hangtime answers one concrete question for a group.</div>
+    <span class="slide-number">HANGTIME / 1</span>
+  </article>
+
+  <article class="slide" data-title="Customer evidence">
+    <p class="eyebrow">Customer evidence</p>
+    <h1>Two users changed what we built.</h1>
+    <span class="tag observed">Observed · n = 2</span>
+    <div class="cards two" style="margin-top:3%">
+      <section class="card">
+        <h2>What we heard</h2>
+        <p class="statement" style="margin-top:8%"><span class="red">1.</span> Matching felt off. Seeing where people were going felt useful.</p>
+        <p class="statement" style="margin-top:8%"><span class="red">2.</span> The first screen felt crowded and hard to follow.</p>
+      </section>
+      <section class="card blue">
+        <h2>What changed</h2>
+        <p class="statement" style="margin-top:8%">→ Matching became optional—not the main product.</p>
+        <p class="statement" style="margin-top:8%">→ The map, deals, ride cost, and group decision moved forward.</p>
+      </section>
+    </div>
+    <div class="limit" style="margin-top:3%"><strong class="red">HONEST LIMIT</strong><p>Two conversations are revision evidence—not proof of demand.</p></div>
+    <div class="speaker-note">State the denominator. The evidence supports the revision, not market validation.</div>
+    <span class="slide-number">HANGTIME / 2</span>
+  </article>
+
+  <article class="slide" data-title="Working MVP">
+    <p class="eyebrow">Working MVP</p>
+    <h1>The group makes one decision in four steps.</h1>
+    <div class="cards four" style="margin-top:5%">
+      <section class="card"><span class="step-number">1</span><h2>Open</h2><p>See campus-area crowd zones.</p></section>
+      <section class="card"><span class="step-number">2</span><h2>Compare</h2><p>Check events, deals, food, wait, and ride estimates.</p></section>
+      <section class="card"><span class="step-number">3</span><h2>Vote</h2><p>Let the crew choose from a short list.</p></section>
+      <section class="card"><span class="step-number">4</span><h2>Lock</h2><p>Commit to one destination.</p></section>
+    </div>
+    <div style="margin-top:4%"><span class="tag observed">Current status</span><p class="statement">The interface is deployed. Crowd, venue, deal, event, and ride data are modeled for demonstration—not verified live feeds.</p></div>
+    <span class="source">Live prototype: haydendbucher.github.io/hangtime/</span>
+    <div class="speaker-note">Walk the four-step path. Be explicit that the interface is live but the underlying data is modeled.</div>
+    <span class="slide-number">HANGTIME / 3</span>
+  </article>
+
+  <article class="slide" data-title="Customer, payer, and beachhead">
+    <p class="eyebrow">Customer, payer, and beachhead</p>
+    <h1>Students use it. Venues fund it.</h1>
+    <div class="cards three" style="margin-top:4%">
+      <section class="card"><span class="tag target">Customer</span><h2 style="margin-top:9%">College groups</h2><p>Job: decide where to go with less searching and group-chat friction.</p><p class="statement green-text">Price: free</p></section>
+      <section class="card"><span class="tag assumption">Payer assumption</span><h2 style="margin-top:9%">Local venues</h2><p>Proposed value: reach students while they choose and measure offer redemptions.</p><p class="statement red">$75/month + $1/redemption</p></section>
+      <section class="card blue"><span class="tag observed">Beachhead fact</span><h2 style="margin-top:9%">Ohio State</h2><p class="big blue-text">61,326</p><p>Columbus-campus students in Autumn 2025.</p></section>
+    </div>
+    <p class="statement" style="text-align:center;margin-top:3%">Prove OSU first; expand campus by campus.</p>
+    <span class="source">Source: Ohio State EARI, Student Enrollment—Columbus Campus, Autumn 2025.</span>
+    <div class="speaker-note">The enrollment is a published fact. The price and payer behavior are assumptions that still need testing.</div>
+    <span class="slide-number">HANGTIME / 4</span>
+  </article>
+
+  <article class="slide" data-title="Business economics">
+    <p class="eyebrow">Business economics</p>
+    <h1>One campus model—every input is labeled.</h1>
+    <div class="cards two" style="margin-top:3%">
+      <section class="card">
+        <span class="tag assumption">Planning assumptions</span>
+        <h2 style="margin:6% 0 4%">Inputs</h2>
+        <div class="rows">
+          <div class="row"><span>Paying venues</span><strong>20</strong></div>
+          <div class="row"><span>Monthly venue fee</span><strong>$75</strong></div>
+          <div class="row"><span>Monthly redemptions</span><strong>400</strong></div>
+          <div class="row"><span>Fee per redemption</span><strong>$1</strong></div>
+          <div class="row"><span>Near-variable costs</span><strong>$450</strong></div>
+        </div>
+      </section>
+      <section class="card blue">
+        <span class="tag calculation">Calculation</span>
+        <p style="margin:7% 0 1%;color:var(--muted);font-weight:700">Monthly revenue</p>
+        <p class="math">20 × $75 + 400 × $1 = $1,900</p>
+        <p style="margin:7% 0 1%;color:var(--muted);font-weight:700">Monthly contribution</p>
+        <p class="math good">$1,900 − $450 = $1,450</p>
+        <p class="statement green-text">≈ 76% contribution margin</p>
+      </section>
+    </div>
+    <div class="limit" style="margin-top:2%"><strong class="red">NOT TRACTION</strong><p>Price, volume, costs, and willingness to pay still require testing.</p></div>
+    <div class="speaker-note">Do not rush. Read the inputs first, then the arithmetic. Every number on this slide is either an assumption or a calculation.</div>
+    <span class="slide-number">HANGTIME / 5</span>
+  </article>
+
+  <article class="slide" data-title="The next proof">
+    <p class="eyebrow">The next proof</p>
+    <h1>The test is simple enough to fail.</h1>
+    <span class="tag assumption">Hypothesis</span>
+    <div class="band dark" style="margin-top:2%"><h2>At least half of qualified groups will lock a destination within five minutes, without help.</h2></div>
+    <div class="cards four" style="margin-top:3%">
+      <section class="card"><p class="big blue-text">20</p><h3>groups tested</h3><p>All must already be deciding where to go.</p></section>
+      <section class="card"><p class="big red">10+</p><h3>pass</h3><p>Continue the current direction.</p></section>
+      <section class="card"><p class="big red">6–9</p><h3>revise</h3><p>Change the flow and repeat.</p></section>
+      <section class="card"><p class="big red">0–5</p><h3>stop</h3><p>Return to problem discovery.</p></section>
+    </div>
+    <p class="statement" style="margin-top:2%"><span class="tag observed">Current status</span> The structured 20-group test has not been run.</p>
+    <div class="speaker-note">This is the main honest test. The rule was set before results, and there are no results yet.</div>
+    <span class="slide-number">HANGTIME / 6</span>
+  </article>
+
+  <article class="slide" data-title="Funding plan">
+    <p class="eyebrow">Funding plan</p>
+    <h1>$250K funds one 12-month proof cycle.</h1>
+    <div class="cards two" style="grid-template-columns:.72fr 1.28fr;margin-top:3%;height:61%">
+      <section class="card terms">
+        <span class="tag target">Proposed terms</span>
+        <p class="big">$250K</p><p class="statement">post-money SAFE</p>
+        <p class="big" style="margin-top:10%">$3.0M cap</p>
+        <p class="statement">8.3% implied ownership at the cap</p>
+        <p class="statement" style="margin-top:10%;color:var(--yellow)">12 months · ≈ $20.8K/month</p>
+        <p style="font-size:.8em">Proposed—not an established market valuation.</p>
+      </section>
+      <section class="card">
+        <h2>Where the money goes</h2>
+        <div class="rows" style="margin-top:4%">
+          <div class="row"><strong>Product + reliable data</strong><strong class="red">$100K</strong></div>
+          <div class="row"><strong>Campus launch + venue partners</strong><strong class="red">$62.5K</strong></div>
+          <div class="row"><strong>Trust, safety + compliance</strong><strong class="blue-text">$50K</strong></div>
+          <div class="row"><strong>Student acquisition</strong><strong class="blue-text">$25K</strong></div>
+          <div class="row"><strong>Contingency + operations</strong><strong class="blue-text">$12.5K</strong></div>
+        </div>
+        <p style="color:var(--blue);font-weight:700">The budget adds to $250K. Final terms require negotiation and legal review.</p>
+      </section>
+    </div>
+    <span class="source">SAFE ownership illustration: investment ÷ post-money valuation cap. Source: Y Combinator SAFE documents.</span>
+    <div class="speaker-note">The ask comes from the use-of-funds budget. The cap is a proposal, not a claimed market valuation.</div>
+    <span class="slide-number">HANGTIME / 7</span>
+  </article>
+
+  <article class="slide" data-title="What the round purchases">
+    <p class="eyebrow">What the round purchases</p>
+    <h1>One campus must work before we expand.</h1>
+    <span class="tag target">12-month targets</span>
+    <div class="cards targets" style="margin-top:3%">
+      <section class="card target-card"><h3>Students return</h3><p>1,500 monthly active<br>≥25% retained at four weeks</p></section>
+      <section class="card target-card"><h3>Venues pay</h3><p>20 paying venues<br>≈ $2,000 monthly revenue</p></section>
+      <section class="card target-card"><h3>Groups decide</h3><p>≥50% lock within five minutes</p></section>
+      <section class="card target-card"><h3>Information is credible</h3><p>70% verified within 20 minutes</p></section>
+    </div>
+    <div class="band dark" style="margin-top:3%"><h2>The ask: capital and OSU-area venue introductions to prove this loop.</h2></div>
+    <span class="source">All figures on this slide are targets—not current traction.</span>
+    <div class="speaker-note">Close by connecting the money to a finite milestone. Expansion happens only if this campus loop works.</div>
+    <span class="slide-number">HANGTIME / 8</span>
+  </article>
+</main>
+
+<nav class="controls" aria-label="Slide controls">
+  <a href="https://github.com/HaydenDBucher/hangtime-pitch/edit/main/index.html" target="_blank" rel="noreferrer">Edit</a>
+  <button id="notes" title="Toggle speaker notes (N)">Notes</button>
+  <button id="prev" aria-label="Previous slide">←</button>
+  <button id="next" aria-label="Next slide">→</button>
+</nav>
+<div class="progress" aria-hidden="true"><span></span></div>
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const bar = document.querySelector('.progress span');
+  let current = 0;
+  function indexFromHash() {
+    const n = Number(location.hash.replace('#',''));
+    return Number.isFinite(n) && n >= 1 && n <= slides.length ? n - 1 : 0;
+  }
+  function show(index, updateHash=true) {
+    current = Math.max(0, Math.min(slides.length - 1, index));
+    slides.forEach((s,i) => s.classList.toggle('active', i === current));
+    bar.style.width = `${((current + 1) / slides.length) * 100}%`;
+    document.title = `Hangtime — ${slides[current].dataset.title}`;
+    if (updateHash) history.replaceState(null, '', `#${current + 1}`);
+  }
+  document.getElementById('prev').onclick = () => show(current - 1);
+  document.getElementById('next').onclick = () => show(current + 1);
+  document.getElementById('notes').onclick = () => document.body.classList.toggle('notes');
+  addEventListener('hashchange', () => show(indexFromHash(), false));
+  addEventListener('keydown', event => {
+    if (['ArrowRight','PageDown',' '].includes(event.key)) { event.preventDefault(); show(current + 1); }
+    if (['ArrowLeft','PageUp'].includes(event.key)) { event.preventDefault(); show(current - 1); }
+    if (event.key === 'Home') show(0);
+    if (event.key === 'End') show(slides.length - 1);
+    if (event.key.toLowerCase() === 'n') document.body.classList.toggle('notes');
+  });
+  show(indexFromHash(), false);
+</script>
+</body>
+</html>
+
