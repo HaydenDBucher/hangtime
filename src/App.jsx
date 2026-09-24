@@ -319,6 +319,17 @@ function App() {
     document.getElementById("tonight")?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const showMatchingDemo = () => {
+    const demoGroup = orderedMatches[0];
+    trackExperimentEvent("matching_demo_opened", { groupId: demoGroup?.id });
+    setPlanConfigured(true);
+    setPlanLocked(true);
+    setOpenToMeet(true);
+    setWalkthroughActive(false);
+    setPlan((current) => ({ ...current, event: current.event === "Open plan" ? "High Street first stop" : current.event }));
+    if (demoGroup) setProfile(demoGroup);
+  };
+
   const sendWave = (group) => {
     trackExperimentEvent("introduction_requested", { groupId: group.id });
     const completingWalkthrough = walkthroughActive;
@@ -349,7 +360,7 @@ function App() {
         <section className="tonight shell" id="tonight">
           <div className="map-first-heading">
             <div><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>Ohio State tonight</span></div><h1>Pick tonight's<br/><em>first stop.</em></h1></div>
-            <div className="map-head-actions"><p>See what's busy, compare your options, and choose together.</p><button onClick={() => { trackExperimentEvent("plan_started"); setPlanOpen(true); }}>{planConfigured ? "Edit tonight's plan" : "Start with your crew"}<Icon name="arrow"/></button></div>
+            <div className="map-head-actions"><p>See what's busy, compare your options, and choose together.</p><div className="map-head-buttons"><button onClick={() => { trackExperimentEvent("plan_started"); setPlanOpen(true); }}>{planConfigured ? "Edit tonight's plan" : "Start with your crew"}<Icon name="arrow"/></button><button className="matching-demo-cta" onClick={showMatchingDemo}><Icon name="users" size={17}/>Demo group matching</button></div></div>
           </div>
 
           <div className="single-next-step" role="status">
@@ -787,9 +798,9 @@ function EventRail({ events, source, selected, intention, claimed, onSelect, onI
     {selected && <div className="venue-intel">
       <div className="intel-live"><span className="live-dot"></span><strong>{selectedRank > 0 ? `#${selectedRank} tonight · ` : ""}{estimatedPeople(selected)} people</strong><small>Updated {selected.updated || "recently"}</small></div>
       <h2>{selected.venue}</h2><p>{selected.title} · {selected.time} · {selected.age || "Check age policy"}</p>
+      {selected.deal && <div className="intel-deal"><span><Icon name="spark" size={13}/>TONIGHT'S FEATURED DEAL</span><strong>{selected.deal}</strong><small>Save it for your crew before you lock the plan.</small><button className={claimed ? "claimed" : ""} onClick={() => onClaim(selected)}>{claimed ? <><Icon name="check" size={14}/>Saved</> : "Save deal"}</button></div>}
       <div className="intel-grid"><div><small>WAIT</small><strong>{selected.wait || "Check venue"}</strong></div><div><small>COVER</small><strong>{selected.cover || "Check venue"}</strong></div><div><small>PEAK</small><strong>{selected.peak || selected.time}</strong></div><div><small>YOUR NETWORK</small><strong>{selected.friends || 0} going</strong></div></div>
       <div className="confidence"><Icon name="shield" size={13}/>{selected.confidence || "Community estimate"} · {selected.groups} student crews committed</div>
-      {selected.deal && <div className="intel-deal"><span>TONIGHT'S DEAL</span><strong>{selected.deal}</strong><button className={claimed ? "claimed" : ""} onClick={() => onClaim(selected)}>{claimed ? "Saved" : "Save"}</button></div>}
       <RideOptions event={selected}/>
       <div className="intent-picker"><span>Your crew</span><div>{[["considering","Considering"],["heading","Heading there"],["here","Here now"]].map(([value,label]) => <button className={intention === value ? "active" : ""} onClick={() => onIntent(selected,value)} key={value}>{intention === value && <Icon name="check" size={12}/>} {label}</button>)}</div></div>
     </div>}

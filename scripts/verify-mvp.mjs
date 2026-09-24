@@ -25,6 +25,8 @@ const checks = [
   ["interactive demo chat", app.includes("function ChatModal") && app.includes('trackExperimentEvent("demo_message_sent"')],
   ["single profile modal handoff", app.includes("setProfile(null); setPersonProfile({ person, group });")],
   ["fictional matching shown in walkthrough", app.includes("Open demo match") && app.includes("Fictional demo accounts") && app.includes("These are fictional demo accounts")],
+  ["matching demo is always visible", app.includes("Demo group matching") && app.includes("matching_demo_opened")],
+  ["selected venue deal is featured", app.includes("TONIGHT'S FEATURED DEAL") && styles.includes(".venue-intel .intel-deal")],
 ];
 
 const failed = checks.filter(([, passed]) => !passed);
