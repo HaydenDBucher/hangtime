@@ -461,6 +461,24 @@ body.modal-open { overflow: hidden; }
 .walkthrough-steps strong { font-size: 11px; }
 .walkthrough-steps small { color: var(--muted); font-size: 8px; line-height: 1.35; }
 
+.group-browser-modal { width: min(980px, 100%); }
+.group-browser-modal > h2 { font-size: 46px; }
+.group-browser-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+.group-browser-card { min-width: 0; padding: 16px; display: grid; gap: 13px; border: 1px solid var(--ink); background: #f3f3ef; }
+.group-browser-top { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.group-browser-top > span { display: grid; justify-items: end; }
+.group-browser-top > span strong { font-size: 24px; line-height: 1; }
+.group-browser-top > span small { color: var(--muted); font-size: 7px; text-transform: uppercase; }
+.demo-profile-label { width: max-content; padding: 4px 6px; display: inline-flex; border-radius: 3px; background: #eef0fb; color: #4053c7; font-family: "IBM Plex Mono", Consolas, monospace; font-size: 6px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.group-browser-card h3 { margin: 5px 0 2px; font-size: 20px; line-height: 1.05; }
+.group-browser-card > div > p { margin: 0; color: var(--muted); font-size: 9px; }
+.group-browser-plan { padding: 11px; display: grid; gap: 4px; border-left: 3px solid var(--coral); background: #e7e7e2; }
+.group-browser-plan small { color: var(--muted); font-size: 6px; font-weight: 800; letter-spacing: .1em; }
+.group-browser-plan strong { font-size: 11px; line-height: 1.3; }
+.group-browser-plan span { color: var(--muted); font-size: 8px; }
+.group-browser-card > button { min-height: 40px; padding: 0 12px; display: flex; justify-content: space-between; align-items: center; border: 0; background: var(--ink); color: #fff; font-size: 9px; font-weight: 750; cursor: pointer; }
+.group-browser-card > button:hover { background: var(--coral); }
+
 .chat-modal { width: min(620px, 100%); }
 .chat-thread { min-height: 240px; max-height: 340px; padding: 14px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; border: 1px solid var(--line); background: #eeeeea; }
 .chat-thread > div { max-width: 78%; padding: 10px 12px; display: grid; gap: 3px; border: 1px solid var(--line); background: var(--white); }
@@ -737,6 +755,8 @@ button { letter-spacing: -.01em; }
 
 @media (max-width: 560px) {
   .walkthrough-steps { grid-template-columns: 1fr; }
+  .group-browser-grid { grid-template-columns: 1fr; }
+  .group-browser-modal > h2 { font-size: 38px; }
   .topbar { border-radius: 14px; }.profile-button > span:first-child { width: 38px; height: 38px; }
   .auth-actions button { padding-inline: 10px; font-size: 9px; }.auth-actions button:first-child { display: none; }
   .tonight { padding-top: 55px; }.map-first-heading .eyebrow { margin-bottom: 23px; }.map-first-heading h1 { max-width: 350px; font-size: 58px; line-height: .86; }.map-head-actions { align-items: stretch; flex-direction: column; }.map-head-actions p { font-size: 14px; }.map-head-actions button { width: 100%; }.map-toolbar { display: flex; align-items: stretch; flex-direction: column; }.map-toolbar > label { width: 100%; }.map-toolbar > div:not(.view-tabs) { width: 100%; }.map-toolbar > div:not(.view-tabs) button { flex: 1; }.map-toolbar .view-tabs { width: 100%; }

@@ -206,6 +206,7 @@ function App() {
   const [walkthroughOpen, setWalkthroughOpen] = useState(false);
   const [walkthroughActive, setWalkthroughActive] = useState(false);
   const [walkthroughStep, setWalkthroughStep] = useState(0);
+  const [groupBrowserOpen, setGroupBrowserOpen] = useState(false);
   const [chatGroup, setChatGroup] = useState(null);
   const [toast, setToast] = useState("");
   const [planConfigured, setPlanConfigured] = useState(() => Boolean(savedPlanState?.planConfigured));
@@ -314,20 +315,20 @@ function App() {
     setProfile(null);
     setPersonProfile(null);
     setMatchedGroup(null);
+    setGroupBrowserOpen(false);
     setChatGroup(null);
     setPlanOpen(true);
     document.getElementById("tonight")?.scrollIntoView({ behavior: "smooth" });
   };
 
   const showMatchingDemo = () => {
-    const demoGroup = orderedMatches[0];
-    trackExperimentEvent("matching_demo_opened", { groupId: demoGroup?.id });
+    trackExperimentEvent("matching_demo_opened", { groupsShown: orderedMatches.length });
     setPlanConfigured(true);
     setPlanLocked(true);
     setOpenToMeet(true);
     setWalkthroughActive(false);
     setPlan((current) => ({ ...current, event: current.event === "Open plan" ? "High Street first stop" : current.event }));
-    if (demoGroup) setProfile(demoGroup);
+    setGroupBrowserOpen(true);
   };
 
   const sendWave = (group) => {
@@ -360,7 +361,7 @@ function App() {
         <section className="tonight shell" id="tonight">
           <div className="map-first-heading">
             <div><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>Ohio State tonight</span></div><h1>Pick tonight's<br/><em>first stop.</em></h1></div>
-            <div className="map-head-actions"><p>See what's busy, compare your options, and choose together.</p><div className="map-head-buttons"><button onClick={() => { trackExperimentEvent("plan_started"); setPlanOpen(true); }}>{planConfigured ? "Edit tonight's plan" : "Start with your crew"}<Icon name="arrow"/></button><button className="matching-demo-cta" onClick={showMatchingDemo}><Icon name="users" size={17}/>Demo group matching</button></div></div>
+            <div className="map-head-actions"><p>See what's busy, compare your options, and choose together.</p><div className="map-head-buttons"><button onClick={() => { trackExperimentEvent("plan_started"); setPlanOpen(true); }}>{planConfigured ? "Edit tonight's plan" : "Start with your crew"}<Icon name="arrow"/></button><button className="matching-demo-cta" onClick={showMatchingDemo}><Icon name="users" size={17}/>Browse demo groups</button></div></div>
           </div>
 
           <div className="single-next-step" role="status">
@@ -376,7 +377,7 @@ function App() {
             <div><strong>{["Set the crew's plan", "Compare one destination", "Vote and lock the winner", "Open a fictional crew and tap Interested"][walkthroughStep]}</strong><small>{["Choose an area, type of night, and start time.", "Tap any map marker or ranked venue.", "Cast your vote, then lock the group winner.", "This opens the fake profiles, plan overlap, and mutual-match state."][walkthroughStep]}</small></div>
             {walkthroughStep === 0 && <button onClick={() => setPlanOpen(true)}>Open plan</button>}
             {walkthroughStep === 2 && <button onClick={() => setPollOpen(true)}>Open vote</button>}
-            {walkthroughStep === 3 && <button onClick={() => { document.getElementById("matches")?.scrollIntoView({ behavior: "smooth" }); setProfile(orderedMatches[0]); }}>Open demo match</button>}
+            {walkthroughStep === 3 && <button onClick={() => { document.getElementById("matches")?.scrollIntoView({ behavior: "smooth" }); setGroupBrowserOpen(true); }}>Browse groups</button>}
             <button className="walkthrough-exit" onClick={() => setWalkthroughActive(false)} aria-label="Exit walkthrough">Exit</button>
           </div>}
 
@@ -441,6 +442,9 @@ function App() {
       )}
       {personProfile && (
         <PersonModal person={personProfile.person} group={personProfile.group} onClose={() => setPersonProfile(null)} onBack={() => { setPersonProfile(null); setProfile(personProfile.group); }}/>
+      )}
+      {groupBrowserOpen && (
+        <GroupBrowserModal groups={orderedMatches} onClose={() => setGroupBrowserOpen(false)} onOpenGroup={(group) => { setGroupBrowserOpen(false); setProfile(group); }} onOpenPerson={(person, group) => { setGroupBrowserOpen(false); setPersonProfile({ person, group }); }}/>
       )}
       {matchedGroup && (
         <MatchModal group={matchedGroup} onClose={() => setMatchedGroup(null)} onMessage={() => { const group = matchedGroup; setMatchedGroup(null); setChatGroup(group); }}/>
@@ -933,6 +937,20 @@ function PlanModal({ plan, onClose, onSave }) {
     {!showAllNights && <button className="night-options-toggle" onClick={() => setShowAllNights(true)}>Show more night types</button>}
     <label><span>Starting around</span><div className="choice-grid time">{["8:30 PM", "9:30 PM", "10:30 PM", "Whenever"].map((time) => <button className={next.time === time ? "selected" : ""} onClick={() => set("time", time)} key={time}>{time}</button>)}</div></label>
     <button className="modal-primary" onClick={() => onSave(next)}>Show me where to go <Icon name="arrow"/></button>
+  </ModalShell>;
+}
+
+function GroupBrowserModal({ groups, onClose, onOpenGroup, onOpenPerson }) {
+  return <ModalShell onClose={onClose} label="Browse fictional group matches" className="group-browser-modal">
+    <span className="kicker">FICTIONAL DEMO ACCOUNTS</span><h2>Groups near your plan.</h2>
+    <p>Tap a person’s photo for an individual account, or open the group to see its full plan and match details.</p>
+    <div className="group-browser-grid">{groups.map((group) => <article className="group-browser-card" key={group.id}>
+      <div className="group-browser-top"><PhotoStack people={group.people} onPerson={(person) => onOpenPerson(person, group)}/><span><strong>{group.score}%</strong><small>plan fit</small></span></div>
+      <div><span className="demo-profile-label">Demo group</span><h3>{group.name}</h3><p>{group.members} people · Ages {group.range} · {group.distance}</p></div>
+      <div className="group-browser-plan"><small>TONIGHT</small><strong>{group.status}</strong><span>{group.overlap}{group.mutuals ? ` · ${group.mutuals} mutuals` : ""}</span></div>
+      <button onClick={() => onOpenGroup(group)}>View people + plan <Icon name="arrow" size={16}/></button>
+    </article>)}</div>
+    <p className="prototype-note"><Icon name="shield" size={15}/>All names, photos, groups, scores, plans, and linked-account indicators in this directory are fictional demonstration data.</p>
   </ModalShell>;
 }
 

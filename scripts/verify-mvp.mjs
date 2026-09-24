@@ -24,8 +24,9 @@ const checks = [
   ["guided walkthrough path", app.includes("60-SECOND PRODUCT WALKTHROUGH") && app.includes("walkthroughStep + 1")],
   ["interactive demo chat", app.includes("function ChatModal") && app.includes('trackExperimentEvent("demo_message_sent"')],
   ["single profile modal handoff", app.includes("setProfile(null); setPersonProfile({ person, group });")],
-  ["fictional matching shown in walkthrough", app.includes("Open demo match") && app.includes("Fictional demo accounts") && app.includes("These are fictional demo accounts")],
-  ["matching demo is always visible", app.includes("Demo group matching") && app.includes("matching_demo_opened")],
+  ["fictional matching shown in walkthrough", app.includes("Browse groups") && app.includes("FICTIONAL DEMO ACCOUNTS") && app.includes("These are fictional demo accounts")],
+  ["matching demo is always visible", app.includes("Browse demo groups") && app.includes("matching_demo_opened")],
+  ["groups and individual accounts are browsable", app.includes("function GroupBrowserModal") && app.includes("onOpenPerson(person, group)") && app.includes("View people + plan")],
   ["selected venue deal is featured", app.includes("TONIGHT'S FEATURED DEAL") && styles.includes(".venue-intel .intel-deal")],
 ];
 
