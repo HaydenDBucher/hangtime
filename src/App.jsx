@@ -310,6 +310,7 @@ function App() {
     setWalkthroughStep(0);
     setPlanConfigured(false);
     setPlanLocked(false);
+    setOpenToMeet(true);
     setProfile(null);
     setPersonProfile(null);
     setMatchedGroup(null);
@@ -320,6 +321,7 @@ function App() {
 
   const sendWave = (group) => {
     trackExperimentEvent("introduction_requested", { groupId: group.id });
+    const completingWalkthrough = walkthroughActive;
     if (walkthroughActive) {
       setWalkthroughActive(false);
       setWalkthroughStep(0);
@@ -327,8 +329,9 @@ function App() {
     if (group.id === 1) {
       setMatchedGroup(group);
       setProfile(null);
+      if (completingWalkthrough) setToast("Walkthrough complete. The fictional crews matched and profiles unlocked.");
     } else {
-      setToast(walkthroughActive ? "Walkthrough complete. You planned a night and requested an introduction." : `Wave sent to ${group.name}`);
+      setToast(completingWalkthrough ? "Walkthrough complete. You planned a night and requested an introduction." : `Wave sent to ${group.name}`);
       setProfile(null);
     }
   };
@@ -359,10 +362,10 @@ function App() {
 
           {walkthroughActive && <div className="walkthrough-bar" role="status" aria-live="polite">
             <span>GUIDED DEMO · {walkthroughStep + 1} OF 4</span>
-            <div><strong>{["Set the crew's plan", "Compare one destination", "Vote and lock the winner", "Open a crew and tap Interested"][walkthroughStep]}</strong><small>{["Choose an area, type of night, and start time.", "Tap any map marker or ranked venue.", "Cast your vote, then lock the group winner.", "Matching is optional and only appears after the destination is locked."][walkthroughStep]}</small></div>
+            <div><strong>{["Set the crew's plan", "Compare one destination", "Vote and lock the winner", "Open a fictional crew and tap Interested"][walkthroughStep]}</strong><small>{["Choose an area, type of night, and start time.", "Tap any map marker or ranked venue.", "Cast your vote, then lock the group winner.", "This opens the fake profiles, plan overlap, and mutual-match state."][walkthroughStep]}</small></div>
             {walkthroughStep === 0 && <button onClick={() => setPlanOpen(true)}>Open plan</button>}
             {walkthroughStep === 2 && <button onClick={() => setPollOpen(true)}>Open vote</button>}
-            {walkthroughStep === 3 && <button onClick={() => document.getElementById("matches")?.scrollIntoView({ behavior: "smooth" })}>See matches</button>}
+            {walkthroughStep === 3 && <button onClick={() => { document.getElementById("matches")?.scrollIntoView({ behavior: "smooth" }); setProfile(orderedMatches[0]); }}>Open demo match</button>}
             <button className="walkthrough-exit" onClick={() => setWalkthroughActive(false)} aria-label="Exit walkthrough">Exit</button>
           </div>}
 
@@ -391,7 +394,7 @@ function App() {
 
         {planLocked && <section className="matches shell" id="matches">
           <div className="section-title-row matches-heading">
-            <div><span className="kicker">{!planLocked ? "AVAILABLE AFTER YOUR PLAN IS LOCKED" : openToMeet ? "OPEN TO ONE INTRODUCTION" : "DISCOVERY PAUSED"}</span><h2>Crews whose plans overlap.</h2></div>
+            <div><span className="kicker">{!planLocked ? "AVAILABLE AFTER YOUR PLAN IS LOCKED" : openToMeet ? "OPEN TO ONE INTRODUCTION" : "DISCOVERY PAUSED"}</span><h2>Crews whose plans overlap.</h2><span className="demo-account-label"><Icon name="users" size={13}/>Fictional demo accounts</span></div>
             <div className="filter-row"><Icon name="tune" size={17}/>{filters.map((filter) => <button className={matchFilter === filter ? "active" : ""} onClick={() => setMatchFilter(filter)} key={filter}>{filter}</button>)}</div>
           </div>
           <div className="meeting-control"><div><span className="live-dot"></span><p><strong>Meet another crew tonight</strong><small>{planLocked ? "Only groups near the same place and time can see you." : "First lock a destination so matching has a real place and time."}</small></p></div><button disabled={!planLocked} className={planLocked && openToMeet ? "on" : ""} onClick={() => setOpenToMeet((current) => !current)} aria-pressed={planLocked && openToMeet} aria-label={planLocked ? "Toggle crew introductions" : "Crew introductions unavailable until a destination is locked"}><i></i></button></div>
@@ -930,7 +933,7 @@ function WalkthroughModal({ onClose, onStart }) {
       <li><span>1</span><div><strong>Set the crew's plan</strong><small>Choose the area, type of night, and start time.</small></div></li>
       <li><span>2</span><div><strong>Compare a destination</strong><small>Use a map marker or the ranked venue list.</small></div></li>
       <li><span>3</span><div><strong>Vote and lock</strong><small>Cast your vote and lock the group winner.</small></div></li>
-      <li><span>4</span><div><strong>Explore an introduction</strong><small>Open a crew profile, view a person, or tap Interested.</small></div></li>
+      <li><span>4</span><div><strong>Open a fictional group match</strong><small>See fake accounts, individual profiles, plan overlap, and the mutual-match state.</small></div></li>
     </ol>
     <button className="modal-primary" onClick={onStart}>Start walkthrough <Icon name="arrow"/></button>
     <p className="prototype-note"><Icon name="shield" size={15}/>All people, crowd levels, events, offers, and ride estimates shown in the walkthrough are modeled demo data.</p>
@@ -1025,6 +1028,7 @@ function MatchModal({ group, onClose, onMessage }) {
     <div className="mutual-groups"><div><AvatarStack/><strong>The usual four</strong></div><span>+</span><div><PhotoStack people={group.people}/><strong>{group.name}</strong></div></div>
     <p>Your plans overlap at {group.timeline[0].place} around {group.timeline[0].time}.</p>
     <div className="unlocked"><Icon name="instagram"/><span><strong>Profiles unlocked</strong><small>First names and connected accounts are now visible.</small></span></div>
+    <p className="prototype-note"><Icon name="shield" size={15}/>These are fictional demo accounts. No real person is contacted.</p>
     <button className="modal-primary" onClick={onMessage}><Icon name="message"/>Open group chat</button><button className="text-button" onClick={onClose}>Keep exploring</button>
   </ModalShell>;
 }

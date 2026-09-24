@@ -24,6 +24,7 @@ const checks = [
   ["guided walkthrough path", app.includes("60-SECOND PRODUCT WALKTHROUGH") && app.includes("walkthroughStep + 1")],
   ["interactive demo chat", app.includes("function ChatModal") && app.includes('trackExperimentEvent("demo_message_sent"')],
   ["single profile modal handoff", app.includes("setProfile(null); setPersonProfile({ person, group });")],
+  ["fictional matching shown in walkthrough", app.includes("Open demo match") && app.includes("Fictional demo accounts") && app.includes("These are fictional demo accounts")],
 ];
 
 const failed = checks.filter(([, passed]) => !passed);
