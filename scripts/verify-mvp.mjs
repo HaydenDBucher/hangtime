@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const app = read("src/App.jsx");
+const styles = read("src/styles.css");
 const experiment = read("src/experimentService.js");
 
 const checks = [
@@ -19,6 +20,10 @@ const checks = [
   ["modeled-data disclosure", app.includes("fictional or modeled")],
   ["persistent core plan", app.includes("PLAN_STATE_KEY")],
   ["measurement failure isolation", experiment.includes("Measurement must never prevent")],
+  ["modal layer clears map overlays", styles.includes(".modal-layer { position: fixed; inset: 0; z-index: 2000") && styles.includes(".real-map-panel .map-controls { z-index: 900")],
+  ["guided walkthrough path", app.includes("60-SECOND PRODUCT WALKTHROUGH") && app.includes("walkthroughStep + 1")],
+  ["interactive demo chat", app.includes("function ChatModal") && app.includes('trackExperimentEvent("demo_message_sent"')],
+  ["single profile modal handoff", app.includes("setProfile(null); setPersonProfile({ person, group });")],
 ];
 
 const failed = checks.filter(([, passed]) => !passed);
