@@ -28,6 +28,10 @@ const checks = [
   ["matching demo is always visible", app.includes("Browse demo groups") && app.includes("matching_demo_opened")],
   ["groups and individual accounts are browsable", app.includes("function GroupBrowserModal") && app.includes("onOpenPerson(person, group)") && app.includes("View people + plan")],
   ["selected venue deal is featured", app.includes("TONIGHT'S FEATURED DEAL") && styles.includes(".venue-intel .intel-deal")],
+  ["recommendations explain why", app.includes("function RecommendationsModal") && app.includes("WHY WE SUGGESTED IT") && app.includes("getSuggestionReasons")],
+  ["deal terms are explicit", app.includes("function getDealTerms") && app.includes("CREW DEAL")],
+  ["recommendation enters crew vote", app.includes("recommendation_added_to_vote") && app.includes("setVoteEvents")],
+  ["walkthrough always reaches mutual match", app.includes("group.id === 1 || completingWalkthrough")],
 ];
 
 const failed = checks.filter(([, passed]) => !passed);
