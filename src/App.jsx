@@ -223,7 +223,7 @@ function App() {
   const [eventSource, setEventSource] = useState("loading");
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [activeView, setActiveView] = useState("map");
-  const [mapFilter, setMapFilter] = useState("Crowds");
+  const [mapFilter, setMapFilter] = useState("Deals");
   const [mapSearch, setMapSearch] = useState("");
   const [showAllLenses, setShowAllLenses] = useState(false);
   const [matchFilter, setMatchFilter] = useState("Best plan");
@@ -627,7 +627,7 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
     if (!map || !layer) return;
     layer.clearLayers();
 
-    const showVenueDetail = mapZoom >= 14.5 || events.length <= 8;
+    const showVenueDetail = lens === "Deals" || mapZoom >= 14.5 || events.length <= 8;
     if (!showVenueDetail) {
       const districtName = (area = "") => {
         if (/downtown$/i.test(area)) return "Downtown";
@@ -688,8 +688,8 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
       const isSelected = selected?.id === event.id;
       const ridePreview = getCampusRidePreview({ name: event.venue, lat, lng });
       const rideMinimum = ridePreview.providers[0].fare.match(/\d+/)?.[0] || "6";
-      const markerValue = lens === "Ride cost" ? `$${rideMinimum}` : lens === "Deals" ? (event.deal ? "Deal" : "—") : count;
-      const markerLabel = lens === "Ride cost" ? "ride" : lens === "Deals" ? "tonight" : lens === "Food" ? "people" : "crews";
+      const markerValue = lens === "Ride cost" ? `$${rideMinimum}` : lens === "Deals" ? (event.deal ? "$" : "—") : count;
+      const markerLabel = lens === "Ride cost" ? "ride" : lens === "Deals" ? "offer" : lens === "Food" ? "people" : "crews";
 
       if (showVenueDetail) {
         L.circle(point, {
@@ -709,9 +709,23 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
           iconSize: events.length > 12 ? [48, 48] : [58, 58],
           iconAnchor: events.length > 12 ? [24, 24] : [29, 29],
         });
-        L.marker(point, { icon: venueIcon, title: `${event.venue}: ${count} crews` })
+        const venueMarker = L.marker(point, { icon: venueIcon, title: `${event.venue}: ${event.deal || `${count} crews`}` })
           .on("click", () => onSelect(event))
           .addTo(layer);
+        if (event.deal) {
+          const dealTooltip = document.createElement("div");
+          const venueName = document.createElement("strong");
+          const offer = document.createElement("span");
+          venueName.textContent = event.venue;
+          offer.textContent = event.deal;
+          dealTooltip.append(venueName, offer);
+          venueMarker.bindTooltip(dealTooltip, {
+            className: "deal-map-tooltip",
+            direction: "top",
+            offset: [0, -24],
+            permanent: lens === "Deals" && isSelected,
+          });
+        }
       }
 
       if (showVenueDetail && lens === "Crowds" && index < 8) {
@@ -820,8 +834,9 @@ function RideOptions({ event }) {
 
 function EventRail({ events, source, selected, intention, claimed, onSelect, onIntent, onClaim }) {
   const [showAllRankings, setShowAllRankings] = useState(false);
-  const rankedEvents = useMemo(() => [...events].sort((a, b) => estimatedPeople(b) - estimatedPeople(a)), [events]);
+  const rankedEvents = useMemo(() => [...events].sort((a, b) => Number(Boolean(b.deal)) - Number(Boolean(a.deal)) || estimatedPeople(b) - estimatedPeople(a)), [events]);
   const totalPeople = rankedEvents.reduce((total, event) => total + estimatedPeople(event), 0);
+  const dealCount = rankedEvents.filter((event) => event.deal).length;
   const maxPeople = Math.max(1, ...rankedEvents.map(estimatedPeople));
   const topEvents = rankedEvents.slice(0, 3);
   const selectedRank = selected ? rankedEvents.findIndex((event) => event.id === selected.id) + 1 : 0;
@@ -829,16 +844,16 @@ function EventRail({ events, source, selected, intention, claimed, onSelect, onI
   const visibleRankings = showAllRankings ? rankedEvents : selectedOutsideTop ? [...topEvents, selectedOutsideTop] : topEvents;
 
   return <aside className="event-rail">
-    <div className="rail-top"><div><span className={`source-dot ${source}`}></span><strong>{source === "live" ? "Live crowd ranking" : source === "loading" ? "Building ranking" : "Where people are"}</strong></div><span>{events.length} spots</span></div>
-    <div className="ranking-overview"><div><span>TONIGHT, RIGHT NOW</span><strong>{totalPeople.toLocaleString()} people nearby</strong></div><small>Ranked by estimated attendance</small></div>
-    <div className="ranked-places" aria-label="Places ranked by estimated attendance">
+    <div className="rail-top"><div><span className={`source-dot ${source}`}></span><strong>{source === "loading" ? "Finding tonight's offers" : "Deals by location"}</strong></div><span>{events.length} spots</span></div>
+    <div className="ranking-overview"><div><span>TONIGHT'S OPTIONS</span><strong>{dealCount} deals · {totalPeople.toLocaleString()} people</strong></div><small>Tap a location to see the full offer</small></div>
+    <div className="ranked-places" aria-label="Places with tonight's deals and crowd estimates">
       {visibleRankings.map((event) => {
         const people = estimatedPeople(event);
         const rank = rankedEvents.findIndex((candidate) => candidate.id === event.id) + 1;
         const dealSummary = event.deal || `${event.cover || "No cover info"} · ${event.wait || "Check wait"}`;
-        return <button className={`ranking-row ${selected?.id === event.id ? "selected" : ""}`} onClick={() => onSelect(event)} aria-label={`Rank ${rank}, ${event.venue}, ${people} people`} key={event.id}>
+        return <button className={`ranking-row ${event.deal ? "has-deal" : "no-deal"} ${selected?.id === event.id ? "selected" : ""}`} onClick={() => onSelect(event)} aria-label={`Rank ${rank}, ${event.venue}, ${people} people, ${dealSummary}`} key={event.id}>
           <span className="rank-number">{String(rank).padStart(2, "0")}</span>
-          <span className="rank-copy"><strong>{event.venue}</strong><small>{event.area} · {event.trend || "Steady"}</small><span className="rank-deal"><em>{event.deal ? "DEAL" : "INFO"}</em>{dealSummary}</span></span>
+          <span className="rank-copy"><strong>{event.venue}</strong><small>{event.area} · {event.trend || "Steady"}</small><span className="rank-deal"><em>{event.deal ? "TONIGHT" : "INFO"}</em>{dealSummary}</span>{event.deal && <small className="rank-deal-terms">{getDealTerms(event)}</small>}</span>
           <span className="rank-count"><strong>{people}</strong><small>people</small></span>
           <span className="rank-track"><i style={{ width: `${Math.max(12, people / maxPeople * 100)}%` }}></i></span>
         </button>;
