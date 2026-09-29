@@ -689,7 +689,7 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
       const ridePreview = getCampusRidePreview({ name: event.venue, lat, lng });
       const rideMinimum = ridePreview.providers[0].fare.match(/\d+/)?.[0] || "6";
       const markerValue = lens === "Ride cost" ? `$${rideMinimum}` : lens === "Deals" ? (event.deal ? "$" : "—") : count;
-      const markerLabel = lens === "Ride cost" ? "ride" : lens === "Deals" ? "offer" : lens === "Food" ? "people" : "crews";
+      const markerLabel = lens === "Ride cost" ? "ride" : lens === "Deals" ? (/food/i.test(event.category || "") ? "food" : "bar") : lens === "Food" ? "people" : "crews";
 
       if (showVenueDetail) {
         L.circle(point, {
@@ -853,7 +853,7 @@ function EventRail({ events, source, selected, intention, claimed, onSelect, onI
         const dealSummary = event.deal || `${event.cover || "No cover info"} · ${event.wait || "Check wait"}`;
         return <button className={`ranking-row ${event.deal ? "has-deal" : "no-deal"} ${selected?.id === event.id ? "selected" : ""}`} onClick={() => onSelect(event)} aria-label={`Rank ${rank}, ${event.venue}, ${people} people, ${dealSummary}`} key={event.id}>
           <span className="rank-number">{String(rank).padStart(2, "0")}</span>
-          <span className="rank-copy"><strong>{event.venue}</strong><small>{event.area} · {event.trend || "Steady"}</small><span className="rank-deal"><em>{event.deal ? "TONIGHT" : "INFO"}</em>{dealSummary}</span>{event.deal && <small className="rank-deal-terms">{getDealTerms(event)}</small>}</span>
+          <span className="rank-copy"><strong>{event.venue}</strong><small>{event.area} · {event.category} · {event.trend || "Steady"}</small><span className="rank-deal"><em>{event.deal ? "TONIGHT" : "INFO"}</em>{dealSummary}</span>{event.deal && <small className="rank-deal-terms">{getDealTerms(event)}</small>}</span>
           <span className="rank-count"><strong>{people}</strong><small>people</small></span>
           <span className="rank-track"><i style={{ width: `${Math.max(12, people / maxPeople * 100)}%` }}></i></span>
         </button>;
