@@ -16,7 +16,7 @@ const checks = [
   ["release verification boundary", read("README.md").includes("Automated checks do not substitute")],
   ["plan-start measurement", app.includes('trackExperimentEvent("plan_started")')],
   ["destination-lock measurement", app.includes('trackExperimentEvent("destination_locked"')],
-  ["explicit vote requirement", app.includes("disabled={yourVote === null || !events.length}")],
+  ["explicit vote requirement", app.includes("disabled={!result.winner}")],
   ["modeled-data disclosure", app.includes("fictional or modeled")],
   ["persistent core plan", app.includes("PLAN_STATE_KEY")],
   ["measurement failure isolation", experiment.includes("Measurement must never prevent")],

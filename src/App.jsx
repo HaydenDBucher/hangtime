@@ -1,3 +1,5 @@
+import BarCrowds from "./BarCrowds";
+import { meetsWaitLimit, summarizeBallots } from "./decisionService";
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -144,7 +146,7 @@ function nightMatchesEvent(event, night = "") {
 }
 
 function getSuggestedEvents(events, plan) {
-  return [...events].map((event) => {
+  return events.filter((event) => meetsWaitLimit(event, plan)).map((event) => {
     const areaMatch = plan?.area === "Open to ideas" || event.area === plan?.area;
     const score = (areaMatch ? 70 : 0) + (nightMatchesEvent(event, plan?.night) ? 45 : 0) + (event.deal ? 26 : 0) + Math.min(30, event.friends || 0) + Math.min(30, estimatedPeople(event) / 6) - (/20|25|30/.test(event.wait || "") ? 12 : 0);
     return { event, score };
@@ -153,6 +155,7 @@ function getSuggestedEvents(events, plan) {
 
 function getSuggestionReasons(event, plan) {
   const reasons = [];
+  if (plan?.maxWait) reasons.push(`Within your ${plan.maxWait}-minute wait limit (modeled)`);
   if (plan?.area === "Open to ideas" || event.area === plan?.area) reasons.push(plan?.area === "Open to ideas" ? `Strong option near ${event.area}` : `Matches your ${plan.area} area`);
   if (nightMatchesEvent(event, plan?.night)) reasons.push(`Fits “${plan.night}”`);
   if (event.friends) reasons.push(`${event.friends} people in your network`);
@@ -424,6 +427,8 @@ function App() {
             <button className="walkthrough-exit" onClick={() => setWalkthroughActive(false)} aria-label="Exit walkthrough">Exit</button>
           </div>}
 
+          <BarCrowds events={events} loading={eventSource === "loading"} onSelect={(event) => { setMapFilter("Crowds"); setMapSearch(""); selectEvent(event); document.querySelector(".city-board")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}/>
+
           <div className="night-lenses" aria-label="Explore tonight">{(showAllLenses || planConfigured ? lensStats : lensStats.slice(0, 3)).map((lens) => <button className={mapFilter === lens.label ? "active" : ""} onClick={() => setMapFilter(lens.label)} key={lens.label}><span><Icon name={lens.icon} size={15}/>{lens.label}</span><strong>{lens.value}</strong><small>{lens.detail}</small></button>)}{!showAllLenses && !planConfigured && <button className="more-lenses" onClick={() => setShowAllLenses(true)}><span><Icon name="tune" size={15}/>More</span><strong>Food + rides</strong><small>Show every planning signal</small></button>}</div>
 
           <div className="map-toolbar compact"><label><Icon name="compass" size={17}/><input value={mapSearch} onChange={(event) => setMapSearch(event.target.value)} placeholder="Search High Street + downtown"/></label><div className="view-tabs" aria-label="Choose view">{["map", "events"].map((view) => <button className={activeView === view ? "active" : ""} onClick={() => setActiveView(view)} key={view}>{view === "map" ? <Icon name="compass" size={17}/> : <Icon name="calendar" size={17}/>} {view}</button>)}</div></div>
@@ -469,13 +474,13 @@ function App() {
       <footer className="footer shell"><Logo/><p>One plan. More possibilities.</p><div><button onClick={() => setWalkthroughOpen(true)}>Walkthrough</button><a href="#safety">Safety</a><button onClick={() => { trackExperimentEvent("venue_interest_opened"); setVenueOpen(true); }}>For venues</button><button onClick={() => setEvidenceOpen(true)}>Test evidence</button><span>Concept MVP</span></div></footer>
 
       {planOpen && (
-        <PlanModal plan={plan} onClose={() => setPlanOpen(false)} onSave={(next) => { trackExperimentEvent("plan_configured", { area: next.area, night: next.night, time: next.time }); setPlan(next); setPlanConfigured(true); setPlanOpen(false); setRecommendationsOpen(true); if (walkthroughActive) setWalkthroughStep(1); setToast("Plan saved. Three explained suggestions are ready."); }}/>
+        <PlanModal plan={plan} onClose={() => setPlanOpen(false)} onSave={(next) => { trackExperimentEvent("plan_configured", { area: next.area, night: next.night, time: next.time }); setPlan(next); setPlanLocked(false); setVoteEvents([]); setPlanConfigured(true); setPlanOpen(false); setRecommendationsOpen(true); if (walkthroughActive) setWalkthroughStep(1); setToast("Plan saved. Three explained suggestions are ready."); }}/>
       )}
       {recommendationsOpen && (
-        <RecommendationsModal plan={plan} events={events} claimedDeals={claimedDeals} onClaim={claimDeal} onClose={() => setRecommendationsOpen(false)} onChoose={(event, candidates) => { trackExperimentEvent("recommendation_added_to_vote", { eventId: event.id, venue: event.venue }); selectEvent(event); setPlan((current) => ({ ...current, event: event.title, area: event.area })); setVoteEvents([event, ...candidates.filter((candidate) => candidate.id !== event.id)].slice(0, 3)); setRecommendationsOpen(false); setPollOpen(true); if (walkthroughActive) setWalkthroughStep(2); setToast(`${event.venue} added to the crew vote.`); }}/>
+        <RecommendationsModal plan={plan} events={events} claimedDeals={claimedDeals} onClaim={claimDeal} onClose={() => setRecommendationsOpen(false)} onChoose={(event, candidates) => { trackExperimentEvent("recommendation_added_to_vote", { eventId: event.id, venue: event.venue }); selectEvent(event); setPlanLocked(false); setVoteEvents([event, ...candidates.filter((candidate) => candidate.id !== event.id)].slice(0, 3)); setRecommendationsOpen(false); setPollOpen(true); if (walkthroughActive) setWalkthroughStep(2); setToast(`${event.venue} added to the crew vote.`); }}/>
       )}
       {pollOpen && (
-        <CrewPoll events={(voteEvents.length ? voteEvents : events).slice(0, 3)} onClose={() => setPollOpen(false)} onChoose={(event) => { trackExperimentEvent("destination_locked", { eventId: event.id, venue: event.venue }); joinEvent(event); setPlanConfigured(true); setPlanLocked(true); setPollOpen(false); if (walkthroughActive) { setWalkthroughStep(3); window.setTimeout(() => { document.getElementById("matches")?.scrollIntoView({ behavior: "smooth" }); setGroupBrowserOpen(true); }, 220); } setToast(`${event.venue} is locked. Matching is now optional.`); }}/>
+        <CrewPoll crewSize={Number(plan.crewSize) || 4} events={(voteEvents.length ? voteEvents.filter((event) => meetsWaitLimit(event, plan)) : getSuggestedEvents(events, plan)).slice(0, 3)} onClose={() => setPollOpen(false)} onChoose={(event) => { trackExperimentEvent("destination_locked", { eventId: event.id, venue: event.venue }); joinEvent(event); setPlanConfigured(true); setPlanLocked(true); setPollOpen(false); if (walkthroughActive) { setWalkthroughStep(3); window.setTimeout(() => { document.getElementById("matches")?.scrollIntoView({ behavior: "smooth" }); setGroupBrowserOpen(true); }, 220); } setToast(`${event.venue} is locked. Matching is now optional.`); }}/>
       )}
       {authOpen && (
         <AuthModal initialMode={authMode} onClose={() => setAuthOpen(false)} onAuthenticated={(session) => { setAccount(session.profile); setAuthOpen(false); setToast(session.needsVerification ? "Check your email to verify your account" : `Welcome${session.profile.name ? `, ${session.profile.name.split(" ")[0]}` : ""}`); }}/>
@@ -888,19 +893,27 @@ function DealsSection({ events, claimedDeals, onClaim }) {
   if (!deals.length) return null;
   return <section className="promotions shell">
     <div className="promo-copy"><span className="sponsor-tag">CREW UNLOCKS · TONIGHT</span><h2>Deals worth<br/>changing plans for.</h2><p>Prototype offers show how local partners can reward groups that commit together.</p></div>
-    {deals.map((event, index) => { const claimed = claimedDeals.includes(event.id); return <article className={`promo-card ${index === 0 ? "coral" : "dark"}`} key={event.id}><span>{event.venue.toUpperCase()} · TONIGHT</span><h3>{event.deal}</h3><p>{event.area} · {event.cover}</p><div className="unlock-progress"><div><i style={{ width: claimed ? "100%" : "75%" }}></i></div><small>{claimed ? "Unlocked for your crew" : "3 of 4 crew members committed"}</small></div><button onClick={() => onClaim(event)}>{claimed ? "Deal saved" : "Commit and unlock"}<Icon name={claimed ? "check" : "arrow"} size={18}/></button></article>; })}
+    {deals.map((event, index) => { const claimed = claimedDeals.includes(event.id); return <article className={`promo-card ${index === 0 ? "coral" : "dark"}`} key={event.id}><span>{event.venue.toUpperCase()} · TONIGHT</span><h3>{event.deal}</h3><p>{event.area} · {event.cover}</p><div className="unlock-progress"><div><i style={{ width: claimed ? "100%" : "0%" }}></i></div><small>{claimed ? "Saved on this device" : "Preview offer - venue confirmation required"}</small></div><button onClick={() => onClaim(event)}>{claimed ? "Deal saved" : "Save preview offer"}<Icon name={claimed ? "check" : "arrow"} size={18}/></button></article>; })}
   </section>;
 }
 
-function CrewPoll({ events, onClose, onChoose }) {
-  const [votes, setVotes] = useState(events.map((_, index) => [2,1,1][index] || 0));
-  const [yourVote, setYourVote] = useState(null);
-  const vote = (index) => {
-    setVotes((current) => current.map((count, itemIndex) => count + (itemIndex === index ? 1 : 0) - (itemIndex === yourVote ? 1 : 0)));
-    setYourVote(index);
+function CrewPoll({ events, crewSize, onClose, onChoose }) {
+  const [ballots, setBallots] = useState(() => Array(crewSize).fill(null));
+  const [member, setMember] = useState(0);
+  const result = summarizeBallots(ballots, events.map(event => event.id));
+  const castVote = (eventId) => {
+    setBallots(current => current.map((vote, index) => index === member ? eventId : vote));
+    trackExperimentEvent("crew_ballot_cast", { eventId });
   };
-  const winner = votes.indexOf(Math.max(...votes));
-  return <ModalShell onClose={onClose} label="Crew destination vote" className="poll-modal"><span className="kicker">STEP 3 OF 3 · THE USUAL FOUR</span><h2>Where should we start?</h2><p>Cast your vote before locking the group winner.</p><div className="poll-members"><AvatarStack/><span>{yourVote === null ? "3 of 4 voted · your vote is next" : "4 of 4 voted · ready to lock"}</span></div><div className="poll-options">{events.map((event,index) => <button className={yourVote === index ? "selected" : ""} onClick={() => vote(index)} key={event.id}><span><strong>{event.venue}</strong><small>{event.wait} wait · {event.cover}</small></span><b>{votes[index]}</b></button>)}</div><button className="modal-primary" disabled={yourVote === null || !events.length} onClick={() => onChoose(events[winner])}>{yourVote === null ? "Vote to continue" : "Lock the winner"} <Icon name="arrow"/></button></ModalShell>;
+  return <ModalShell onClose={onClose} label="Crew destination vote" className="poll-modal">
+    <span className="kicker">STEP 3 - DECIDE TOGETHER</span><h2>Everyone gets one vote.</h2>
+    <p>Pass this device around. Each person selects their number and votes. Votes can be changed. This session does not sync across phones or verify voters.</p>
+    <label><span>Who is voting?</span><select value={member} onChange={event => setMember(Number(event.target.value))}>{ballots.map((vote, index) => <option key={index} value={index}>Person {index + 1}{vote ? " - voted" : " - waiting"}</option>)}</select></label>
+    <p role="status">{ballots.filter(Boolean).length} of {crewSize} voted{result.tied ? " - Tied: discuss and change a vote to agree on a winner." : ""}</p>
+    {!events.length && <p>No eligible places. Close this vote and edit your plan.</p>}
+    <div className="poll-options">{events.map((event, index) => <button className={ballots[member] === event.id ? "selected" : ""} aria-pressed={ballots[member] === event.id} onClick={() => castVote(event.id)} key={event.id}><span><strong>{event.venue}</strong><small>{event.wait} wait / {event.cover}</small></span><b>{result.counts[index]}</b></button>)}</div>
+    <button className="modal-primary" disabled={!result.winner} onClick={() => onChoose(events.find(event => event.id === result.winner))}>{result.winner ? "Lock the crew's choice" : result.tied ? "Resolve the tie to continue" : "Everyone votes before locking"}<Icon name="arrow"/></button>
+  </ModalShell>;
 }
 
 function AuthModal({ initialMode, onClose, onAuthenticated }) {
@@ -992,7 +1005,9 @@ function PlanModal({ plan, onClose, onSave }) {
   const set = (key, value) => setNext((current) => ({ ...current, [key]: value }));
   return <ModalShell onClose={onClose} label="Set tonight's plan" className="plan-modal">
     <span className="kicker">STEP 1</span><h2>What sounds good tonight?</h2><p>Choose the closest fit. Nothing here is permanent.</p>
-    <label><span>Who’s in?</span><div className="modal-crew"><AvatarStack/><strong>The usual four</strong><small>4 demo members</small></div></label>
+    <label><span>Who’s in?</span><div className="modal-crew"><AvatarStack/><strong>Your crew</strong><small>Vote together on this device</small></div></label>
+    <label><span>How many are deciding?</span><select value={next.crewSize || 4} onChange={(event) => set("crewSize", Number(event.target.value))}>{[3,4,5,6,7,8].map((size) => <option key={size} value={size}>{size} people</option>)}</select></label>
+    <label><span>Longest line your crew will accept</span><select value={next.maxWait || ""} onChange={(event) => set("maxWait", event.target.value)}><option value="">Any wait</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="20">20 minutes</option><option value="30">30 minutes</option></select><small>Uses modeled wait ranges; unknown waits are excluded when a limit is set.</small></label>
     <label><span>Where around campus?</span><div className="choice-grid">{["High Street", "North Campus", "South Campus", "Open to ideas"].map((area) => <button className={next.area === area ? "selected" : ""} onClick={() => set("area", area)} key={area}>{area}</button>)}</div></label>
     <label><span>What kind of night?</span><div className="night-choice-grid">{(showAllNights ? nightOptions : nightOptions.slice(0, 4)).map((option) => <button className={next.night === option.label ? "selected" : ""} onClick={() => set("night", option.label)} key={option.label}><strong>{option.label}</strong><small>{option.detail}</small></button>)}</div></label>
     {!showAllNights && <button className="night-options-toggle" onClick={() => setShowAllNights(true)}>Show more night types</button>}
@@ -1003,11 +1018,11 @@ function PlanModal({ plan, onClose, onSave }) {
 
 function RecommendationsModal({ plan, events, claimedDeals, onClaim, onClose, onChoose }) {
   const candidates = useMemo(() => getSuggestedEvents(events, plan).slice(0, 3), [events, plan]);
-  const labels = ["BEST OVERALL FIT", "BEST DEAL + CROWD", "EASIEST BACKUP"];
+  const labels = ["FIRST SUGGESTION", "SECOND SUGGESTION", "THIRD SUGGESTION"];
   return <ModalShell onClose={onClose} label="Recommended places for tonight" className="recommendations-modal">
-    <span className="kicker">STEP 2 · EXPLAINED RECOMMENDATIONS</span><h2>Three places worth voting on.</h2>
-    <p>Each suggestion uses your plan plus the modeled crowd, deal, wait, cover, network, and ride information shown below.</p>
-    {!candidates.length ? <div className="recommendations-loading"><span className="live-dot"></span><strong>Building your suggestions…</strong></div> : <div className="recommendation-grid">{candidates.map((event, index) => {
+    <span className="kicker">STEP 2 · EXPLAINED RECOMMENDATIONS</span><h2>A shortlist your crew can agree on.</h2>
+    <p>Your wait limit filters the shortlist. Area, night type, deals, modeled network and crowd levels rank the remaining places. Cover and ride estimates are shown for comparison; they do not affect ranking.</p>
+    {!candidates.length ? <div className="recommendations-loading"><span className="live-dot"></span><strong>{events.length ? "No places meet your wait limit. Close this panel and edit your plan to widen it." : "Loading places..."}</strong></div> : <div className="recommendation-grid">{candidates.map((event, index) => {
       const ride = getCampusRidePreview({ name: event.venue, lat: Number(event.lat), lng: Number(event.lng) });
       const claimed = claimedDeals.includes(event.id);
       return <article className="recommendation-card" key={event.id}>

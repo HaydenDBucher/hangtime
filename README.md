@@ -14,6 +14,9 @@ If dependencies need to be restored, run `npm install` first.
 
 ## Core MVP flow
 
+- Compare bar populations with Smaller crowd (under 75), Social crowd (75–119), and Big crowd (120+) filters. Counts are modeled demo data, not live occupancy or noise measurements. Open a bar card to view its map details and offers.
+- Set a maximum modeled wait and a crew size of 3–8; compare only eligible wait ranges.
+- Pass one device around to record each member's vote; resolve ties before locking a destination. Ballots are local to the open voting session, not synchronized across phones.
 - Open directly into an Ohio State campus map with venue search, crowd filters, and zoom controls.
 - Set the crew, area, type of night, and start time in one screen.
 - Explore an activity heat map with crowd trend, wait, cover, peak-time, and confidence signals.
@@ -70,6 +73,7 @@ GitHub Pages deploys automatically from `main` using the workflow in `.github/wo
 
 ## MVP evidence packet
 
+- [`PITCH_2_IMPROVEMENTS.md`](PITCH_2_IMPROVEMENTS.md): changes based on Pitch 2 feedback, differentiation, a revised pitch, and proposed pilot milestones grounded in GitHub commit `172dc21`.
 - [`SUBMISSION_CHECKLIST.md`](SUBMISSION_CHECKLIST.md): final required-item audit and exact three-item submission package.
 - [`MVP_EXPERIMENT.md`](MVP_EXPERIMENT.md): named hypothesis, behavioral measure, denominator, and precommitted decision rule.
 - [`USER_TEST_RESULTS.md`](USER_TEST_RESULTS.md): consent-safe protocol and results/retest structure. It intentionally contains no invented outcomes.

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "check": "node scripts/verify-mvp.mjs",
+    "check": "node scripts/verify-mvp.mjs && node --test scripts/decision.test.mjs",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0"
   },
