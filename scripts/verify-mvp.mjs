@@ -44,6 +44,7 @@ const checks = [
   ["live listings receive a modeled deal", eventService.includes('deal: modeledOffer') && eventService.includes('dealSource: "modeled"')],
   ["sponsored placements are disclosed", app.includes("SPONSORED DEMO · PREMIUM PLACEMENT") && app.includes("crowd position is not boosted")],
   ["sponsored visibility is measurable", app.includes('trackExperimentEvent("sponsored_placement_opened"') && app.includes('trackExperimentEvent("sponsored_offer_saved"')],
+  ["map appears before crowd comparison", app.indexOf('className={`city-board') < app.indexOf('<BarCrowds events=')],
 ];
 
 const failed = checks.filter(([, passed]) => !passed);

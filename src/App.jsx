@@ -460,8 +460,6 @@ function App() {
             <button className="walkthrough-exit" onClick={() => setWalkthroughActive(false)} aria-label="Exit walkthrough">Exit</button>
           </div>}
 
-          <BarCrowds events={events} loading={eventSource === "loading"} onSelect={(event) => { setMapFilter("Crowds"); setMapSearch(""); selectEvent(event); document.querySelector(".city-board")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}/>
-
           <div className="night-lenses" aria-label="Explore tonight">{(showAllLenses || planConfigured ? lensStats : lensStats.slice(0, 3)).map((lens) => <button className={mapFilter === lens.label ? "active" : ""} onClick={() => setMapFilter(lens.label)} key={lens.label}><span><Icon name={lens.icon} size={15}/>{lens.label}</span><strong>{lens.value}</strong><small>{lens.detail}</small></button>)}{!showAllLenses && !planConfigured && <button className="more-lenses" onClick={() => setShowAllLenses(true)}><span><Icon name="tune" size={15}/>More</span><strong>Food + rides</strong><small>Show every planning signal</small></button>}</div>
 
           <div className="map-toolbar compact"><label><Icon name="compass" size={17}/><input value={mapSearch} onChange={(event) => setMapSearch(event.target.value)} placeholder="Search High Street + downtown"/></label><div className="view-tabs" aria-label="Choose view">{["map", "events"].map((view) => <button className={activeView === view ? "active" : ""} onClick={() => setActiveView(view)} key={view}>{view === "map" ? <Icon name="compass" size={17}/> : <Icon name="calendar" size={17}/>} {view}</button>)}</div></div>
@@ -470,6 +468,8 @@ function App() {
             {eventSource === "loading" ? <div className="map-panel map-loading"><span className="live-dot"></span><strong>Building tonight's map</strong></div> : <NightMap events={visibleEvents} selected={selectedEvent} intentions={intentions} lens={mapFilter} onSelect={selectEvent}/>}
             <EventRail events={visibleEvents} source={eventSource} selected={selectedEvent} intention={selectedEvent ? intentions[selectedEvent.id] : null} claimed={selectedEvent ? claimedDeals.includes(selectedEvent.id) : false} onSelect={selectEvent} onIntent={setIntent} onClaim={claimDeal}/>
           </div>
+
+          <BarCrowds events={events} loading={eventSource === "loading"} onSelect={(event) => { setMapFilter("Crowds"); setMapSearch(""); selectEvent(event); document.querySelector(".city-board")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}/>
         </section>
 
         {planConfigured && <section className="plan-bar shell" aria-label="Your plan tonight">
