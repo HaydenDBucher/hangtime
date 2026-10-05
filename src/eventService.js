@@ -145,6 +145,7 @@ const fallbackEvents = [
     id: "buckeye-donuts-late-night",
     title: "Late-night food run",
     venue: "Buckeye Donuts",
+    buckId: true,
     area: "High Street",
     time: "10:30 PM",
     category: "Food",
@@ -378,6 +379,7 @@ const fallbackEvents = [
     id: "mikeys-late-slice",
     title: "Late slice stop",
     venue: "Mikey's Late Night Slice",
+    buckId: true,
     area: "Short North",
     time: "9:30 PM",
     category: "Food",
@@ -656,6 +658,7 @@ const normalizeEvent = (event, index) => {
 
   return {
     id: event.id,
+    source: "ticketmaster",
     title: event.name,
     venue: venue?.name || "Ohio State area",
     area: venue?.city?.name || "Campus area",

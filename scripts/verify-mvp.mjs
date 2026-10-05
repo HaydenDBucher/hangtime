@@ -25,13 +25,19 @@ const checks = [
   ["interactive demo chat", app.includes("function ChatModal") && app.includes('trackExperimentEvent("demo_message_sent"')],
   ["single profile modal handoff", app.includes("setProfile(null); setPersonProfile({ person, group });")],
   ["fictional matching shown in walkthrough", app.includes("Browse groups") && app.includes("FICTIONAL DEMO ACCOUNTS") && app.includes("These are fictional demo accounts")],
-  ["matching demo is always visible", app.includes("Browse demo groups") && app.includes("matching_demo_opened")],
+  ["matching demo is always visible", app.includes("Preview student groups") && app.includes("matching_demo_opened")],
   ["groups and individual accounts are browsable", app.includes("function GroupBrowserModal") && app.includes("onOpenPerson(person, group)") && app.includes("View people + plan")],
-  ["selected venue deal is featured", app.includes("TONIGHT'S FEATURED DEAL") && styles.includes(".venue-intel .intel-deal")],
+  ["selected venue deal is featured", app.includes("getOfferTrust(selected).toUpperCase()") && styles.includes(".venue-intel .intel-deal")],
   ["recommendations explain why", app.includes("function RecommendationsModal") && app.includes("WHY WE SUGGESTED IT") && app.includes("getSuggestionReasons")],
-  ["deal terms are explicit", app.includes("function getDealTerms") && app.includes("CREW DEAL")],
+  ["deal terms are explicit", app.includes("function getDealTerms") && app.includes("getDealTerms(selected)")],
   ["recommendation enters crew vote", app.includes("recommendation_added_to_vote") && app.includes("setVoteEvents")],
   ["walkthrough always reaches mutual match", app.includes("group.id === 1 || completingWalkthrough")],
+  ["student campus focus", app.includes("OSU-FIRST MVP") && app.includes("@osu.edu")],
+  ["budget is part of the core plan", app.includes("Budget per person") && app.includes("Under $35/person")],
+  ["modeled per-person cost is visible", app.includes("function estimateNightCost") && app.includes("EST. NIGHT")],
+  ["ride smart context is linked", app.includes("https://ttm.osu.edu/ride-smart")],
+  ["everyone-home crew check", app.includes("function StudentNightPlan") && app.includes("Everyone home?" )],
+  ["offer trust labels", app.includes("function getOfferTrust") && app.includes("Modeled student offer")],
 ];
 
 const failed = checks.filter(([, passed]) => !passed);

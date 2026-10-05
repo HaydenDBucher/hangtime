@@ -148,9 +148,36 @@ function nightMatchesEvent(event, night = "") {
 function getSuggestedEvents(events, plan) {
   return events.filter((event) => meetsWaitLimit(event, plan)).map((event) => {
     const areaMatch = plan?.area === "Open to ideas" || event.area === plan?.area;
-    const score = (areaMatch ? 70 : 0) + (nightMatchesEvent(event, plan?.night) ? 45 : 0) + (event.deal ? 26 : 0) + Math.min(30, event.friends || 0) + Math.min(30, estimatedPeople(event) / 6) - (/20|25|30/.test(event.wait || "") ? 12 : 0);
+    const costFit = estimateNightCost(event) <= budgetLimit(plan?.budget);
+    const score = (areaMatch ? 70 : 0) + (nightMatchesEvent(event, plan?.night) ? 45 : 0) + (event.deal ? 26 : 0) + (costFit ? 20 : -15) + Math.min(30, event.friends || 0) + Math.min(30, estimatedPeople(event) / 6) - (/20|25|30/.test(event.wait || "") ? 12 : 0);
     return { event, score };
   }).sort((a, b) => b.score - a.score).map(({ event }) => event);
+}
+
+function getOfferTrust(event) {
+  if (event?.source === "ticketmaster" || event?.updated === "Live listing") return "Official event listing";
+  if (event?.buckId) return "BuckID merchant · modeled offer";
+  if (event?.deal) return "Modeled student offer";
+  return "Community estimate";
+}
+
+function firstDollarAmount(value = "") {
+  return Number(String(value).match(/\$(\d+)/)?.[1] || 0);
+}
+
+function estimateNightCost(event) {
+  if (!event) return 0;
+  const coverOrSpend = firstDollarAmount(event.cover);
+  const isFood = /food|dinner|pizza|donut|market|slice/i.test(`${event.category} ${event.title} ${event.venue}`);
+  const venueSpend = coverOrSpend || (isFood ? 14 : 8);
+  const destination = { name: event.venue, lat: Number(event.lat), lng: Number(event.lng) };
+  const rideLow = firstDollarAmount(getCampusRidePreview(destination).providers[0]?.fare);
+  return venueSpend + Math.ceil((rideLow * 2) / 4);
+}
+
+function budgetLimit(label = "") {
+  if (/flexible/i.test(label)) return Number.POSITIVE_INFINITY;
+  return Number(label.match(/\d+/)?.[0] || 35);
 }
 
 function getSuggestionReasons(event, plan) {
@@ -158,6 +185,8 @@ function getSuggestionReasons(event, plan) {
   if (plan?.maxWait) reasons.push(`Within your ${plan.maxWait}-minute wait limit (modeled)`);
   if (plan?.area === "Open to ideas" || event.area === plan?.area) reasons.push(plan?.area === "Open to ideas" ? `Strong option near ${event.area}` : `Matches your ${plan.area} area`);
   if (nightMatchesEvent(event, plan?.night)) reasons.push(`Fits “${plan.night}”`);
+  const cost = estimateNightCost(event);
+  reasons.push(cost <= budgetLimit(plan?.budget) ? `Modeled ~$${cost}/person · fits your budget` : `Modeled ~$${cost}/person`);
   if (event.friends) reasons.push(`${event.friends} people in your network`);
   reasons.push(`${estimatedPeople(event)} people estimated there`);
   return reasons.slice(0, 3);
@@ -254,7 +283,7 @@ function App() {
   const [toast, setToast] = useState("");
   const [planConfigured, setPlanConfigured] = useState(() => Boolean(savedPlanState?.planConfigured));
   const [planLocked, setPlanLocked] = useState(() => Boolean(savedPlanState?.planLocked));
-  const [plan, setPlan] = useState(() => savedPlanState?.plan || { crew: "The usual four", area: "High Street", night: "Drinks, then decide", time: "9:30 PM", event: "Open plan" });
+  const [plan, setPlan] = useState(() => ({ budget: "Under $35/person", crew: "The usual four", area: "High Street", night: "Drinks, then decide", time: "9:30 PM", event: "Open plan", ...(savedPlanState?.plan || {}) }));
   const tonightLabel = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" }).format(new Date());
 
   useEffect(() => {
@@ -299,9 +328,9 @@ function App() {
     return [
       { label: "Crowds", icon: "users", value: `${people} nearby`, detail: "Where people are going" },
       { label: "Deals", icon: "spark", value: `${deals} tonight`, detail: "Modeled student offers" },
-      { label: "Events", icon: "calendar", value: `${events.length} tonight`, detail: "Music, games, comedy" },
+      { label: "Events", icon: "calendar", value: `${events.length} tonight`, detail: "OSU + nearby tonight" },
       { label: "Food", icon: "food", value: `${food} late spots`, detail: "Food around campus" },
-      { label: "Ride cost", icon: "car", value: `from $${rideFrom}`, detail: "From Ohio Union" },
+      { label: "Ride cost", icon: "car", value: `from $${rideFrom}`, detail: "Union + Ride Smart context" },
     ];
   }, [events]);
 
@@ -405,9 +434,11 @@ function App() {
       <main>
         <section className="tonight shell" id="tonight">
           <div className="map-first-heading">
-            <div><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>Ohio State tonight</span></div><h1>Pick tonight's<br/><em>first stop.</em></h1></div>
-            <div className="map-head-actions"><p>See what's busy, compare your options, and choose together.</p><div className="map-head-buttons"><button onClick={() => { trackExperimentEvent("plan_started"); setPlanOpen(true); }}>{planConfigured ? "Edit tonight's plan" : "Start with your crew"}<Icon name="arrow"/></button><button className="matching-demo-cta" onClick={showMatchingDemo}><Icon name="users" size={17}/>Browse demo groups</button></div></div>
+            <div><div className="eyebrow"><span>{tonightLabel}</span><i></i><span>Ohio State students</span></div><h1>Ohio State,<br/><em>tonight.</em></h1></div>
+            <div className="map-head-actions"><p>One place for your crew to decide, save, ride, and get home.</p><div className="map-head-buttons"><button onClick={() => { trackExperimentEvent("plan_started"); setPlanOpen(true); }}>{planConfigured ? "Edit tonight's plan" : "Build tonight's plan"}<Icon name="arrow"/></button><button className="matching-demo-cta" onClick={showMatchingDemo}><Icon name="users" size={17}/>Preview student groups</button></div></div>
           </div>
+
+          <div className="campus-scope-strip" aria-label="Ohio State pilot scope"><span><strong>OSU-FIRST MVP</strong>Built for one campus</span><span><strong>3.6-MILE RADIUS</strong>Campus to downtown</span><span><strong>HONEST LABELS</strong>Live, modeled, or estimated</span><span><strong>STUDENT RIDES</strong>Ride Smart context</span></div>
 
           <div className="single-next-step" role="status">
             <span>{planLocked ? <Icon name="check" size={14}/> : planConfigured ? "2" : "1"}</span>
@@ -443,12 +474,21 @@ function App() {
           <div className="plan-crew"><AvatarStack/><span><small>{account ? account.crewName || "Your crew" : "Demo crew"}</small><strong>{plan.crew}</strong></span></div>
           <button onClick={() => setPlanOpen(true)}><Icon name="pin"/><span><small>Area</small><strong>{plan.area}</strong></span></button>
           <button onClick={() => setPlanOpen(true)}><Icon name="spark"/><span><small>Type of night</small><strong>{plan.night}</strong></span></button>
+          <button onClick={() => setPlanOpen(true)}><span><small>Budget</small><strong>{plan.budget || "Under $35/person"}</strong></span></button>
           <button onClick={() => setPlanOpen(true)}><Icon name="clock"/><span><small>Start</small><strong>{plan.time}</strong></span></button>
           <div className="plan-event"><span><small>Plan</small><strong>{plan.event}</strong></span></div>
           <div className="plan-actions"><button onClick={() => setPlanOpen(true)}>Edit</button><button className="lock-plan-cta" disabled={!events.length} onClick={() => { trackExperimentEvent("crew_vote_opened"); setPollOpen(true); }}>{planLocked ? "Vote again" : "Vote + lock plan"}</button></div>
         </section>}
 
-        {planConfigured && (
+        {planConfigured && <StudentNightPlan
+          plan={plan}
+          event={selectedEvent}
+          events={events}
+          locked={planLocked}
+          onEdit={() => setPlanOpen(true)}
+          onVote={() => { trackExperimentEvent("crew_vote_opened"); setPollOpen(true); }}
+        />}
+        {planConfigured && !planLocked && (
           <NextMoves events={events} onSelect={(event) => { selectEvent(event); document.getElementById("tonight")?.scrollIntoView({ behavior: "smooth" }); }}/>
         )}
 
@@ -480,7 +520,7 @@ function App() {
         <RecommendationsModal plan={plan} events={events} claimedDeals={claimedDeals} onClaim={claimDeal} onClose={() => setRecommendationsOpen(false)} onChoose={(event, candidates) => { trackExperimentEvent("recommendation_added_to_vote", { eventId: event.id, venue: event.venue }); selectEvent(event); setPlanLocked(false); setVoteEvents([event, ...candidates.filter((candidate) => candidate.id !== event.id)].slice(0, 3)); setRecommendationsOpen(false); setPollOpen(true); if (walkthroughActive) setWalkthroughStep(2); setToast(`${event.venue} added to the crew vote.`); }}/>
       )}
       {pollOpen && (
-        <CrewPoll crewSize={Number(plan.crewSize) || 4} events={(voteEvents.length ? voteEvents.filter((event) => meetsWaitLimit(event, plan)) : getSuggestedEvents(events, plan)).slice(0, 3)} onClose={() => setPollOpen(false)} onChoose={(event) => { trackExperimentEvent("destination_locked", { eventId: event.id, venue: event.venue }); joinEvent(event); setPlanConfigured(true); setPlanLocked(true); setPollOpen(false); if (walkthroughActive) { setWalkthroughStep(3); window.setTimeout(() => { document.getElementById("matches")?.scrollIntoView({ behavior: "smooth" }); setGroupBrowserOpen(true); }, 220); } setToast(`${event.venue} is locked. Matching is now optional.`); }}/>
+        <CrewPoll crewSize={Number(plan.crewSize) || 4} events={(voteEvents.length ? voteEvents.filter((event) => meetsWaitLimit(event, plan)) : getSuggestedEvents(events, plan)).slice(0, 3)} onClose={() => setPollOpen(false)} onChoose={(event) => { trackExperimentEvent("destination_locked", { eventId: event.id, venue: event.venue }); selectEvent(event); joinEvent(event); setPlanConfigured(true); setPlanLocked(true); setPollOpen(false); if (walkthroughActive) { setWalkthroughStep(3); window.setTimeout(() => { document.getElementById("matches")?.scrollIntoView({ behavior: "smooth" }); setGroupBrowserOpen(true); }, 220); } setToast(`${event.venue} is locked. Matching is now optional.`); }}/>
       )}
       {authOpen && (
         <AuthModal initialMode={authMode} onClose={() => setAuthOpen(false)} onAuthenticated={(session) => { setAccount(session.profile); setAuthOpen(false); setToast(session.needsVerification ? "Check your email to verify your account" : `Welcome${session.profile.name ? `, ${session.profile.name.split(" ")[0]}` : ""}`); }}/>
@@ -805,7 +845,7 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
       {lens === "Crowds" && <div className="forecast-tabs" aria-label="Crowd forecast time">{[0, 15, 30].map((minutes) => <button className={horizon === minutes ? "active" : ""} onClick={() => setHorizon(minutes)} key={minutes}>{minutes === 0 ? "Now" : `+${minutes} min`}</button>)}</div>}
     </div>
     {lens === "Crowds" && feedEvent && <div className="movement-feed"><span className="movement-pulse"></span><strong>{Math.max(2, Math.round(feedEvent.groups * .18))} crews moving toward {feedEvent.venue}</strong><small>updated just now</small></div>}
-    <div className="map-privacy-note"><Icon name="shield" size={13}/>High Street → downtown · approximate groups</div>
+    <div className="map-privacy-note"><Icon name="shield" size={13}/>OSU campus radius · aggregated groups</div>
     <div className="map-controls"><button onClick={() => mapInstance.current?.zoomIn()} aria-label="Zoom in">+</button><button onClick={() => mapInstance.current?.zoomOut()} aria-label="Zoom out">−</button><button onClick={centerOnCrowd} aria-label="Center on live crowd"><Icon name="users" size={16}/></button><button aria-label="Use my location" onClick={locate} className={locating ? "locating" : ""}><Icon name="compass" size={16}/></button></div>
     {!events.length && <div className="map-empty"><strong>No places match that view</strong><span>Try another filter or search.</span></div>}
   </div>;
@@ -831,9 +871,10 @@ function RideOptions({ event }) {
   return <section className="ride-preview" aria-label={`Ride options to ${event.venue}`}>
     <div className="ride-preview-head"><span><Icon name="car" size={14}/>Ride from Ohio Union</span><small>{preview.distance} · {preview.walkMinutes} min walk</small></div>
     <div className="ride-provider-grid">{preview.providers.map((provider) => <a href={getRideLink(provider.id, destination)} target="_blank" rel="noreferrer" key={provider.id}>
-      <span><strong>{provider.name}</strong><small>{provider.eta} pickup</small></span><b>{provider.fare}</b><em>Check live fare ↗</em>
+      <span><strong>{provider.name}</strong><small>{provider.eta} pickup</small></span><b>{provider.fare}</b><em>~${Math.max(1, Math.ceil(firstDollarAmount(provider.fare) / 4))} each for 4 · check live fare ↗</em>
     </a>)}</div>
     <p>Campus estimate only. Uber and Lyft confirm the live price in their apps.</p>
+    <a className="ride-smart-note" href="https://ttm.osu.edu/ride-smart" target="_blank" rel="noreferrer"><span><strong>Lyft Ride Smart at Ohio State</strong><small>Eligible students can access discounted rides in the program area from 7 p.m.–7 a.m.</small></span><b>Check eligibility ↗</b></a>
   </section>;
 }
 
@@ -850,7 +891,7 @@ function EventRail({ events, source, selected, intention, claimed, onSelect, onI
 
   return <aside className="event-rail">
     <div className="rail-top"><div><span className={`source-dot ${source}`}></span><strong>{source === "loading" ? "Finding tonight's offers" : "Deals by location"}</strong></div><span>{events.length} spots</span></div>
-    <div className="ranking-overview"><div><span>TONIGHT'S OPTIONS</span><strong>{dealCount} deals · {totalPeople.toLocaleString()} people</strong></div><small>Tap a location to see the full offer</small></div>
+    <div className="ranking-overview"><div><span>TONIGHT'S OPTIONS</span><strong>{dealCount} offers · {totalPeople.toLocaleString()} people</strong></div><small>Tap a location for deal, cost, and ride</small></div>
     <div className="ranked-places" aria-label="Places with tonight's deals and crowd estimates">
       {visibleRankings.map((event) => {
         const people = estimatedPeople(event);
@@ -858,7 +899,7 @@ function EventRail({ events, source, selected, intention, claimed, onSelect, onI
         const dealSummary = event.deal || `${event.cover || "No cover info"} · ${event.wait || "Check wait"}`;
         return <button className={`ranking-row ${event.deal ? "has-deal" : "no-deal"} ${selected?.id === event.id ? "selected" : ""}`} onClick={() => onSelect(event)} aria-label={`Rank ${rank}, ${event.venue}, ${people} people, ${dealSummary}`} key={event.id}>
           <span className="rank-number">{String(rank).padStart(2, "0")}</span>
-          <span className="rank-copy"><strong>{event.venue}</strong><small>{event.area} · {event.category} · {event.trend || "Steady"}</small><span className="rank-deal"><em>{event.deal ? "TONIGHT" : "INFO"}</em>{dealSummary}</span>{event.deal && <small className="rank-deal-terms">{getDealTerms(event)}</small>}</span>
+          <span className="rank-copy"><strong>{event.venue}</strong><small>{event.area} · {event.category} · {event.trend || "Steady"}</small><span className="rank-deal"><em>{event.deal ? "TONIGHT" : "INFO"}</em>{dealSummary}</span><small className="rank-trust">{getOfferTrust(event)} · ~${estimateNightCost(event)}/person</small>{event.deal && <small className="rank-deal-terms">{getDealTerms(event)}</small>}</span>
           <span className="rank-count"><strong>{people}</strong><small>people</small></span>
           <span className="rank-track"><i style={{ width: `${Math.max(12, people / maxPeople * 100)}%` }}></i></span>
         </button>;
@@ -868,14 +909,32 @@ function EventRail({ events, source, selected, intention, claimed, onSelect, onI
     {selected && <div className="venue-intel">
       <div className="intel-live"><span className="live-dot"></span><strong>{selectedRank > 0 ? `#${selectedRank} tonight · ` : ""}{estimatedPeople(selected)} people</strong><small>Updated {selected.updated || "recently"}</small></div>
       <h2>{selected.venue}</h2><p>{selected.title} · {selected.time} · {selected.age || "Check age policy"}</p>
-      {selected.deal && <div className="intel-deal"><span><Icon name="spark" size={13}/>TONIGHT'S FEATURED DEAL</span><strong>{selected.deal}</strong><small>{getDealTerms(selected)}</small><button className={claimed ? "claimed" : ""} onClick={() => onClaim(selected)}>{claimed ? <><Icon name="check" size={14}/>Saved</> : "Save deal"}</button></div>}
-      <div className="intel-grid"><div><small>WAIT</small><strong>{selected.wait || "Check venue"}</strong></div><div><small>COVER</small><strong>{selected.cover || "Check venue"}</strong></div><div><small>PEAK</small><strong>{selected.peak || selected.time}</strong></div><div><small>YOUR NETWORK</small><strong>{selected.friends || 0} going</strong></div></div>
+      {selected.deal && <div className="intel-deal"><span><Icon name="spark" size={13}/>{getOfferTrust(selected).toUpperCase()}</span><strong>{selected.deal}</strong><small>{getDealTerms(selected)}</small><button className={claimed ? "claimed" : ""} onClick={() => onClaim(selected)}>{claimed ? <><Icon name="check" size={14}/>Saved</> : "Save deal"}</button></div>}
+      <div className="intel-grid"><div><small>WAIT</small><strong>{selected.wait || "Check venue"}</strong></div><div><small>COVER</small><strong>{selected.cover || "Check venue"}</strong></div><div><small>EST. NIGHT</small><strong>~${estimateNightCost(selected)}/person</strong></div><div><small>YOUR NETWORK</small><strong>{selected.friends || 0} going</strong></div></div>
       <div className="confidence"><Icon name="shield" size={13}/>{selected.confidence || "Community estimate"} · {selected.groups} student crews committed</div>
       <RideOptions event={selected}/>
       <div className="intent-picker"><span>Your crew</span><div>{[["considering","Considering"],["heading","Heading there"],["here","Here now"]].map(([value,label]) => <button className={intention === value ? "active" : ""} onClick={() => onIntent(selected,value)} key={value}>{intention === value && <Icon name="check" size={12}/>} {label}</button>)}</div></div>
     </div>}
     <p className="data-note">{source === "live" ? "Live event listings are mixed with modeled, privacy-safe crowds and prototype offers." : "Prototype data: crowds, waits, and offers are modeled to show the complete live experience."}</p>
   </aside>;
+}
+
+function StudentNightPlan({ plan, event, events, locked, onEdit, onVote }) {
+  const [homeChecks, setHomeChecks] = useState({ You: true, Jake: false, Maya: false, Connor: false });
+  const lockedEvent = locked ? events.find((candidate) => candidate.title === plan.event) || event : event;
+  const backup = getSuggestedEvents(events.filter((candidate) => candidate.id !== lockedEvent?.id), plan)[0];
+  const toggleHome = (name) => setHomeChecks((current) => ({ ...current, [name]: !current[name] }));
+  return <section className="night-command shell" aria-label="Tonight plan status">
+    <div className="night-command-head"><div><span className="kicker">TONIGHT PLAN · OHIO STATE</span><h2>{locked ? "The crew has a plan." : "One vote from a plan."}</h2></div><span className={`plan-state ${locked ? "locked" : "building"}`}>{locked ? "LOCKED" : "BUILDING"}</span></div>
+    <div className="night-command-grid">
+      <div><small>FIRST STOP</small><strong>{locked ? lockedEvent?.venue || plan.event : "Vote not locked"}</strong><span>{locked ? `${plan.time} · ${lockedEvent?.area || plan.area}` : `${plan.area} · ${plan.time}`}</span></div>
+      <div><small>BACKUP</small><strong>{backup?.venue || "Choose after voting"}</strong><span>{backup ? `${backup.wait || "Check wait"} · ${backup.deal || backup.cover}` : "Nearby alternative"}</span></div>
+      <div><small>MODELED COST</small><strong>{lockedEvent ? `~$${estimateNightCost(lockedEvent)}/person` : plan.budget}</strong><span>{plan.budget || "Under $35/person"} target · venue + split ride</span></div>
+      <div><small>RIDE HOME</small><strong>Check Ride Smart</strong><span>7 p.m.–7 a.m. · eligibility + zone apply</span></div>
+    </div>
+    <div className="night-path" aria-label="Plan progress"><span className="done"><Icon name="check" size={13}/>Plan</span><span className={locked ? "done" : "current"}>{locked && <Icon name="check" size={13}/>}Vote</span><span className={locked ? "current" : ""}>Compare ride</span><span>Everyone home</span></div>
+    {locked ? <div className="home-check"><div><strong>Everyone home?</strong><small>Demo crew check-in · not emergency monitoring</small></div><div>{Object.entries(homeChecks).map(([name, checked]) => <button className={checked ? "checked" : ""} onClick={() => toggleHome(name)} key={name}>{checked && <Icon name="check" size={12}/>} {name}</button>)}</div></div> : <div className="night-command-actions"><button onClick={onEdit}>Edit plan</button><button onClick={onVote}>Vote + lock</button></div>}
+  </section>;
 }
 
 function NextMoves({ events, onSelect }) {
@@ -926,6 +985,7 @@ function AuthModal({ initialMode, onClose, onAuthenticated }) {
     event.preventDefault();
     setError("");
     if (mode === "signup" && !form.ageConfirmed) return setError("You must confirm that you are 18 or older.");
+    if (mode === "signup" && !/@osu\.edu$/i.test(form.email)) return setError("Use an Ohio State @osu.edu email for this campus pilot.");
     if (form.password.length < 8) return setError("Use at least 8 characters for your password.");
     setLoading(true);
     try {
@@ -939,17 +999,17 @@ function AuthModal({ initialMode, onClose, onAuthenticated }) {
   };
   return <ModalShell onClose={onClose} label={mode === "signup" ? "Create a Hangtime account" : "Sign in to Hangtime"} className="auth-modal">
     <div className="auth-brand"><Logo/><span>{isCloudAuthEnabled() ? "Secure cloud account" : "Browser-local prototype"}</span></div>
-    <h2>{mode === "signup" ? "Make tonight easier." : "Welcome back."}</h2><p>{mode === "signup" ? "Save your crew, join plans, unlock deals, and meet people safely." : "Your crew and tonight’s plan are waiting."}</p>
+    <h2>{mode === "signup" ? "Your campus. One night plan." : "Welcome back."}</h2><p>{mode === "signup" ? "Create your Ohio State student profile to plan with your crew." : "Your crew and tonight’s plan are waiting."}</p>
     <div className="auth-tabs"><button className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")}>Create account</button><button className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")}>Sign in</button></div>
     <form className="auth-form" onSubmit={submit}>
-      {mode === "signup" && <><label><span>Name</span><input required value={form.name} onChange={(event) => set("name", event.target.value)} placeholder="First and last name"/></label><div className="auth-split"><label><span>Campus or city</span><input required value={form.campus} onChange={(event) => set("campus", event.target.value)} /></label><label><span>Crew name</span><input required value={form.crewName} onChange={(event) => set("crewName", event.target.value)} /></label></div></>}
-      <label><span>Email</span><input required type="email" autoComplete="email" value={form.email} onChange={(event) => set("email", event.target.value)} placeholder="you@school.edu"/></label>
+      {mode === "signup" && <><label><span>Name</span><input required value={form.name} onChange={(event) => set("name", event.target.value)} placeholder="First and last name"/></label><div className="auth-split"><label><span>Campus</span><input required readOnly value="Ohio State · Columbus" /></label><label><span>Crew name</span><input required value={form.crewName} onChange={(event) => set("crewName", event.target.value)} /></label></div></>}
+      <label><span>{mode === "signup" ? "Ohio State email" : "Email"}</span><input required type="email" autoComplete="email" value={form.email} onChange={(event) => set("email", event.target.value)} placeholder="you@osu.edu"/></label>
       <label><span>Password</span><input required minLength="8" type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} value={form.password} onChange={(event) => set("password", event.target.value)} placeholder="8 characters or more"/></label>
       {mode === "signup" && <><label><span>Instagram <small>Optional · hidden until matching</small></span><input value={form.instagram} onChange={(event) => set("instagram", event.target.value)} placeholder="@username"/></label><label className="age-check"><input type="checkbox" checked={form.ageConfirmed} onChange={(event) => set("ageConfirmed", event.target.checked)}/><span>I confirm that I’m at least 18 years old.</span></label></>}
       {error && <div className="auth-error" role="alert">{error}</div>}
       <button className="modal-primary" disabled={loading}>{loading ? "Working…" : mode === "signup" ? "Create my account" : "Sign in"}<Icon name="arrow"/></button>
     </form>
-    {!isCloudAuthEnabled() && <p className="prototype-note"><Icon name="shield" size={14}/>Prototype accounts remain on this browser. Configure Supabase before collecting real user credentials.</p>}
+    {!isCloudAuthEnabled() && <p className="prototype-note"><Icon name="shield" size={14}/>Student access would require university verification in production. Prototype accounts remain on this browser; do not enter real credentials.</p>}
   </ModalShell>;
 }
 
@@ -1011,6 +1071,7 @@ function PlanModal({ plan, onClose, onSave }) {
     <label><span>Where around campus?</span><div className="choice-grid">{["High Street", "North Campus", "South Campus", "Open to ideas"].map((area) => <button className={next.area === area ? "selected" : ""} onClick={() => set("area", area)} key={area}>{area}</button>)}</div></label>
     <label><span>What kind of night?</span><div className="night-choice-grid">{(showAllNights ? nightOptions : nightOptions.slice(0, 4)).map((option) => <button className={next.night === option.label ? "selected" : ""} onClick={() => set("night", option.label)} key={option.label}><strong>{option.label}</strong><small>{option.detail}</small></button>)}</div></label>
     {!showAllNights && <button className="night-options-toggle" onClick={() => setShowAllNights(true)}>Show more night types</button>}
+    <label><span>Budget per person</span><div className="choice-grid budget">{["Under $20/person", "Under $35/person", "Under $50/person", "Flexible"].map((budget) => <button className={(next.budget || "Under $35/person") === budget ? "selected" : ""} onClick={() => set("budget", budget)} key={budget}>{budget}</button>)}</div></label>
     <label><span>Starting around</span><div className="choice-grid time">{["8:30 PM", "9:30 PM", "10:30 PM", "Whenever"].map((time) => <button className={next.time === time ? "selected" : ""} onClick={() => set("time", time)} key={time}>{time}</button>)}</div></label>
     <button className="modal-primary" onClick={() => onSave(next)}>Show me where to go <Icon name="arrow"/></button>
   </ModalShell>;
@@ -1021,7 +1082,7 @@ function RecommendationsModal({ plan, events, claimedDeals, onClaim, onClose, on
   const labels = ["FIRST SUGGESTION", "SECOND SUGGESTION", "THIRD SUGGESTION"];
   return <ModalShell onClose={onClose} label="Recommended places for tonight" className="recommendations-modal">
     <span className="kicker">STEP 2 · EXPLAINED RECOMMENDATIONS</span><h2>A shortlist your crew can agree on.</h2>
-    <p>Your wait limit filters the shortlist. Area, night type, deals, modeled network and crowd levels rank the remaining places. Cover and ride estimates are shown for comparison; they do not affect ranking.</p>
+    <p>Your wait limit filters the shortlist. Area, night type, budget, deals, modeled network, and crowd levels rank the remaining places. Ride estimates are shown for comparison.</p>
     {!candidates.length ? <div className="recommendations-loading"><span className="live-dot"></span><strong>{events.length ? "No places meet your wait limit. Close this panel and edit your plan to widen it." : "Loading places..."}</strong></div> : <div className="recommendation-grid">{candidates.map((event, index) => {
       const ride = getCampusRidePreview({ name: event.venue, lat: Number(event.lat), lng: Number(event.lng) });
       const claimed = claimedDeals.includes(event.id);
@@ -1029,8 +1090,8 @@ function RecommendationsModal({ plan, events, claimedDeals, onClaim, onClose, on
         <div className="recommendation-rank"><span>{labels[index]}</span><strong>#{index + 1}</strong></div>
         <h3>{event.venue}</h3><p>{event.title} · {event.area}</p>
         <div className="recommendation-why"><small>WHY WE SUGGESTED IT</small>{getSuggestionReasons(event, plan).map((reason) => <span key={reason}><Icon name="check" size={12}/>{reason}</span>)}</div>
-        <div className="recommendation-facts"><div><small>CROWD</small><strong>{estimatedPeople(event)} people</strong></div><div><small>WAIT</small><strong>{event.wait}</strong></div><div><small>COVER</small><strong>{event.cover}</strong></div><div><small>RIDE</small><strong>{ride.providers[0].fare}</strong></div></div>
-        <div className={`recommendation-deal ${event.deal ? "has-deal" : "no-deal"}`}><span><Icon name="spark" size={13}/>{event.deal ? "CREW DEAL" : "NO DEAL LISTED"}</span><strong>{event.deal || "Choose this place for the plan, not a promotion."}</strong><small>{getDealTerms(event)}</small>{event.deal && <button className={claimed ? "claimed" : ""} onClick={() => onClaim(event)}>{claimed ? <><Icon name="check" size={13}/>Deal saved</> : "Save deal"}</button>}</div>
+        <div className="recommendation-facts"><div><small>CROWD</small><strong>{estimatedPeople(event)} people</strong></div><div><small>WAIT</small><strong>{event.wait}</strong></div><div><small>RIDE</small><strong>{ride.providers[0].fare}</strong></div><div><small>EST. NIGHT</small><strong>~${estimateNightCost(event)}/person</strong></div></div>
+        <div className={`recommendation-deal ${event.deal ? "has-deal" : "no-deal"}`}><span><Icon name="spark" size={13}/>{getOfferTrust(event).toUpperCase()}</span><strong>{event.deal || "Choose this place for the plan, not a promotion."}</strong><small>{getDealTerms(event)}</small>{event.deal && <button className={claimed ? "claimed" : ""} onClick={() => onClaim(event)}>{claimed ? <><Icon name="check" size={13}/>Deal saved</> : "Save deal"}</button>}</div>
         <button className="recommendation-add" onClick={() => onChoose(event, candidates)}>Add to crew vote <Icon name="arrow" size={16}/></button>
       </article>;
     })}</div>}
