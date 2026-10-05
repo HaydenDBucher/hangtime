@@ -4,6 +4,8 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 const app = read("src/App.jsx");
 const styles = read("src/styles.css");
 const experiment = read("src/experimentService.js");
+const eventService = read("src/eventService.js");
+const { fallbackEvents } = await import(new URL("../src/eventService.js", import.meta.url));
 
 const checks = [
   ["customer and payer case", read("README.md").includes("## Customer and payer")],
@@ -38,6 +40,10 @@ const checks = [
   ["ride smart context is linked", app.includes("https://ttm.osu.edu/ride-smart")],
   ["everyone-home crew check", app.includes("function StudentNightPlan") && app.includes("Everyone home?" )],
   ["offer trust labels", app.includes("function getOfferTrust") && app.includes("Modeled student offer")],
+  ["every modeled location has a deal", fallbackEvents.length > 0 && fallbackEvents.every((event) => Boolean(event.deal))],
+  ["live listings receive a modeled deal", eventService.includes('deal: modeledOffer') && eventService.includes('dealSource: "modeled"')],
+  ["sponsored placements are disclosed", app.includes("SPONSORED DEMO · PREMIUM PLACEMENT") && app.includes("crowd position is not boosted")],
+  ["sponsored visibility is measurable", app.includes('trackExperimentEvent("sponsored_placement_opened"') && app.includes('trackExperimentEvent("sponsored_offer_saved"')],
 ];
 
 const failed = checks.filter(([, passed]) => !passed);

@@ -155,6 +155,8 @@ function getSuggestedEvents(events, plan) {
 }
 
 function getOfferTrust(event) {
+  if (event?.promoted) return "Sponsored demo · modeled offer";
+  if (event?.dealSource === "modeled") return "Modeled student offer";
   if (event?.source === "ticketmaster" || event?.updated === "Live listing") return "Official event listing";
   if (event?.buckId) return "BuckID merchant · modeled offer";
   if (event?.deal) return "Modeled student offer";
@@ -750,7 +752,7 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
 
         const venueIcon = L.divIcon({
           className: "hangtime-div-icon",
-          html: `<div class="venue-map-marker ${events.length > 12 ? "dense" : ""} ${isSelected ? "selected" : ""} ${intentions[event.id] ? "committed" : ""}" style="--marker:${color}"><strong>${markerValue}</strong><span>${markerLabel}</span>${intentions[event.id] ? '<i>✓</i>' : ""}</div>`,
+          html: `<div class="venue-map-marker ${events.length > 12 ? "dense" : ""} ${event.promoted ? "sponsored" : ""} ${isSelected ? "selected" : ""} ${intentions[event.id] ? "committed" : ""}" style="--marker:${color}">${event.promoted ? '<b class="map-sponsored-badge">AD</b>' : ""}<strong>${markerValue}</strong><span>${markerLabel}</span>${intentions[event.id] ? '<i>✓</i>' : ""}</div>`,
           iconSize: events.length > 12 ? [48, 48] : [58, 58],
           iconAnchor: events.length > 12 ? [24, 24] : [29, 29],
         });
@@ -759,11 +761,13 @@ function NightMap({ events, selected, intentions, lens, onSelect }) {
           .addTo(layer);
         if (event.deal) {
           const dealTooltip = document.createElement("div");
+          const disclosure = document.createElement("small");
           const venueName = document.createElement("strong");
           const offer = document.createElement("span");
+          disclosure.textContent = event.promoted ? "Sponsored demo · modeled offer" : getOfferTrust(event);
           venueName.textContent = event.venue;
           offer.textContent = event.deal;
-          dealTooltip.append(venueName, offer);
+          dealTooltip.append(disclosure, venueName, offer);
           venueMarker.bindTooltip(dealTooltip, {
             className: "deal-map-tooltip",
             direction: "top",
@@ -880,7 +884,8 @@ function RideOptions({ event }) {
 
 function EventRail({ events, source, selected, intention, claimed, onSelect, onIntent, onClaim }) {
   const [showAllRankings, setShowAllRankings] = useState(false);
-  const rankedEvents = useMemo(() => [...events].sort((a, b) => Number(Boolean(b.deal)) - Number(Boolean(a.deal)) || estimatedPeople(b) - estimatedPeople(a)), [events]);
+  const rankedEvents = useMemo(() => [...events].sort((a, b) => Number(Boolean(b.promoted)) - Number(Boolean(a.promoted)) || Number(Boolean(b.deal)) - Number(Boolean(a.deal)) || estimatedPeople(b) - estimatedPeople(a)), [events]);
+  const sponsoredEvent = rankedEvents.find((event) => event.promoted);
   const totalPeople = rankedEvents.reduce((total, event) => total + estimatedPeople(event), 0);
   const dealCount = rankedEvents.filter((event) => event.deal).length;
   const maxPeople = Math.max(1, ...rankedEvents.map(estimatedPeople));
@@ -892,14 +897,21 @@ function EventRail({ events, source, selected, intention, claimed, onSelect, onI
   return <aside className="event-rail">
     <div className="rail-top"><div><span className={`source-dot ${source}`}></span><strong>{source === "loading" ? "Finding tonight's offers" : "Deals by location"}</strong></div><span>{events.length} spots</span></div>
     <div className="ranking-overview"><div><span>TONIGHT'S OPTIONS</span><strong>{dealCount} offers · {totalPeople.toLocaleString()} people</strong></div><small>Tap a location for deal, cost, and ride</small></div>
+    {sponsoredEvent && <button className="sponsored-spotlight" onClick={() => { trackExperimentEvent("sponsored_placement_opened", { eventId: sponsoredEvent.id, venue: sponsoredEvent.venue }); onSelect(sponsoredEvent); }}>
+      <span className="sponsored-spotlight-label">SPONSORED DEMO · PREMIUM PLACEMENT</span>
+      <strong>{sponsoredEvent.venue}</strong>
+      <span>{sponsoredEvent.deal}</span>
+      <small>Modeled offer · crowd position is not boosted</small>
+      <Icon name="arrow" size={17}/>
+    </button>}
     <div className="ranked-places" aria-label="Places with tonight's deals and crowd estimates">
       {visibleRankings.map((event) => {
         const people = estimatedPeople(event);
         const rank = rankedEvents.findIndex((candidate) => candidate.id === event.id) + 1;
         const dealSummary = event.deal || `${event.cover || "No cover info"} · ${event.wait || "Check wait"}`;
-        return <button className={`ranking-row ${event.deal ? "has-deal" : "no-deal"} ${selected?.id === event.id ? "selected" : ""}`} onClick={() => onSelect(event)} aria-label={`Rank ${rank}, ${event.venue}, ${people} people, ${dealSummary}`} key={event.id}>
+        return <button className={`ranking-row ${event.deal ? "has-deal" : "no-deal"} ${event.promoted ? "sponsored" : ""} ${selected?.id === event.id ? "selected" : ""}`} onClick={() => { if (event.promoted) trackExperimentEvent("sponsored_placement_opened", { eventId: event.id, venue: event.venue, surface: "ranking" }); onSelect(event); }} aria-label={`Rank ${rank}, ${event.venue}, ${people} people, ${dealSummary}${event.promoted ? ", sponsored demo" : ""}`} key={event.id}>
           <span className="rank-number">{String(rank).padStart(2, "0")}</span>
-          <span className="rank-copy"><strong>{event.venue}</strong><small>{event.area} · {event.category} · {event.trend || "Steady"}</small><span className="rank-deal"><em>{event.deal ? "TONIGHT" : "INFO"}</em>{dealSummary}</span><small className="rank-trust">{getOfferTrust(event)} · ~${estimateNightCost(event)}/person</small>{event.deal && <small className="rank-deal-terms">{getDealTerms(event)}</small>}</span>
+          <span className="rank-copy"><strong>{event.venue}{event.promoted && <b className="sponsored-pill">SPONSORED DEMO</b>}</strong><small>{event.area} · {event.category} · {event.trend || "Steady"}</small><span className="rank-deal"><em>TONIGHT</em>{dealSummary}</span><small className="rank-trust">{getOfferTrust(event)} · ~${estimateNightCost(event)}/person</small><small className="rank-deal-terms">{getDealTerms(event)}</small></span>
           <span className="rank-count"><strong>{people}</strong><small>people</small></span>
           <span className="rank-track"><i style={{ width: `${Math.max(12, people / maxPeople * 100)}%` }}></i></span>
         </button>;
@@ -948,11 +960,11 @@ function NextMoves({ events, onSelect }) {
 }
 
 function DealsSection({ events, claimedDeals, onClaim }) {
-  const deals = events.filter((event) => event.deal).slice(0, 3);
+  const deals = [...events].filter((event) => event.deal).sort((a, b) => Number(Boolean(b.promoted)) - Number(Boolean(a.promoted)) || estimatedPeople(b) - estimatedPeople(a)).slice(0, 3);
   if (!deals.length) return null;
   return <section className="promotions shell">
     <div className="promo-copy"><span className="sponsor-tag">CREW UNLOCKS · TONIGHT</span><h2>Deals worth<br/>changing plans for.</h2><p>Prototype offers show how local partners can reward groups that commit together.</p></div>
-    {deals.map((event, index) => { const claimed = claimedDeals.includes(event.id); return <article className={`promo-card ${index === 0 ? "coral" : "dark"}`} key={event.id}><span>{event.venue.toUpperCase()} · TONIGHT</span><h3>{event.deal}</h3><p>{event.area} · {event.cover}</p><div className="unlock-progress"><div><i style={{ width: claimed ? "100%" : "0%" }}></i></div><small>{claimed ? "Saved on this device" : "Preview offer - venue confirmation required"}</small></div><button onClick={() => onClaim(event)}>{claimed ? "Deal saved" : "Save preview offer"}<Icon name={claimed ? "check" : "arrow"} size={18}/></button></article>; })}
+    {deals.map((event, index) => { const claimed = claimedDeals.includes(event.id); return <article className={`promo-card ${index === 0 ? "coral" : "dark"} ${event.promoted ? "sponsored-card" : ""}`} key={event.id}><span>{event.promoted ? "SPONSORED DEMO · " : ""}{event.venue.toUpperCase()} · TONIGHT</span><h3>{event.deal}</h3><p>{event.area} · {event.cover}</p><div className="unlock-progress"><div><i style={{ width: claimed ? "100%" : "0%" }}></i></div><small>{claimed ? "Saved on this device" : "Modeled offer · venue confirmation required"}</small></div><button onClick={() => { if (event.promoted) trackExperimentEvent("sponsored_offer_saved", { eventId: event.id, venue: event.venue }); onClaim(event); }}>{claimed ? "Deal saved" : "Save preview offer"}<Icon name={claimed ? "check" : "arrow"} size={18}/></button></article>; })}
   </section>;
 }
 

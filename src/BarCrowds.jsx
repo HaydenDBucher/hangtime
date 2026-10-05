@@ -5,7 +5,7 @@ export default function BarCrowds({ events, loading, onSelect }) {
   const [preference, setPreference] = useState('all');
   const bars = events.filter(event => event.venueType === 'bar');
   const visible = bars.filter(event => preference === 'all' || crowdLevel(event)?.id === preference)
-    .sort((a, b) => (crowdPopulation(a) ?? Infinity) - (crowdPopulation(b) ?? Infinity));
+    .sort((a, b) => Number(Boolean(b.promoted)) - Number(Boolean(a.promoted)) || (crowdPopulation(a) ?? Infinity) - (crowdPopulation(b) ?? Infinity));
   return <section className="bar-crowds" aria-labelledby="bar-crowds-title">
     <span className="kicker">PICK YOUR KIND OF NIGHT</span>
     <h2 id="bar-crowds-title">How big a crowd are you looking for?</h2>
@@ -19,12 +19,14 @@ export default function BarCrowds({ events, loading, onSelect }) {
     <div className="bar-crowd-grid">{visible.map(event => {
       const count = crowdPopulation(event);
       const level = crowdLevel(event);
-      return <article className="bar-crowd-card" key={event.id}>
+      return <article className={`bar-crowd-card ${event.promoted ? 'sponsored' : ''}`} key={event.id}>
+        {event.promoted && <span className="bar-sponsor-label">SPONSORED DEMO · PREMIUM PLACEMENT</span>}
         <span className={`crowd-badge ${level?.id || 'unknown'}`}>{level?.label || 'Population unavailable'}</span>
         <h3>{event.venue}</h3><p>{event.area}</p>
         <strong className="crowd-population">{count === null ? 'Unknown' : `~${count} people`}</strong>
         <small>Modeled population</small><p>{level?.detail || 'No population estimate available.'}</p>
         <p>Wait: {event.wait || 'Unknown'} · Entry: {event.age || 'Confirm with venue'}</p>
+        <div className="bar-deal"><small>TONIGHT'S MODELED OFFER</small><strong>{event.deal}</strong></div>
         <button onClick={() => onSelect(event)}>View bar and offers</button>
       </article>;
     })}</div>

@@ -1384,3 +1384,36 @@ button { letter-spacing: -.01em; }
   .home-check { align-items: flex-start; flex-direction: column; }
   .ride-smart-note { align-items: flex-start; flex-direction: column; }
 }
+
+/* Transparent sponsored inventory */
+.sponsored-spotlight {
+  width: calc(100% - 24px);
+  margin: 12px;
+  padding: 13px 42px 13px 14px;
+  position: relative;
+  display: grid;
+  gap: 4px;
+  border: 1px solid #4053c7;
+  border-radius: 4px;
+  background: #eef0fb;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.sponsored-spotlight:hover { background: #e4e7f8; }
+.sponsored-spotlight-label { color: #4053c7; font-family: "IBM Plex Mono", Consolas, monospace; font-size: 7px; font-weight: 750; letter-spacing: .08em; }
+.sponsored-spotlight > strong { font-size: 17px; letter-spacing: -.025em; }
+.sponsored-spotlight > span:not(.sponsored-spotlight-label) { font-size: 12px; font-weight: 700; line-height: 1.25; }
+.sponsored-spotlight > small { color: var(--muted); font-size: 8px; }
+.sponsored-spotlight > .icon { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); }
+.ranking-row.sponsored { background: #f6f7ff; box-shadow: inset 3px 0 #4053c7; }
+.sponsored-pill { margin-left: 7px; padding: 3px 5px; display: inline-block; border-radius: 2px; background: #4053c7; color: #fff; font-family: "IBM Plex Mono", Consolas, monospace; font-size: 6px; letter-spacing: .05em; vertical-align: 2px; }
+.venue-map-marker.sponsored { box-shadow: 0 0 0 4px rgba(64,83,199,.22), 0 7px 18px rgba(23,25,31,.26); }
+.map-sponsored-badge { min-width: 19px; height: 15px; position: absolute; top: -7px; right: -7px; display: grid; place-items: center; border: 1px solid #fff; border-radius: 3px; background: #4053c7; color: #fff; font-family: "IBM Plex Mono", Consolas, monospace; font-size: 6px; }
+.deal-map-tooltip small { color: #4053c7; font-family: "IBM Plex Mono", Consolas, monospace; font-size: 7px; font-weight: 700; text-transform: uppercase; }
+.promo-card.sponsored-card { outline: 3px solid rgba(64,83,199,.32); outline-offset: 3px; }
+.bar-crowd-card.sponsored { border-color: #4053c7; box-shadow: 0 0 0 3px rgba(64,83,199,.09); }
+.bar-sponsor-label { margin-bottom: 8px; display: block; color: #4053c7; font-family: "IBM Plex Mono", Consolas, monospace; font-size: 8px; font-weight: 750; letter-spacing: .07em; }
+.bar-deal { margin-top: 12px; padding: 11px; display: grid; gap: 4px; border: 1px solid #d5d9d2; border-radius: 8px; background: #f7f8f4; }
+.bar-deal small { color: #4053c7; font-size: 7px; font-weight: 750; letter-spacing: .08em; }
+.bar-deal strong { font-size: 13px; line-height: 1.3; }

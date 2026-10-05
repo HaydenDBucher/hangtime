@@ -57,6 +57,7 @@ const fallbackEvents = [
     lng: -83.0124,
     x: 50,
     y: 17,
+    deal: "$7 student ticket and small popcorn before 9 with BuckID",
     wait: "No line",
     cover: "$9 student ticket",
     trend: "Steady",
@@ -105,6 +106,7 @@ const fallbackEvents = [
     lng: -83.0088,
     x: 39,
     y: 24,
+    deal: "Free student entry plus priority seating before 9:45 with BuckID",
     wait: "5 min",
     cover: "Free with BuckID",
     trend: "Steady",
@@ -655,6 +657,12 @@ const normalizeEvent = (event, index) => {
   const longitude = Number(venue?.location?.longitude);
   const popularity = Math.round(Number(event?.pleaseNote?.length || event?.info?.length || 34) / 3);
   const groups = Math.max(4, Math.min(28, 7 + popularity + index * 2));
+  const category = event?.classifications?.[0]?.genre?.name || event?.classifications?.[0]?.segment?.name || "Event";
+  const modeledOffer = /music|concert/i.test(category)
+    ? "$5 student merch credit with ticket before showtime"
+    : /sport/i.test(category)
+      ? "$6 student snack bundle before the event"
+      : "$5 student concession credit before start time";
 
   return {
     id: event.id,
@@ -663,7 +671,9 @@ const normalizeEvent = (event, index) => {
     venue: venue?.name || "Ohio State area",
     area: venue?.city?.name || "Campus area",
     time: formatTime(event?.dates?.start?.dateTime || event?.dates?.start?.localDate),
-    category: event?.classifications?.[0]?.genre?.name || event?.classifications?.[0]?.segment?.name || "Event",
+    category,
+    deal: modeledOffer,
+    dealSource: "modeled",
     attending: groups * (3 + (index % 3)),
     groups,
     lat: Number.isFinite(latitude) ? latitude : 40.003 + ((index % 4) - 1.5) * .004,
