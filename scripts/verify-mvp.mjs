@@ -23,7 +23,7 @@ const checks = [
   ["persistent core plan", app.includes("PLAN_STATE_KEY")],
   ["measurement failure isolation", experiment.includes("Measurement must never prevent")],
   ["modal layer clears map overlays", styles.includes(".modal-layer { position: fixed; inset: 0; z-index: 2000") && styles.includes(".real-map-panel .map-controls { z-index: 900")],
-  ["guided walkthrough path", app.includes("45–60 SECOND · FULL PRODUCT DEMO") && app.includes("walkthroughStep + 1") && app.includes("demoSteps.length")],
+  ["guided walkthrough path", app.includes("45–60 SECOND · SELF-CONTAINED DEMO") && app.includes("requirements[step]") && app.includes("demoSteps.length")],
   ["interactive demo chat", app.includes("function ChatModal") && app.includes('trackExperimentEvent("demo_message_sent"')],
   ["single profile modal handoff", app.includes("setProfile(null); setPersonProfile({ person, group });")],
   ["fictional matching shown in walkthrough", app.includes("Browse matches") && app.includes("FICTIONAL DEMO ACCOUNTS") && app.includes("These are fictional demo accounts")],
@@ -50,6 +50,7 @@ const checks = [
   ["BuckID demo avoids sensitive credentials", app.includes("never asks for an Ohio State password") && app.includes("does not store a BuckID image or number")],
   ["timed demo preloads fictional votes", app.includes("demoMode && index < crewSize - 1") && app.includes("fictional crew votes are preloaded")],
   ["timed demo ends in group chat", app.includes("Meet by the Newport entrance at 9:15?") && app.includes("onMessageSent?.()")],
+  ["full demo remains in one popup", app.includes("function DemoMiniMap") && app.includes('className="walkthrough-modal full-demo-modal"') && app.includes("Seven features. One continuous night.")],
 ];
 
 const failed = checks.filter(([, passed]) => !passed);

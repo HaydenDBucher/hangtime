@@ -569,7 +569,7 @@ function App() {
         <ChatModal group={chatGroup} demoMode={walkthroughActive} onMessageSent={() => { if (walkthroughActive) { trackExperimentEvent("full_demo_completed", { seconds: walkthroughSeconds }); setWalkthroughActive(false); setWalkthroughStep(0); setToast(`Full demo complete in ${walkthroughSeconds} seconds.`); } }} onClose={() => setChatGroup(null)}/>
       )}
       {walkthroughOpen && (
-        <WalkthroughModal onClose={() => setWalkthroughOpen(false)} onStart={startWalkthrough}/>
+        <WalkthroughModal events={events} onClose={() => setWalkthroughOpen(false)}/>
       )}
       {venueOpen && <VenueInterestModal onClose={() => setVenueOpen(false)} onSubmit={(details) => { trackExperimentEvent("venue_interest_submitted", details); setVenueOpen(false); setToast("Venue interest recorded for this prototype"); }}/>} {/* local payer test */}
       {evidenceOpen && <EvidenceModal onClose={() => setEvidenceOpen(false)}/>} {/* local evidence export */}
@@ -1170,15 +1170,86 @@ function GroupBrowserModal({ groups, onClose, onOpenGroup, onOpenPerson }) {
   </ModalShell>;
 }
 
-function WalkthroughModal({ onClose, onStart }) {
-  return <ModalShell onClose={onClose} label="Guided product walkthrough" className="walkthrough-modal">
-    <span className="kicker">45–60 SECOND · FULL PRODUCT DEMO</span><h2>Show the whole night in one run.</h2>
-    <p>A presenter-ready path through seven real prototype interactions. Follow the highlighted action on each screen.</p>
-    <ol className="walkthrough-steps">
-      {demoSteps.map((step, index) => <li key={step.title}><span>{index + 1}</span><div><strong>{step.title}</strong><small>{step.detail}</small></div></li>)}
-    </ol>
-    <button className="modal-primary" onClick={onStart}>Start full demo <Icon name="arrow"/></button>
-    <p className="prototype-note"><Icon name="shield" size={15}/>All identities, people, crowds, offers, rides, matches, and messages in this walkthrough are fictional or modeled. Never enter a real BuckID password.</p>
+function DemoMiniMap({ events, selected, onSelect }) {
+  return <div className="demo-mini-map" aria-label="Interactive campus nightlife map">
+    <span className="demo-map-road vertical"></span><span className="demo-map-road horizontal one"></span><span className="demo-map-road horizontal two"></span>
+    <span className="demo-map-label campus">OHIO STATE</span><span className="demo-map-label short">HIGH STREET</span><span className="demo-map-label south">SHORT NORTH</span>
+    {events.map((event, index) => <button className={selected?.id === event.id ? "selected" : ""} style={{ left: `${18 + (index % 3) * 31}%`, top: `${25 + Math.floor(index / 3) * 42 + (index % 2) * 5}%` }} onClick={() => onSelect(event)} aria-label={`Select ${event.venue}`} key={event.id}><span>{estimatedPeople(event)}</span><small>{event.venue}</small>{event.promoted && <b>AD</b>}</button>)}
+    {!events.length && <div className="demo-map-loading"><span className="live-dot"></span>Loading campus places…</div>}
+  </div>;
+}
+
+function WalkthroughModal({ events, onClose }) {
+  const [step, setStep] = useState(0);
+  const [seconds, setSeconds] = useState(0);
+  const [buckVerified, setBuckVerified] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+  const [dealSaved, setDealSaved] = useState(false);
+  const [demoPlan, setDemoPlan] = useState({ area: "High Street", night: "Drinks, then decide", budget: "Under $35/person", maxWait: "20" });
+  const [voteEventId, setVoteEventId] = useState(null);
+  const [demoGroupId, setDemoGroupId] = useState(matches[0].id);
+  const [matched, setMatched] = useState(false);
+  const [draft, setDraft] = useState("Meet by the Newport entrance at 9:15?");
+  const [messages, setMessages] = useState([{ from: "Lane Ave seniors", text: "We are starting near Newport around 9:15." }]);
+  const [chatSent, setChatSent] = useState(false);
+  const [complete, setComplete] = useState(false);
+  const mapEvents = events.slice(0, 6);
+  const selected = events.find((event) => event.id === selectedId) || mapEvents[0] || null;
+  const shortlist = useMemo(() => getSuggestedEvents(events, demoPlan).slice(0, 3), [demoPlan, events]);
+  const demoGroup = matches.find((group) => group.id === demoGroupId) || matches[0];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setSeconds((current) => current + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedId && mapEvents[0]) setSelectedId(mapEvents[0].id);
+  }, [mapEvents, selectedId]);
+
+  const requirements = [buckVerified, Boolean(selected), dealSaved, Boolean(shortlist.length), Boolean(voteEventId), matched, chatSent];
+  const next = () => {
+    trackExperimentEvent("full_demo_step_completed", { step: step + 1 });
+    if (step < demoSteps.length - 1) setStep((current) => current + 1);
+    else {
+      setComplete(true);
+      trackExperimentEvent("full_demo_completed", { seconds });
+    }
+  };
+  const selectPlace = (event) => { setSelectedId(event.id); setDealSaved(false); };
+  const sendDemoMessage = (event) => {
+    event.preventDefault();
+    if (!draft.trim()) return;
+    setMessages((current) => [...current, { from: "Your crew", text: draft.trim() }]);
+    setDraft("");
+    setChatSent(true);
+    trackExperimentEvent("demo_message_sent", { groupId: demoGroup.id, containedDemo: true });
+  };
+
+  return <ModalShell onClose={onClose} label="Complete Hangtime product demo" className="walkthrough-modal full-demo-modal">
+    <header className="full-demo-header"><div><span className="kicker">45–60 SECOND · SELF-CONTAINED DEMO</span><h2>{complete ? "That’s Hangtime." : demoSteps[step].title}</h2><p>{complete ? "One verified student journey from deciding where to go through meeting another crew." : demoSteps[step].detail}</p></div><div className="demo-clock"><strong>{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}</strong><small>TARGET 0:45–1:00</small></div></header>
+
+    <div className="demo-progress" aria-label="Demo progress">{demoSteps.map((item, index) => <span className={index < step || complete ? "complete" : index === step ? "active" : ""} key={item.title}><i>{index < step || complete ? <Icon name="check" size={10}/> : index + 1}</i><small>{["BuckID", "Map", "Deal", "Plan", "Vote", "Match", "Chat"][index]}</small></span>)}</div>
+
+    {!complete && <div className="full-demo-stage">
+      {step === 0 && <div className="demo-identity-layout"><div className="demo-buckid-card"><span>THE OHIO STATE UNIVERSITY</span><div><b>B</b><i></i><strong>Brutus Demo</strong></div><small>STUDENT · DEMONSTRATION ONLY</small></div><section className={`buckid-verification ${buckVerified ? "verified" : ""}`}><div className="buckid-heading"><span className="buckid-mark">B</span><div><strong>BuckID campus verification</strong><small>Student access before matching</small></div><b>{buckVerified ? "VERIFIED" : "READY"}</b></div><ol><li className="complete"><Icon name="check" size={12}/>Confirm @osu.edu email</li><li className={buckVerified ? "complete" : ""}><Icon name="check" size={12}/>Match name + BuckID photo</li><li className={buckVerified ? "complete" : ""}><Icon name="check" size={12}/>Confirm 18+ eligibility</li></ol>{buckVerified ? <div className="buckid-success"><Icon name="shield" size={15}/>Demo identity verified</div> : <button onClick={() => { setBuckVerified(true); trackExperimentEvent("buckid_demo_verified", { containedDemo: true }); }}>Run simulated BuckID check</button>}<p>No Ohio State password, BuckID number, or ID image is collected in this prototype.</p></section></div>}
+
+      {step === 1 && <div className="demo-map-layout"><DemoMiniMap events={mapEvents} selected={selected} onSelect={selectPlace}/><aside className="demo-place-panel">{selected ? <><span className="kicker">TAP ANY MAP MARKER</span><h3>{selected.venue}</h3><p>{selected.area} · {selected.category}</p><div className="demo-place-stats"><span><strong>{estimatedPeople(selected)}</strong><small>people</small></span><span><strong>{selected.wait}</strong><small>wait</small></span><span><strong>{getCampusRidePreview({ name: selected.venue, lat: selected.lat, lng: selected.lng }).providers[0].fare}</strong><small>ride</small></span></div><div className="demo-map-deal"><small>TONIGHT</small><strong>{selected.deal}</strong></div></> : <p>Loading modeled campus data…</p>}</aside></div>}
+
+      {step === 2 && <div className="demo-deal-layout"><div className="demo-deal-list">{events.slice(0, 4).map((event) => <button className={selected?.id === event.id ? "selected" : ""} onClick={() => selectPlace(event)} key={event.id}><span><strong>{event.venue}</strong><small>{event.area} · {estimatedPeople(event)} people</small></span><Icon name="chevron" size={16}/></button>)}</div>{selected && <article className="demo-featured-deal"><span>{getOfferTrust(selected).toUpperCase()}</span><h3>{selected.deal}</h3><p>{getDealTerms(selected)}</p><div><strong>{selected.venue}</strong><small>{selected.cover} · {selected.wait} wait · ~${estimateNightCost(selected)}/person</small></div><button className={dealSaved ? "saved" : ""} onClick={() => { setDealSaved(true); trackExperimentEvent("deal_saved", { eventId: selected.id, containedDemo: true }); }}>{dealSaved ? <><Icon name="check" size={15}/>Saved to crew plan</> : "Save this deal"}</button></article>}</div>}
+
+      {step === 3 && <div className="demo-plan-layout"><section><span className="kicker">YOUR CREW’S PLAN</span><label>Area<div>{["High Street", "South Campus", "Open to ideas"].map((value) => <button className={demoPlan.area === value ? "selected" : ""} onClick={() => setDemoPlan((current) => ({ ...current, area: value }))} key={value}>{value}</button>)}</div></label><label>Night<div>{["Drinks, then decide", "Dinner into drinks", "Catch a show"].map((value) => <button className={demoPlan.night === value ? "selected" : ""} onClick={() => setDemoPlan((current) => ({ ...current, night: value }))} key={value}>{value}</button>)}</div></label><label>Budget<div>{["Under $20/person", "Under $35/person", "Under $50/person"].map((value) => <button className={demoPlan.budget === value ? "selected" : ""} onClick={() => setDemoPlan((current) => ({ ...current, budget: value }))} key={value}>{value}</button>)}</div></label></section><aside><span className="kicker">EXPLAINED SHORTLIST</span>{shortlist.map((event, index) => <button onClick={() => selectPlace(event)} key={event.id}><b>#{index + 1}</b><span><strong>{event.venue}</strong><small>{event.wait} · ~${estimateNightCost(event)}/person</small><em>{event.deal}</em></span></button>)}</aside></div>}
+
+      {step === 4 && <div className="demo-vote-layout"><div><span className="kicker">THE USUAL FOUR · FINAL VOTE</span><h3>Three fictional votes are already in.</h3><p>Tap your choice. Every crew member gets one vote; ties cannot silently pick a winner.</p><div className="demo-voters"><span className="done">1 ✓</span><span className="done">2 ✓</span><span className="done">3 ✓</span><span>YOU</span></div></div><section>{shortlist.map((event, index) => <button className={voteEventId === event.id ? "selected" : ""} onClick={() => setVoteEventId(event.id)} key={event.id}><span><strong>{event.venue}</strong><small>{event.wait} · {event.deal}</small></span><b>{[2,1,0][index] + (voteEventId === event.id ? 1 : 0)}</b></button>)}</section></div>}
+
+      {step === 5 && <div className="demo-match-layout"><div className="demo-group-list">{matches.slice(0, 3).map((group) => <button className={demoGroup.id === group.id ? "selected" : ""} onClick={() => { setDemoGroupId(group.id); setMatched(false); setChatSent(false); setMessages([{ from: group.name, text: `We are starting near ${group.timeline[0].place} around ${group.timeline[0].time}.` }]); }} key={group.id}><PhotoStack people={group.people}/><span><strong>{group.name}</strong><small>{group.score}% plan fit · {group.status}</small></span></button>)}</div><article className="demo-group-profile"><div><PhotoStack people={demoGroup.people} size="large"/><span><strong>{demoGroup.score}%</strong><small>PLAN FIT</small></span></div><h3>{demoGroup.name}</h3><p>{demoGroup.blurb}</p><div className="demo-member-row">{demoGroup.people.map((person) => <span key={person.name}><ProfilePhoto person={person}/><small>{person.name}</small></span>)}</div><div className="demo-group-plan"><small>THEIR NIGHT</small><strong>{demoGroup.status}</strong></div><button className={matched ? "matched" : ""} onClick={() => { setMatched(true); trackExperimentEvent("introduction_requested", { groupId: demoGroup.id, containedDemo: true }); }}>{matched ? <><Icon name="check" size={15}/>It’s mutual · chat unlocked</> : "Request mutual introduction"}</button></article></div>}
+
+      {step === 6 && <div className="demo-chat-layout"><aside><span className="burst"><Icon name="spark" size={20}/></span><span className="kicker">IT’S MUTUAL</span><h3>Your crews overlap.</h3><p>{demoGroup.name} plans to be near {demoGroup.timeline[0].place} at {demoGroup.timeline[0].time}. Connected accounts are now visible.</p><PhotoStack people={demoGroup.people} size="large"/></aside><section><div className="demo-chat-head"><PhotoStack people={demoGroup.people}/><span><strong>{demoGroup.name}</strong><small>Fictional group chat · {demoGroup.members + 4} people</small></span></div><div className="chat-thread">{messages.map((message, index) => <div className={message.from === "Your crew" ? "mine" : "theirs"} key={`${message.from}-${index}`}><strong>{message.from}</strong><span>{message.text}</span></div>)}</div><form className="chat-compose" onSubmit={sendDemoMessage}><label><span className="sr-only">Message</span><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Type a demo message…"/></label><button disabled={!draft.trim()} aria-label="Send demo message"><Icon name="arrow"/></button></form>{chatSent && <div className="demo-chat-success"><Icon name="check" size={14}/>Message added locally. No real person was contacted.</div>}</section></div>}
+    </div>}
+
+    {complete && <div className="demo-complete"><span><Icon name="check" size={28}/></span><h3>Seven features. One continuous night.</h3><p>Verified access, crowd discovery, deals, planning, voting, matching, and chat—all shown without leaving this popup.</p><div>{["BuckID", "Map", "Deals", "Plan", "Vote", "Match", "Chat"].map((item) => <span key={item}><Icon name="check" size={12}/>{item}</span>)}</div></div>}
+
+    <footer className="full-demo-footer"><p><Icon name="shield" size={14}/>Everything shown here is fictional or modeled demonstration data.</p><div>{!complete && step > 0 && <button className="demo-back" onClick={() => setStep((current) => current - 1)}>Back</button>}{complete ? <button className="demo-next" onClick={onClose}>Close demo</button> : <button className="demo-next" disabled={!requirements[step]} onClick={next}>{step === demoSteps.length - 1 ? "Finish demo" : `Next: ${["Map", "Deal", "Plan", "Vote", "Match", "Chat"][step]}`}<Icon name="arrow" size={16}/></button>}</div></footer>
   </ModalShell>;
 }
 
