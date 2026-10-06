@@ -49,6 +49,9 @@ The team therefore changed the primary job from **“find another group”** to 
 | Deals can change the destination decision | Surface value at the moment of choice | Deal lens, venue offers, save action, and promoted partner concept | Helps students spend less and gives venues a measurable conversion path | Implemented concept; offers and economics unvalidated |
 | Transportation changes the real cost of a night | Include travel before commitment | Modeled Uber/Lyft ranges from Ohio Union and provider deep links | Lets a group consider total cost and distance in the same decision | Implemented estimates; not live prices |
 | Location utility can create privacy risk | Show trends without exposing individuals | Aggregate clusters, approximate group locations, reversible status, mutual disclosure, report/block controls | Preserves usefulness while reducing tracking and identity exposure | Interface implemented; production safety operations incomplete |
+| Users need to know whether a popular destination is worth the delay | Make wait time part of the core decision, not a buried detail | Wait estimates appear beside crowd size, deals, cover, ride cost, rankings, and recommendations | Helps students compare the real time and money cost of each option | Implemented with modeled wait data; accuracy not yet validated |
+| A broad nightlife audience weakened the product's identity | Define the initial niche as verified college students, beginning at Ohio State | OSU-centered geography and language, BuckID verification in account creation, and a privacy-preserving verification walkthrough | Creates a clearer reason for students to trust the network and makes the initial market specific | Prototype implemented; verification is simulated and not production authentication |
+| The product's value was harder to see when features were spread across screens | Put immediate utility first and shorten the path to it | Map-first opening, readable deal cards, venue selection, planning, voting, matching, and chat are demonstrated in one contained popup | Makes crowd insight, savings, and coordination understandable with fewer clicks | Implemented; speed and comprehension still require external testing |
 
 ## Complete build chronology
 
@@ -72,6 +75,12 @@ The team therefore changed the primary job from **“find another group”** to 
 | 2026-09-20 | `59b0b64` | Does the product make its core decision testable? | Require a plan, comparison, vote, and destination lock before matching | Added the three-step flow, explicit vote, post-lock matching, modeled-data banner, report/block actions, and anonymous event instrumentation | Working path implemented; external completion results not claimed |
 | 2026-09-20 | `633f3e9` | Can the evidence and release process be audited? | Freeze decision rules and fail the build if core evidence controls disappear | Added evidence index, payer case, rule receipt, limitations, QA documentation, persistent state, and automated checks in CI | Automated checks do not replace real users or device QA |
 | 2026-09-20 | `68ee87a` | How should the course submission be packaged? | Consolidate the rubric case into one Word document | Added `Hangtime_Rubric_Submission.docx` and removed a redundant multi-file presentation package | Document uses only supplied evidence and labeled assumptions |
+| 2026-09-29 | `3e45eee` | Is the practical value visible quickly enough? | Lead with the map and venue savings | Made the map and deals the primary product view | Implemented; effect on decision speed not yet measured |
+| 2026-10-05 | `d61a2b4` | What information helps a crew choose among crowded bars? | Show the cost of popularity alongside crowd activity | Expanded comparisons to include wait time and crew decision context | Waits and crowd counts are modeled |
+| 2026-10-05 | `cb9a8d3` | Who should Hangtime serve first? | Narrow the wedge to Ohio State students going out near campus | Strengthened the campus focus, student-specific experience, cost guidance, safety, and verification language | Clearer niche implemented; demand and trust benefit unvalidated |
+| 2026-10-05 | `b13f76e` | How quickly should the main value appear? | Show the map before supporting comparisons | Reordered the interface so current destination activity appears first | Implemented; usability effect unvalidated |
+| 2026-10-06 | `6d47b50` | Can the complete value proposition be shown in one short walkthrough? | Demonstrate the whole student journey, including verified access | Added a complete demo from BuckID verification through map, deals, planning, voting, matching, and chat | All people, messages, locations, and verification actions in the walkthrough are fictional or simulated |
+| 2026-10-06 | `7893d52`, `4b0ea89` | Was the walkthrough itself adding friction? | Keep every demo action in one readable popup and remove the visible timer | Consolidated the walkthrough into a single modal with step progress and no countdown pressure | Automated product checks and production build passed; live-user comprehension not yet tested |
 
 ## Current working product
 
@@ -84,7 +93,7 @@ The deployed MVP currently supports:
 5. A three-step plan flow: configure, compare, vote, and lock.
 6. Reversible “considering,” “heading there,” and “here now” intent.
 7. Optional group profiles and matching after destination commitment.
-8. Prototype accounts through local browser storage, with an optional Supabase adapter.
+8. Prototype accounts through local browser storage, with simulated BuckID verification and an optional Supabase adapter.
 9. Anonymous browser-local experiment events and JSON export.
 10. A venue-interest flow that presents explicit pricing choices.
 
@@ -101,6 +110,20 @@ The primary rule remains:
 - **Continue:** at least 50% of qualified groups lock a destination within five minutes without moderator help.
 - **Change:** 25–49% complete, or at least 30% need help at the same step.
 - **Stop or reframe:** fewer than 25% complete.
+
+## Latest user-informed value and niche revision
+
+The project owner subsequently reported user input emphasizing three practical needs: students want to see the expected wait before choosing a destination, the service should clearly belong to a specific student community with verified accounts, and the product should make its value obvious and easy to access. This input reinforced the move away from a broad social or dating-style product and toward an all-in-one college night-out utility.
+
+The resulting product decisions were:
+
+- Put wait time beside crowd size, deals, cover, and ride cost so popularity can be judged against inconvenience and expense.
+- Define the first niche as Ohio State students within the campus nightlife corridor rather than the general nightlife market.
+- Add BuckID-oriented verification to account creation and demonstrate it without collecting a password, BuckID number, or identification image.
+- Lead with the map and deals because they deliver immediate, repeatable value before a user joins a group or matches with anyone.
+- Keep planning, venue selection, voting, matching, and chat accessible inside one self-contained walkthrough, with no timer pressuring the user.
+
+These are implemented product revisions, not proof that users will adopt or pay for Hangtime. Waits, crowds, accounts, profiles, matches, and verification are still modeled or simulated in the current MVP. The next honest test is whether qualified student groups can use this clearer path to choose a destination without moderator help and whether verified-campus framing increases trust.
 
 ## Data and safety boundaries
 
