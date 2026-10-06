@@ -23,10 +23,10 @@ const checks = [
   ["persistent core plan", app.includes("PLAN_STATE_KEY")],
   ["measurement failure isolation", experiment.includes("Measurement must never prevent")],
   ["modal layer clears map overlays", styles.includes(".modal-layer { position: fixed; inset: 0; z-index: 2000") && styles.includes(".real-map-panel .map-controls { z-index: 900")],
-  ["guided walkthrough path", app.includes("60-SECOND PRODUCT WALKTHROUGH") && app.includes("walkthroughStep + 1")],
+  ["guided walkthrough path", app.includes("45–60 SECOND · FULL PRODUCT DEMO") && app.includes("walkthroughStep + 1") && app.includes("demoSteps.length")],
   ["interactive demo chat", app.includes("function ChatModal") && app.includes('trackExperimentEvent("demo_message_sent"')],
   ["single profile modal handoff", app.includes("setProfile(null); setPersonProfile({ person, group });")],
-  ["fictional matching shown in walkthrough", app.includes("Browse groups") && app.includes("FICTIONAL DEMO ACCOUNTS") && app.includes("These are fictional demo accounts")],
+  ["fictional matching shown in walkthrough", app.includes("Browse matches") && app.includes("FICTIONAL DEMO ACCOUNTS") && app.includes("These are fictional demo accounts")],
   ["matching demo is always visible", app.includes("Preview student groups") && app.includes("matching_demo_opened")],
   ["groups and individual accounts are browsable", app.includes("function GroupBrowserModal") && app.includes("onOpenPerson(person, group)") && app.includes("View people + plan")],
   ["selected venue deal is featured", app.includes("getOfferTrust(selected).toUpperCase()") && styles.includes(".venue-intel .intel-deal")],
@@ -45,6 +45,11 @@ const checks = [
   ["sponsored placements are disclosed", app.includes("SPONSORED DEMO · PREMIUM PLACEMENT") && app.includes("crowd position is not boosted")],
   ["sponsored visibility is measurable", app.includes('trackExperimentEvent("sponsored_placement_opened"') && app.includes('trackExperimentEvent("sponsored_offer_saved"')],
   ["map appears before crowd comparison", app.indexOf('className={`city-board') < app.indexOf('<BarCrowds events=')],
+  ["seven-step full demo", app.includes("const demoSteps = [") && app.includes("FULL DEMO ·") && app.includes("full_demo_completed")],
+  ["BuckID is part of account creation", app.includes("BuckID campus verification") && app.includes("buckIdVerified: true") && app.includes("Complete the simulated BuckID verification")],
+  ["BuckID demo avoids sensitive credentials", app.includes("never asks for an Ohio State password") && app.includes("does not store a BuckID image or number")],
+  ["timed demo preloads fictional votes", app.includes("demoMode && index < crewSize - 1") && app.includes("fictional crew votes are preloaded")],
+  ["timed demo ends in group chat", app.includes("Meet by the Newport entrance at 9:15?") && app.includes("onMessageSent?.()")],
 ];
 
 const failed = checks.filter(([, passed]) => !passed);

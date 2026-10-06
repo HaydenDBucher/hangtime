@@ -130,6 +130,16 @@ const nightOptions = [
   { label: "Open to anything", detail: "See what’s busy and decide together." },
 ];
 
+const demoSteps = [
+  { title: "Verify a student identity", detail: "Use the simulated BuckID + @osu.edu check. No real ID data is collected.", action: "Open BuckID check" },
+  { title: "Read the live-night map", detail: "Compare modeled crowds, movement, rides, food, and tonight’s locations.", action: "Show deals" },
+  { title: "Select a place and save its deal", detail: "Open a venue, read the terms, and save the modeled offer.", action: "Save + build plan" },
+  { title: "Review the crew shortlist", detail: "Compare plan fit, wait, estimated cost, ride, crowd, and deals.", action: "Open shortlist" },
+  { title: "Vote and lock the first stop", detail: "The demo preloads three fictional votes; cast the final vote and lock.", action: "Open vote" },
+  { title: "Match with another student group", detail: "Browse fictional groups and profiles, then request a mutual introduction.", action: "Browse matches" },
+  { title: "Coordinate in the group chat", detail: "Open the mutual match and send the prefilled demo meetup message.", action: "Open match" },
+];
+
 function estimatedPeople(event) {
   return Math.max(0, Math.round(Number(event?.attending) || Number(event?.groups || 0) * 4));
 }
@@ -278,6 +288,7 @@ function App() {
   const [walkthroughOpen, setWalkthroughOpen] = useState(false);
   const [walkthroughActive, setWalkthroughActive] = useState(false);
   const [walkthroughStep, setWalkthroughStep] = useState(0);
+  const [walkthroughSeconds, setWalkthroughSeconds] = useState(0);
   const [recommendationsOpen, setRecommendationsOpen] = useState(false);
   const [voteEvents, setVoteEvents] = useState([]);
   const [groupBrowserOpen, setGroupBrowserOpen] = useState(false);
@@ -304,6 +315,13 @@ function App() {
     const timer = window.setTimeout(() => setToast(""), 2800);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    if (!walkthroughActive) return undefined;
+    setWalkthroughSeconds(0);
+    const timer = window.setInterval(() => setWalkthroughSeconds((current) => current + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [walkthroughActive]);
 
   useEffect(() => {
     try {
@@ -393,7 +411,9 @@ function App() {
     setVoteEvents([]);
     setGroupBrowserOpen(false);
     setChatGroup(null);
-    setPlanOpen(true);
+    setPlanOpen(false);
+    setAuthMode("signup");
+    setAuthOpen(true);
     document.getElementById("tonight")?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -410,16 +430,16 @@ function App() {
   const sendWave = (group) => {
     trackExperimentEvent("introduction_requested", { groupId: group.id });
     const completingWalkthrough = walkthroughActive;
-    if (walkthroughActive) {
-      setWalkthroughActive(false);
-      setWalkthroughStep(0);
-    }
     if (group.id === 1 || completingWalkthrough) {
       setMatchedGroup(group);
       setProfile(null);
-      if (completingWalkthrough) setToast("Walkthrough complete. The fictional crews matched and profiles unlocked.");
+      if (completingWalkthrough) {
+        setGroupBrowserOpen(false);
+        setWalkthroughStep(6);
+        setToast("Mutual match unlocked. Open the demo group chat next.");
+      }
     } else {
-      setToast(completingWalkthrough ? "Walkthrough complete. You planned a night and requested an introduction." : `Wave sent to ${group.name}`);
+      setToast(`Wave sent to ${group.name}`);
       setProfile(null);
     }
   };
@@ -451,12 +471,15 @@ function App() {
           <details className="prototype-disclosure"><summary><Icon name="shield" size={14}/>Modeled demo data</summary><p>Crowd counts, profiles, matches, and offers are fictional or modeled unless labeled live. Do not enter real credentials.</p></details>
 
           {walkthroughActive && <div className="walkthrough-bar" role="status" aria-live="polite">
-            <span>GUIDED DEMO · {walkthroughStep + 1} OF 4</span>
-            <div><strong>{["Set the crew's plan", "Review three suggestions and their deals", "Vote and lock the winner", "Browse fictional crews and match"][walkthroughStep]}</strong><small>{["Choose an area, type of night, and start time.", "See why each place fits, what the deal includes, and the estimated cost to get there.", "Cast your vote, then lock the group winner.", "Open a group or individual profile, then tap Interested to reveal the mutual match."][walkthroughStep]}</small></div>
-            {walkthroughStep === 0 && <button onClick={() => setPlanOpen(true)}>Open plan</button>}
-            {walkthroughStep === 1 && <button onClick={() => setRecommendationsOpen(true)}>See suggestions</button>}
-            {walkthroughStep === 2 && <button onClick={() => setPollOpen(true)}>Open vote</button>}
-            {walkthroughStep === 3 && <button onClick={() => { document.getElementById("matches")?.scrollIntoView({ behavior: "smooth" }); setGroupBrowserOpen(true); }}>Browse groups</button>}
+            <span>FULL DEMO · {walkthroughStep + 1} OF {demoSteps.length} · {Math.floor(walkthroughSeconds / 60)}:{String(walkthroughSeconds % 60).padStart(2, "0")}</span>
+            <div><strong>{demoSteps[walkthroughStep].title}</strong><small>{demoSteps[walkthroughStep].detail}</small></div>
+            {walkthroughStep === 0 && <button onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}>{demoSteps[0].action}</button>}
+            {walkthroughStep === 1 && <button onClick={() => { const venue = events.find((event) => event.promoted) || events[0]; setMapFilter("Deals"); setMapSearch(""); if (venue) selectEvent(venue); document.querySelector(".city-board")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>{demoSteps[1].action}</button>}
+            {walkthroughStep === 2 && <button onClick={() => { if (selectedEvent) claimDeal(selectedEvent); setPlanOpen(true); }}>{demoSteps[2].action}</button>}
+            {walkthroughStep === 3 && <button onClick={() => setRecommendationsOpen(true)}>{demoSteps[3].action}</button>}
+            {walkthroughStep === 4 && <button onClick={() => setPollOpen(true)}>{demoSteps[4].action}</button>}
+            {walkthroughStep === 5 && <button onClick={() => { document.getElementById("matches")?.scrollIntoView({ behavior: "smooth" }); setGroupBrowserOpen(true); }}>{demoSteps[5].action}</button>}
+            {walkthroughStep === 6 && <button onClick={() => setMatchedGroup(matches[0])}>{demoSteps[6].action}</button>}
             <button className="walkthrough-exit" onClick={() => setWalkthroughActive(false)} aria-label="Exit walkthrough">Exit</button>
           </div>}
 
@@ -516,16 +539,16 @@ function App() {
       <footer className="footer shell"><Logo/><p>One plan. More possibilities.</p><div><button onClick={() => setWalkthroughOpen(true)}>Walkthrough</button><a href="#safety">Safety</a><button onClick={() => { trackExperimentEvent("venue_interest_opened"); setVenueOpen(true); }}>For venues</button><button onClick={() => setEvidenceOpen(true)}>Test evidence</button><span>Concept MVP</span></div></footer>
 
       {planOpen && (
-        <PlanModal plan={plan} onClose={() => setPlanOpen(false)} onSave={(next) => { trackExperimentEvent("plan_configured", { area: next.area, night: next.night, time: next.time }); setPlan(next); setPlanLocked(false); setVoteEvents([]); setPlanConfigured(true); setPlanOpen(false); setRecommendationsOpen(true); if (walkthroughActive) setWalkthroughStep(1); setToast("Plan saved. Three explained suggestions are ready."); }}/>
+        <PlanModal plan={plan} onClose={() => setPlanOpen(false)} onSave={(next) => { trackExperimentEvent("plan_configured", { area: next.area, night: next.night, time: next.time }); setPlan(next); setPlanLocked(false); setVoteEvents([]); setPlanConfigured(true); setPlanOpen(false); setRecommendationsOpen(true); if (walkthroughActive) setWalkthroughStep(3); setToast("Plan saved. Three explained suggestions are ready."); }}/>
       )}
       {recommendationsOpen && (
-        <RecommendationsModal plan={plan} events={events} claimedDeals={claimedDeals} onClaim={claimDeal} onClose={() => setRecommendationsOpen(false)} onChoose={(event, candidates) => { trackExperimentEvent("recommendation_added_to_vote", { eventId: event.id, venue: event.venue }); selectEvent(event); setPlanLocked(false); setVoteEvents([event, ...candidates.filter((candidate) => candidate.id !== event.id)].slice(0, 3)); setRecommendationsOpen(false); setPollOpen(true); if (walkthroughActive) setWalkthroughStep(2); setToast(`${event.venue} added to the crew vote.`); }}/>
+        <RecommendationsModal plan={plan} events={events} claimedDeals={claimedDeals} onClaim={claimDeal} onClose={() => setRecommendationsOpen(false)} onChoose={(event, candidates) => { trackExperimentEvent("recommendation_added_to_vote", { eventId: event.id, venue: event.venue }); selectEvent(event); setPlanLocked(false); setVoteEvents([event, ...candidates.filter((candidate) => candidate.id !== event.id)].slice(0, 3)); setRecommendationsOpen(false); setPollOpen(true); if (walkthroughActive) setWalkthroughStep(4); setToast(`${event.venue} added to the crew vote.`); }}/>
       )}
       {pollOpen && (
-        <CrewPoll crewSize={Number(plan.crewSize) || 4} events={(voteEvents.length ? voteEvents.filter((event) => meetsWaitLimit(event, plan)) : getSuggestedEvents(events, plan)).slice(0, 3)} onClose={() => setPollOpen(false)} onChoose={(event) => { trackExperimentEvent("destination_locked", { eventId: event.id, venue: event.venue }); selectEvent(event); joinEvent(event); setPlanConfigured(true); setPlanLocked(true); setPollOpen(false); if (walkthroughActive) { setWalkthroughStep(3); window.setTimeout(() => { document.getElementById("matches")?.scrollIntoView({ behavior: "smooth" }); setGroupBrowserOpen(true); }, 220); } setToast(`${event.venue} is locked. Matching is now optional.`); }}/>
+        <CrewPoll demoMode={walkthroughActive} crewSize={Number(plan.crewSize) || 4} events={(voteEvents.length ? voteEvents.filter((event) => meetsWaitLimit(event, plan)) : getSuggestedEvents(events, plan)).slice(0, 3)} onClose={() => setPollOpen(false)} onChoose={(event) => { trackExperimentEvent("destination_locked", { eventId: event.id, venue: event.venue }); selectEvent(event); joinEvent(event); setPlanConfigured(true); setPlanLocked(true); setPollOpen(false); if (walkthroughActive) { setWalkthroughStep(5); window.setTimeout(() => { document.getElementById("matches")?.scrollIntoView({ behavior: "smooth" }); setGroupBrowserOpen(true); }, 220); } setToast(`${event.venue} is locked. Matching is now optional.`); }}/>
       )}
       {authOpen && (
-        <AuthModal initialMode={authMode} onClose={() => setAuthOpen(false)} onAuthenticated={(session) => { setAccount(session.profile); setAuthOpen(false); setToast(session.needsVerification ? "Check your email to verify your account" : `Welcome${session.profile.name ? `, ${session.profile.name.split(" ")[0]}` : ""}`); }}/>
+        <AuthModal initialMode={authMode} walkthroughMode={walkthroughActive && walkthroughStep === 0} onWalkthroughContinue={() => { setAuthOpen(false); setWalkthroughStep(1); setMapFilter("Crowds"); document.querySelector(".city-board")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} onClose={() => setAuthOpen(false)} onAuthenticated={(session) => { setAccount(session.profile); setAuthOpen(false); setToast(session.needsVerification ? "Check your email to verify your account" : `Welcome${session.profile.name ? `, ${session.profile.name.split(" ")[0]}` : ""}`); }}/>
       )}
       {accountOpen && account && (
         <AccountModal account={account} onClose={() => setAccountOpen(false)} onUpdate={(profile) => { const session = updateSessionProfile(profile); setAccount(session.profile); setToast("Profile updated"); }} onSignOut={() => { signOut(); setAccount(null); setAccountOpen(false); setToast("Signed out"); }}/>
@@ -540,10 +563,10 @@ function App() {
         <GroupBrowserModal groups={orderedMatches} onClose={() => setGroupBrowserOpen(false)} onOpenGroup={(group) => { setGroupBrowserOpen(false); setProfile(group); }} onOpenPerson={(person, group) => { setGroupBrowserOpen(false); setPersonProfile({ person, group }); }}/>
       )}
       {matchedGroup && (
-        <MatchModal group={matchedGroup} onClose={() => setMatchedGroup(null)} onMessage={() => { const group = matchedGroup; setMatchedGroup(null); setChatGroup(group); }}/>
+        <MatchModal group={matchedGroup} onClose={() => setMatchedGroup(null)} onMessage={() => { const group = matchedGroup; setMatchedGroup(null); setChatGroup(group); if (walkthroughActive) setWalkthroughStep(6); }}/>
       )}
       {chatGroup && (
-        <ChatModal group={chatGroup} onClose={() => setChatGroup(null)}/>
+        <ChatModal group={chatGroup} demoMode={walkthroughActive} onMessageSent={() => { if (walkthroughActive) { trackExperimentEvent("full_demo_completed", { seconds: walkthroughSeconds }); setWalkthroughActive(false); setWalkthroughStep(0); setToast(`Full demo complete in ${walkthroughSeconds} seconds.`); } }} onClose={() => setChatGroup(null)}/>
       )}
       {walkthroughOpen && (
         <WalkthroughModal onClose={() => setWalkthroughOpen(false)} onStart={startWalkthrough}/>
@@ -968,9 +991,9 @@ function DealsSection({ events, claimedDeals, onClaim }) {
   </section>;
 }
 
-function CrewPoll({ events, crewSize, onClose, onChoose }) {
-  const [ballots, setBallots] = useState(() => Array(crewSize).fill(null));
-  const [member, setMember] = useState(0);
+function CrewPoll({ events, crewSize, demoMode = false, onClose, onChoose }) {
+  const [ballots, setBallots] = useState(() => Array.from({ length: crewSize }, (_, index) => demoMode && index < crewSize - 1 ? events[Math.min(index === crewSize - 2 ? 1 : 0, Math.max(0, events.length - 1))]?.id || null : null));
+  const [member, setMember] = useState(demoMode ? Math.max(0, crewSize - 1) : 0);
   const result = summarizeBallots(ballots, events.map(event => event.id));
   const castVote = (eventId) => {
     setBallots(current => current.map((vote, index) => index === member ? eventId : vote));
@@ -978,7 +1001,7 @@ function CrewPoll({ events, crewSize, onClose, onChoose }) {
   };
   return <ModalShell onClose={onClose} label="Crew destination vote" className="poll-modal">
     <span className="kicker">STEP 3 - DECIDE TOGETHER</span><h2>Everyone gets one vote.</h2>
-    <p>Pass this device around. Each person selects their number and votes. Votes can be changed. This session does not sync across phones or verify voters.</p>
+    <p>{demoMode ? "Three fictional crew votes are preloaded for the timed demo. Cast the final vote, then lock the winner." : "Pass this device around. Each person selects their number and votes. Votes can be changed. This session does not sync across phones or verify voters."}</p>
     <label><span>Who is voting?</span><select value={member} onChange={event => setMember(Number(event.target.value))}>{ballots.map((vote, index) => <option key={index} value={index}>Person {index + 1}{vote ? " - voted" : " - waiting"}</option>)}</select></label>
     <p role="status">{ballots.filter(Boolean).length} of {crewSize} voted{result.tied ? " - Tied: discuss and change a vote to agree on a winner." : ""}</p>
     {!events.length && <p>No eligible places. Close this vote and edit your plan.</p>}
@@ -987,21 +1010,37 @@ function CrewPoll({ events, crewSize, onClose, onChoose }) {
   </ModalShell>;
 }
 
-function AuthModal({ initialMode, onClose, onAuthenticated }) {
+function AuthModal({ initialMode, walkthroughMode = false, onWalkthroughContinue, onClose, onAuthenticated }) {
   const [mode, setMode] = useState(initialMode);
-  const [form, setForm] = useState({ name: "", email: "", password: "", campus: "Ohio State", crewName: "The usual crew", instagram: "", ageConfirmed: false });
+  const [form, setForm] = useState(walkthroughMode
+    ? { name: "Brutus Demo", email: "brutus.demo@osu.edu", password: "demo-only", campus: "Ohio State", crewName: "The usual crew", instagram: "@brutus_demo", ageConfirmed: true }
+    : { name: "", email: "", password: "", campus: "Ohio State", crewName: "The usual crew", instagram: "", ageConfirmed: false });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const set = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const [buckIdStatus, setBuckIdStatus] = useState("idle");
+  const set = (key, value) => {
+    setForm((current) => ({ ...current, [key]: value }));
+    if (["name", "email", "ageConfirmed"].includes(key)) setBuckIdStatus("idle");
+  };
+  const verifyBuckId = () => {
+    setError("");
+    if (!form.name.trim() || !/@osu\.edu$/i.test(form.email) || !form.ageConfirmed) return setError("Add a name, valid @osu.edu email, and confirm 18+ before the BuckID check.");
+    setBuckIdStatus("checking");
+    window.setTimeout(() => {
+      setBuckIdStatus("verified");
+      trackExperimentEvent("buckid_demo_verified", { walkthrough: walkthroughMode });
+    }, 500);
+  };
   const submit = async (event) => {
     event.preventDefault();
     setError("");
     if (mode === "signup" && !form.ageConfirmed) return setError("You must confirm that you are 18 or older.");
     if (mode === "signup" && !/@osu\.edu$/i.test(form.email)) return setError("Use an Ohio State @osu.edu email for this campus pilot.");
+    if (mode === "signup" && buckIdStatus !== "verified") return setError("Complete the simulated BuckID verification before creating an account.");
     if (form.password.length < 8) return setError("Use at least 8 characters for your password.");
     setLoading(true);
     try {
-      const session = mode === "signup" ? await signUp({ email: form.email, password: form.password, profile: { name: form.name.trim(), campus: form.campus, crewName: form.crewName.trim(), instagram: form.instagram.trim(), ageConfirmed: form.ageConfirmed } }) : await signIn({ email: form.email, password: form.password });
+      const session = mode === "signup" ? await signUp({ email: form.email, password: form.password, profile: { name: form.name.trim(), campus: form.campus, crewName: form.crewName.trim(), instagram: form.instagram.trim(), ageConfirmed: form.ageConfirmed, buckIdVerified: true } }) : await signIn({ email: form.email, password: form.password });
       onAuthenticated(session);
     } catch (authError) {
       setError(authError.message);
@@ -1010,16 +1049,22 @@ function AuthModal({ initialMode, onClose, onAuthenticated }) {
     }
   };
   return <ModalShell onClose={onClose} label={mode === "signup" ? "Create a Hangtime account" : "Sign in to Hangtime"} className="auth-modal">
-    <div className="auth-brand"><Logo/><span>{isCloudAuthEnabled() ? "Secure cloud account" : "Browser-local prototype"}</span></div>
+    <div className="auth-brand"><Logo/><span>{walkthroughMode ? "Step 1 of 7 · simulated identity check" : isCloudAuthEnabled() ? "Secure cloud account" : "Browser-local prototype"}</span></div>
     <h2>{mode === "signup" ? "Your campus. One night plan." : "Welcome back."}</h2><p>{mode === "signup" ? "Create your Ohio State student profile to plan with your crew." : "Your crew and tonight’s plan are waiting."}</p>
-    <div className="auth-tabs"><button className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")}>Create account</button><button className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")}>Sign in</button></div>
+    {!walkthroughMode && <div className="auth-tabs"><button className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")}>Create account</button><button className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")}>Sign in</button></div>}
     <form className="auth-form" onSubmit={submit}>
       {mode === "signup" && <><label><span>Name</span><input required value={form.name} onChange={(event) => set("name", event.target.value)} placeholder="First and last name"/></label><div className="auth-split"><label><span>Campus</span><input required readOnly value="Ohio State · Columbus" /></label><label><span>Crew name</span><input required value={form.crewName} onChange={(event) => set("crewName", event.target.value)} /></label></div></>}
       <label><span>{mode === "signup" ? "Ohio State email" : "Email"}</span><input required type="email" autoComplete="email" value={form.email} onChange={(event) => set("email", event.target.value)} placeholder="you@osu.edu"/></label>
       <label><span>Password</span><input required minLength="8" type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} value={form.password} onChange={(event) => set("password", event.target.value)} placeholder="8 characters or more"/></label>
       {mode === "signup" && <><label><span>Instagram <small>Optional · hidden until matching</small></span><input value={form.instagram} onChange={(event) => set("instagram", event.target.value)} placeholder="@username"/></label><label className="age-check"><input type="checkbox" checked={form.ageConfirmed} onChange={(event) => set("ageConfirmed", event.target.checked)}/><span>I confirm that I’m at least 18 years old.</span></label></>}
+      {mode === "signup" && <section className={`buckid-verification ${buckIdStatus}`} aria-label="BuckID verification">
+        <div className="buckid-heading"><span className="buckid-mark">B</span><div><strong>BuckID campus verification</strong><small>Required before student matching is unlocked</small></div><b>{buckIdStatus === "verified" ? "VERIFIED" : buckIdStatus === "checking" ? "CHECKING" : "NOT VERIFIED"}</b></div>
+        <ol><li className={/@osu\.edu$/i.test(form.email) ? "complete" : ""}><Icon name="check" size={12}/>Confirm the @osu.edu address</li><li className={buckIdStatus === "verified" ? "complete" : ""}><Icon name="check" size={12}/>Match the profile name and BuckID photo</li><li className={form.ageConfirmed ? "complete" : ""}><Icon name="check" size={12}/>Confirm age eligibility</li></ol>
+        {buckIdStatus !== "verified" ? <button type="button" onClick={verifyBuckId} disabled={buckIdStatus === "checking"}>{buckIdStatus === "checking" ? "Running simulated check…" : "Run demo BuckID check"}</button> : <div className="buckid-success"><Icon name="shield" size={15}/>Identity check passed for this demonstration</div>}
+        <p>Prototype simulation only. Hangtime never asks for an Ohio State password and does not store a BuckID image or number.</p>
+      </section>}
       {error && <div className="auth-error" role="alert">{error}</div>}
-      <button className="modal-primary" disabled={loading}>{loading ? "Working…" : mode === "signup" ? "Create my account" : "Sign in"}<Icon name="arrow"/></button>
+      {walkthroughMode ? <button type="button" className="modal-primary" disabled={buckIdStatus !== "verified"} onClick={onWalkthroughContinue}>Continue to the map <Icon name="arrow"/></button> : <button className="modal-primary" disabled={loading}>{loading ? "Working…" : mode === "signup" ? "Create my account" : "Sign in"}<Icon name="arrow"/></button>}
     </form>
     {!isCloudAuthEnabled() && <p className="prototype-note"><Icon name="shield" size={14}/>Student access would require university verification in production. Prototype accounts remain on this browser; do not enter real credentials.</p>}
   </ModalShell>;
@@ -1127,25 +1172,22 @@ function GroupBrowserModal({ groups, onClose, onOpenGroup, onOpenPerson }) {
 
 function WalkthroughModal({ onClose, onStart }) {
   return <ModalShell onClose={onClose} label="Guided product walkthrough" className="walkthrough-modal">
-    <span className="kicker">60-SECOND PRODUCT WALKTHROUGH</span><h2>Plan a real path through the prototype.</h2>
-    <p>The guide stays visible while you complete four working interactions.</p>
+    <span className="kicker">45–60 SECOND · FULL PRODUCT DEMO</span><h2>Show the whole night in one run.</h2>
+    <p>A presenter-ready path through seven real prototype interactions. Follow the highlighted action on each screen.</p>
     <ol className="walkthrough-steps">
-      <li><span>1</span><div><strong>Set the crew's plan</strong><small>Choose the area, type of night, and start time.</small></div></li>
-      <li><span>2</span><div><strong>Compare a destination</strong><small>Use a map marker or the ranked venue list.</small></div></li>
-      <li><span>3</span><div><strong>Vote and lock</strong><small>Cast your vote and lock the group winner.</small></div></li>
-      <li><span>4</span><div><strong>Open a fictional group match</strong><small>See fake accounts, individual profiles, plan overlap, and the mutual-match state.</small></div></li>
+      {demoSteps.map((step, index) => <li key={step.title}><span>{index + 1}</span><div><strong>{step.title}</strong><small>{step.detail}</small></div></li>)}
     </ol>
-    <button className="modal-primary" onClick={onStart}>Start walkthrough <Icon name="arrow"/></button>
-    <p className="prototype-note"><Icon name="shield" size={15}/>All people, crowd levels, events, offers, and ride estimates shown in the walkthrough are modeled demo data.</p>
+    <button className="modal-primary" onClick={onStart}>Start full demo <Icon name="arrow"/></button>
+    <p className="prototype-note"><Icon name="shield" size={15}/>All identities, people, crowds, offers, rides, matches, and messages in this walkthrough are fictional or modeled. Never enter a real BuckID password.</p>
   </ModalShell>;
 }
 
-function ChatModal({ group, onClose }) {
+function ChatModal({ group, demoMode = false, onMessageSent, onClose }) {
   const [messages, setMessages] = useState([
     { from: group.name, text: `We are starting near ${group.timeline[0].place} around ${group.timeline[0].time}.` },
     { from: "Your crew", text: "Perfect—we just locked the same area." },
   ]);
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState(demoMode ? "Meet by the Newport entrance at 9:15?" : "");
   const send = (event) => {
     event.preventDefault();
     const text = draft.trim();
@@ -1153,9 +1195,10 @@ function ChatModal({ group, onClose }) {
     setMessages((current) => [...current, { from: "Your crew", text }]);
     setDraft("");
     trackExperimentEvent("demo_message_sent", { groupId: group.id });
+    onMessageSent?.();
   };
   return <ModalShell onClose={onClose} label={`Demo group chat with ${group.name}`} className="chat-modal">
-    <span className="kicker">PROTOTYPE GROUP CHAT</span><h2>{group.name}</h2><p>This local demo does not send messages to real people.</p>
+    <span className="kicker">{demoMode ? "STEP 7 OF 7 · GROUP CHAT" : "PROTOTYPE GROUP CHAT"}</span><h2>{group.name}</h2><p>This local demo does not send messages to real people.</p>
     <div className="chat-thread">{messages.map((message, index) => <div className={message.from === "Your crew" ? "mine" : "theirs"} key={`${message.from}-${index}`}><strong>{message.from}</strong><span>{message.text}</span></div>)}</div>
     <form className="chat-compose" onSubmit={send}><label><span className="sr-only">Message</span><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Type a demo message…"/></label><button disabled={!draft.trim()} aria-label="Send demo message"><Icon name="arrow"/></button></form>
   </ModalShell>;
