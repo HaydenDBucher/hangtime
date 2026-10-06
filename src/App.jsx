@@ -1181,7 +1181,6 @@ function DemoMiniMap({ events, selected, onSelect }) {
 
 function WalkthroughModal({ events, onClose }) {
   const [step, setStep] = useState(0);
-  const [seconds, setSeconds] = useState(0);
   const [buckVerified, setBuckVerified] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [dealSaved, setDealSaved] = useState(false);
@@ -1199,11 +1198,6 @@ function WalkthroughModal({ events, onClose }) {
   const demoGroup = matches.find((group) => group.id === demoGroupId) || matches[0];
 
   useEffect(() => {
-    const timer = window.setInterval(() => setSeconds((current) => current + 1), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
     if (!selectedId && mapEvents[0]) setSelectedId(mapEvents[0].id);
   }, [mapEvents, selectedId]);
 
@@ -1213,7 +1207,7 @@ function WalkthroughModal({ events, onClose }) {
     if (step < demoSteps.length - 1) setStep((current) => current + 1);
     else {
       setComplete(true);
-      trackExperimentEvent("full_demo_completed", { seconds });
+      trackExperimentEvent("full_demo_completed", { containedDemo: true });
     }
   };
   const selectPlace = (event) => { setSelectedId(event.id); setDealSaved(false); };
@@ -1227,7 +1221,7 @@ function WalkthroughModal({ events, onClose }) {
   };
 
   return <ModalShell onClose={onClose} label="Complete Hangtime product demo" className="walkthrough-modal full-demo-modal">
-    <header className="full-demo-header"><div><span className="kicker">45–60 SECOND · SELF-CONTAINED DEMO</span><h2>{complete ? "That’s Hangtime." : demoSteps[step].title}</h2><p>{complete ? "One verified student journey from deciding where to go through meeting another crew." : demoSteps[step].detail}</p></div><div className="demo-clock"><strong>{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}</strong><small>TARGET 0:45–1:00</small></div></header>
+    <header className="full-demo-header"><div><span className="kicker">SELF-CONTAINED PRODUCT DEMO</span><h2>{complete ? "That’s Hangtime." : demoSteps[step].title}</h2><p>{complete ? "One verified student journey from deciding where to go through meeting another crew." : demoSteps[step].detail}</p></div></header>
 
     <div className="demo-progress" aria-label="Demo progress">{demoSteps.map((item, index) => <span className={index < step || complete ? "complete" : index === step ? "active" : ""} key={item.title}><i>{index < step || complete ? <Icon name="check" size={10}/> : index + 1}</i><small>{["BuckID", "Map", "Deal", "Plan", "Vote", "Match", "Chat"][index]}</small></span>)}</div>
 
